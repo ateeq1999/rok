@@ -98,83 +98,63 @@ pub fn resolve_ref(step_index: usize, pick: &str, results: &[StepResult]) -> Opt
 
 fn resolve_jsonpath(value: &Value, path: &str) -> Option<Value> {
     let mut current = value.clone();
-    let parts: Vec<&str> = path.split('.').collect();
-    let mut i = 0;
 
-    while i < parts.len() {
-        let part = parts[i];
+    let parts: Vec<&str> = path.split('.').collect();
+
+    for (i, part) in parts.iter().enumerate() {
         if part.is_empty() {
-            i += 1;
             continue;
         }
 
-        if let Some((key, rest)) = part.split_once('[') {
+        if part.contains('[') || part.contains('*') {
+            let key = part.split('[').next().unwrap_or("");
+            let rest = part.strip_prefix(key).unwrap_or("");
+
             if !key.is_empty() {
-                current = current.get(key)?.clone();
+                if let Some(v) = current.get(key) {
+                    current = v.clone();
+                } else {
+                    return None;
+                }
             }
 
-            let bracket_part = rest.trim_end_matches(']');
-            if bracket_part == "*" {
-                if let Some(arr) = current.as_array() {
-                    current = serde_json::json!(arr.clone());
-                }
-            } else if let Ok(arr_idx) = bracket_part.parse::<usize>() {
-                current = current.get(arr_idx)?.clone();
+            if rest.is_empty() {
+                continue;
             }
-            i += 1;
-            if !rest.ends_with(']') && i < parts.len() {
-                let remaining = parts[i..].join(".");
-                if let Some((arr_key, arr_rest)) = remaining.split_once('[') {
-                    if arr_key == "*" {
-                        if let Some(arr) = current.as_array() {
-                            let extracted: Vec<_> = arr
-                                .iter()
-                                .filter_map(|v| v.get(arr_rest.trim_end_matches(']')))
-                                .cloned()
-                                .collect();
-                            return Some(serde_json::Value::Array(extracted));
+
+            let bracket_content = rest.trim_start_matches('[').trim_end_matches(']');
+
+            if current.is_array() {
+                if bracket_content == "*" {
+                    let arr = current.as_array().unwrap();
+                    let mut extracted = Vec::new();
+
+                    if i + 1 < parts.len() {
+                        let next_part = parts[i + 1];
+                        for item in arr {
+                            if let Some(v) = item.get(next_part) {
+                                extracted.push(v.clone());
+                            }
                         }
+                        return Some(serde_json::Value::Array(extracted));
+                    } else {
+                        return Some(current.clone());
                     }
-                }
-            }
-        } else if part == "*" {
-            if let Some(arr) = current.as_array() {
-                let extracted: Vec<_> = arr
-                    .iter()
-                    .map(|v| {
-                        if let Some(obj) = v.as_object() {
-                            serde_json::Value::Object(obj.clone())
-                        } else {
-                            v.clone()
-                        }
-                    })
-                    .collect();
-                return Some(serde_json::Value::Array(extracted));
-            }
-        } else if part.contains('[') {
-            if let Some((arr_key, arr_idx_str)) = part.split_once('[') {
-                let arr_idx = arr_idx_str.trim_end_matches(']');
-                if arr_key.is_empty() {
-                    if let Some(arr) = current.as_array() {
-                        if arr_idx == "*" {
-                            let extracted: Vec<_> = arr
-                                .iter()
-                                .filter_map(|v| v.as_str().map(String::from))
-                                .collect();
-                            return Some(serde_json::Value::Array(
-                                extracted
-                                    .into_iter()
-                                    .map(serde_json::Value::String)
-                                    .collect(),
-                            ));
-                        }
+                } else if let Ok(idx) = bracket_content.parse::<usize>() {
+                    if let Some(item) = current.get(idx) {
+                        current = item.clone();
+                    } else {
+                        return None;
                     }
                 }
             }
         } else {
-            current = current.get(part)?.clone();
+            if let Some(v) = current.get(*part) {
+                current = v.clone();
+            } else {
+                return None;
+            }
         }
-        i += 1;
     }
 
     Some(current)

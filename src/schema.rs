@@ -158,6 +158,8 @@ pub enum Step {
     },
     Each {
         over: EachOver,
+        #[serde(default = "default_each_as", rename = "as")]
+        as_: String,
         #[serde(default = "default_each_parallel")]
         parallel: bool,
         step: Box<Step>,
@@ -193,6 +195,10 @@ fn default_expect_status() -> u16 {
 
 fn default_each_parallel() -> bool {
     true
+}
+
+fn default_each_as() -> String {
+    "item".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

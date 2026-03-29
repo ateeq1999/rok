@@ -85,9 +85,11 @@ fn create_tarball(source: std::path::PathBuf, dest: &PathBuf) -> Result<(), std:
     let enc = GzEncoder::new(file, Compression::default());
     let mut tar = tar::Builder::new(enc);
 
+    let base_path = source.parent().unwrap_or(std::path::Path::new("."));
+
     for entry in WalkDir::new(&source).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
-        let relative = path.strip_prefix(&source).unwrap_or(path);
+        let relative = path.strip_prefix(base_path).unwrap_or(path);
 
         if path.is_file() {
             let _ = tar.append_path_with_name(path, relative);

@@ -228,9 +228,10 @@ impl Runner {
             } => self.run_if(condition, then, else_, index, prev_results),
             Step::Each {
                 over,
+                as_,
                 parallel,
                 step,
-            } => self.run_each(over, step, *parallel, index, prev_results),
+            } => self.run_each(over, step, as_, *parallel, index, prev_results),
             Step::Parallel { steps } => self.run_parallel(steps, index, prev_results),
         }
     }
@@ -322,6 +323,7 @@ impl Runner {
         &self,
         over: &EachOver,
         step: &Step,
+        as_var: &str,
         parallel: bool,
         index: usize,
         prev_results: &[StepResult],
@@ -350,7 +352,7 @@ impl Runner {
                 .par_iter()
                 .enumerate()
                 .map(|(i, item)| {
-                    let substituted = self.substitute_step(&step_closure, "item", item);
+                    let substituted = self.substitute_step(&step_closure, as_var, item);
                     self.execute_step(&substituted, i, prev_results)
                 })
                 .collect()
@@ -359,7 +361,7 @@ impl Runner {
                 .iter()
                 .enumerate()
                 .map(|(i, item)| {
-                    let substituted = self.substitute_step(&step_closure, "item", item);
+                    let substituted = self.substitute_step(&step_closure, as_var, item);
                     self.execute_step(&substituted, i, prev_results)
                 })
                 .collect()
@@ -519,10 +521,12 @@ impl Runner {
                 },
                 Step::Each {
                     over,
+                    as_,
                     parallel,
                     step,
                 } => Step::Each {
                     over: over.clone(),
+                    as_: as_.clone(),
                     parallel: *parallel,
                     step: Box::new(sub(step, var, val)),
                 },
