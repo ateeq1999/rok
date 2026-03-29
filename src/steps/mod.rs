@@ -1,0 +1,9 @@
+pub mod bash;
+pub mod cp;
+pub mod grep;
+pub mod mkdir;
+pub mod mv;
+pub mod read;
+pub mod replace;
+pub mod rm;
+pub mod write;
