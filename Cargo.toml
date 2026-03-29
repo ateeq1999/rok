@@ -1,6 +1,6 @@
 [package]
 name = "rok"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Run One, Know All - Execute multi-step tasks from JSON"
 readme = "README.md"
