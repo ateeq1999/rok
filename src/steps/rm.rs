@@ -25,7 +25,7 @@ pub fn run(path: &str, recursive: bool, cwd: &std::path::Path) -> StepResult {
             duration_ms,
             stopped_pipeline: None,
         },
-        Err(e) => StepResult {
+        Err(_e) => StepResult {
             index: 0,
             step_type: StepTypeResult::Rm {
                 path: path.to_string(),

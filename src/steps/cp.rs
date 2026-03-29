@@ -36,7 +36,7 @@ pub fn run(from: &str, to: &str, recursive: bool, cwd: &std::path::Path) -> Step
             duration_ms,
             stopped_pipeline: None,
         },
-        Err(e) => StepResult {
+        Err(_e) => StepResult {
             index: 0,
             step_type: StepTypeResult::Cp {
                 from: from.to_string(),

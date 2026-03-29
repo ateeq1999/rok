@@ -2,6 +2,14 @@
 name = "rok"
 version = "0.1.0"
 edition = "2021"
+description = "Run One, Know All - Execute multi-step tasks from JSON"
+readme = "README.md"
+license = "MIT"
+authors = ["Ateeq <ateeq@ateeq.me>"]
+repository = "https://github.com/ateeq1999/rok"
+homepage = "https://github.com/ateeq1999/rok"
+keywords = ["cli", "json", "automation", "task-runner", "ai"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
@@ -13,6 +21,10 @@ regex = "1"
 globset = "0.4"
 anyhow = "1"
 colored = "2"
+
+[[bin]]
+name = "rok"
+path = "src/main.rs"
 
 [profile.release]
 strip = true

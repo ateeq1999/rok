@@ -37,6 +37,7 @@ impl RokError {
         Self::new(ExitCode::StartupError, message)
     }
 
+    #[allow(dead_code)]
     pub fn timeout(message: impl Into<String>) -> Self {
         Self::new(ExitCode::Timeout, message)
     }
@@ -50,6 +51,7 @@ impl fmt::Display for RokError {
 
 impl std::error::Error for RokError {}
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct StepError {
     pub step_index: usize,
@@ -57,6 +59,7 @@ pub struct StepError {
 }
 
 impl StepError {
+    #[allow(dead_code)]
     pub fn new(step_index: usize, message: impl Into<String>) -> Self {
         Self {
             step_index,

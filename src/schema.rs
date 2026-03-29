@@ -176,6 +176,7 @@ pub enum StepTypeResult {
 }
 
 impl StepTypeResult {
+    #[allow(dead_code)]
     pub fn step_type_name(&self) -> &'static str {
         match self {
             Self::Bash { .. } => "bash",
