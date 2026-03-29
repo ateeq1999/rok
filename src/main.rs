@@ -2,6 +2,7 @@ mod cli;
 mod config;
 mod error;
 mod output;
+mod refs;
 mod runner;
 mod schema;
 mod steps;
@@ -39,6 +40,7 @@ fn main() {
                 schema::Step::Bash { cmd } => format!("  {}: bash {}", i, cmd),
                 schema::Step::Read { path } => format!("  {}: read {}", i, path),
                 schema::Step::Write { path, .. } => format!("  {}: write {}", i, path),
+                schema::Step::Patch { path, .. } => format!("  {}: patch {}", i, path),
                 schema::Step::Mv { from, to } => format!("  {}: mv {} → {}", i, from, to),
                 schema::Step::Cp { from, to, .. } => format!("  {}: cp {} → {}", i, from, to),
                 schema::Step::Rm { path, .. } => format!("  {}: rm {}", i, path),
@@ -49,6 +51,34 @@ fn main() {
                 schema::Step::Replace { pattern, path, .. } => {
                     format!("  {}: replace {} in {}", i, pattern, path)
                 }
+                schema::Step::Scan { path, .. } => format!("  {}: scan {}", i, path),
+                schema::Step::Summarize { path, .. } => format!("  {}: summarize {}", i, path),
+                schema::Step::Extract { path, .. } => format!("  {}: extract {}", i, path),
+                schema::Step::Diff { a, b, .. } => format!("  {}: diff {} vs {}", i, a, b),
+                schema::Step::Lint { path, .. } => format!("  {}: lint {}", i, path),
+                schema::Step::Template {
+                    builtin,
+                    source,
+                    output,
+                    ..
+                } => {
+                    format!(
+                        "  {}: template {} -> {}",
+                        i,
+                        if builtin.is_empty() { source } else { builtin },
+                        output
+                    )
+                }
+                schema::Step::Snapshot { path, id } => {
+                    format!("  {}: snapshot {} @ {}", i, path, id)
+                }
+                schema::Step::Restore { id } => format!("  {}: restore {}", i, id),
+                schema::Step::Git { op, .. } => format!("  {}: git {:?}", i, op),
+                schema::Step::Http { method, url, .. } => {
+                    format!("  {}: http {} {}", i, method, url)
+                }
+                schema::Step::If { condition, .. } => format!("  {}: if {:?}", i, condition),
+                schema::Step::Each { over, .. } => format!("  {}: each over {:?}", i, over),
                 schema::Step::Parallel { steps } => {
                     format!("  {}: parallel ({} steps)", i, steps.len())
                 }

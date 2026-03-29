@@ -50,6 +50,10 @@ pub enum Step {
         path: String,
         content: String,
     },
+    Patch {
+        path: String,
+        edits: Vec<PatchEdit>,
+    },
     Mv {
         from: String,
         to: String,
@@ -85,6 +89,79 @@ pub enum Step {
         #[serde(default = "default_regex")]
         regex: bool,
     },
+    Scan {
+        path: String,
+        #[serde(default = "default_depth")]
+        depth: usize,
+        #[serde(default)]
+        include: Vec<String>,
+        #[serde(default = "default_scan_output")]
+        output: ScanOutput,
+    },
+    Summarize {
+        path: String,
+        #[serde(default)]
+        focus: String,
+    },
+    Extract {
+        path: String,
+        #[serde(default)]
+        pick: Vec<String>,
+    },
+    Diff {
+        a: String,
+        b: String,
+        #[serde(default = "default_diff_format")]
+        format: DiffFormat,
+    },
+    Lint {
+        path: String,
+        #[serde(default = "default_lint_tool")]
+        tool: LintTool,
+    },
+    Template {
+        #[serde(default)]
+        builtin: String,
+        #[serde(default)]
+        source: String,
+        output: String,
+        #[serde(default)]
+        vars: HashMap<String, String>,
+    },
+    Snapshot {
+        path: String,
+        id: String,
+    },
+    Restore {
+        id: String,
+    },
+    Git {
+        op: GitOp,
+        #[serde(default)]
+        args: Vec<String>,
+    },
+    Http {
+        method: String,
+        url: String,
+        #[serde(default)]
+        headers: HashMap<String, String>,
+        #[serde(default = "default_expect_status")]
+        expect_status: u16,
+        #[serde(default)]
+        body: Option<String>,
+    },
+    If {
+        condition: Condition,
+        then: Vec<Step>,
+        #[serde(default)]
+        else_: Vec<Step>,
+    },
+    Each {
+        over: EachOver,
+        #[serde(default = "default_each_parallel")]
+        parallel: bool,
+        step: Box<Step>,
+    },
     Parallel {
         steps: Vec<Step>,
     },
@@ -92,6 +169,130 @@ pub enum Step {
 
 fn default_regex() -> bool {
     false
+}
+
+fn default_depth() -> usize {
+    3
+}
+
+fn default_scan_output() -> ScanOutput {
+    ScanOutput::Summary
+}
+
+fn default_diff_format() -> DiffFormat {
+    DiffFormat::Stat
+}
+
+fn default_lint_tool() -> LintTool {
+    LintTool::Auto
+}
+
+fn default_expect_status() -> u16 {
+    200
+}
+
+fn default_each_parallel() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ScanOutput {
+    Summary,
+    Full,
+    Imports,
+    Exports,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DiffFormat {
+    Unified,
+    Json,
+    Stat,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum LintTool {
+    Auto,
+    Eslint,
+    Biome,
+    Clippy,
+    Ruff,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum GitOp {
+    Status,
+    Diff,
+    Log,
+    Add,
+    Commit,
+    Branch,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PatchEdit {
+    pub find: String,
+    pub replace: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum EachOver {
+    List(Vec<String>),
+    Ref(EachRef),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EachRef {
+    pub ref_: usize,
+    #[serde(default = "default_pick")]
+    pub pick: String,
+}
+
+fn default_pick() -> String {
+    "*".to_string()
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", tag = "type")]
+pub enum Condition {
+    Exists {
+        path: String,
+    },
+    Contains {
+        path: String,
+        pattern: String,
+        #[serde(default)]
+        regex: bool,
+    },
+    GrepHasResults {
+        ref_: usize,
+    },
+    StepOk {
+        ref_: usize,
+    },
+    StepFailed {
+        ref_: usize,
+    },
+    FileChanged {
+        path: String,
+        since: String,
+    },
+    Not {
+        condition: Box<Condition>,
+    },
+    And {
+        conditions: Vec<Condition>,
+    },
+    Or {
+        conditions: Vec<Condition>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -144,6 +345,12 @@ pub enum StepTypeResult {
     },
     Write {
         path: String,
+        diff: Option<String>,
+    },
+    Patch {
+        path: String,
+        edits_applied: usize,
+        diff: Option<String>,
     },
     Mv {
         from: String,
@@ -170,9 +377,93 @@ pub enum StepTypeResult {
         files_modified: usize,
         total_replacements: usize,
     },
+    Scan {
+        path: String,
+        stack: Vec<String>,
+        entry_points: Vec<String>,
+        file_count: usize,
+        tree: HashMap<String, Vec<String>>,
+        exports: HashMap<String, Vec<String>>,
+        imports_graph: HashMap<String, Vec<String>>,
+    },
+    Summarize {
+        path: String,
+        summary: FileSummary,
+    },
+    Extract {
+        path: String,
+        data: serde_json::Value,
+    },
+    Diff {
+        a: String,
+        b: String,
+        added: usize,
+        removed: usize,
+        changed_sections: Vec<String>,
+        is_identical: bool,
+        unified_diff: Option<String>,
+    },
+    Lint {
+        errors_count: usize,
+        warnings_count: usize,
+        errors: Vec<LintError>,
+    },
+    Template {
+        output: String,
+        rendered: bool,
+    },
+    Snapshot {
+        path: String,
+        id: String,
+        archived: bool,
+    },
+    Restore {
+        id: String,
+        restored: bool,
+    },
+    Git {
+        op: String,
+        output: serde_json::Value,
+    },
+    Http {
+        method: String,
+        url: String,
+        status: u16,
+        body: Option<String>,
+    },
+    If {
+        condition_met: bool,
+        branch: String,
+        results: Vec<StepResult>,
+    },
+    Each {
+        items: Vec<String>,
+        results: Vec<StepResult>,
+    },
     Parallel {
         results: Vec<StepResult>,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileSummary {
+    pub imports: Vec<String>,
+    pub exports: Vec<String>,
+    pub functions: Vec<String>,
+    pub types_used: Vec<String>,
+    pub line_count: usize,
+    pub last_modified: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LintError {
+    pub file: String,
+    pub line: usize,
+    pub rule: String,
+    pub message: String,
+    pub severity: String,
 }
 
 impl StepTypeResult {
@@ -182,12 +473,25 @@ impl StepTypeResult {
             Self::Bash { .. } => "bash",
             Self::Read { .. } => "read",
             Self::Write { .. } => "write",
+            Self::Patch { .. } => "patch",
             Self::Mv { .. } => "mv",
             Self::Cp { .. } => "cp",
             Self::Rm { .. } => "rm",
             Self::Mkdir { .. } => "mkdir",
             Self::Grep { .. } => "grep",
             Self::Replace { .. } => "replace",
+            Self::Scan { .. } => "scan",
+            Self::Summarize { .. } => "summarize",
+            Self::Extract { .. } => "extract",
+            Self::Diff { .. } => "diff",
+            Self::Lint { .. } => "lint",
+            Self::Template { .. } => "template",
+            Self::Snapshot { .. } => "snapshot",
+            Self::Restore { .. } => "restore",
+            Self::Git { .. } => "git",
+            Self::Http { .. } => "http",
+            Self::If { .. } => "if",
+            Self::Each { .. } => "each",
             Self::Parallel { .. } => "parallel",
         }
     }

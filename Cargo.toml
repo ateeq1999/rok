@@ -1,6 +1,6 @@
 [package]
 name = "rok-cli"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Run One, Know All - Execute multi-step tasks from JSON"
 readme = "README.md"
@@ -21,6 +21,16 @@ regex = "1"
 globset = "0.4"
 anyhow = "1"
 colored = "2"
+similar = "2"
+toml = "0.8"
+serde_yaml = "0.9"
+dotenvy = "0.15"
+tera = "1"
+reqwest = { version = "0.12", features = ["blocking", "json"] }
+git2 = "0.19"
+tar = "0.4"
+flate2 = "1"
+chrono = "0.4"
 
 [[bin]]
 name = "rok"

@@ -73,8 +73,15 @@ fn format_step_type(result: &crate::schema::StepResult) -> String {
         Read { path, files, .. } => {
             format!("read: {} → {} files", path.bold(), files.len())
         }
-        Write { path } => {
+        Write { path, .. } => {
             format!("write: {}", path.bold())
+        }
+        Patch {
+            path,
+            edits_applied,
+            ..
+        } => {
+            format!("patch: {} → {} edits", path.bold(), edits_applied)
         }
         Mv { from, to } => {
             format!("mv: {} → {}", from.bold(), to.bold())
@@ -105,6 +112,108 @@ fn format_step_type(result: &crate::schema::StepResult) -> String {
                 files_modified,
                 total_replacements
             )
+        }
+        Scan {
+            path,
+            file_count,
+            stack,
+            ..
+        } => {
+            format!(
+                "scan: {} → {} files, stack: {}",
+                path.bold(),
+                file_count,
+                stack.join(", ")
+            )
+        }
+        Summarize { path, summary, .. } => {
+            format!(
+                "summarize: {} → {} exports, {} functions",
+                path.bold(),
+                summary.exports.len(),
+                summary.functions.len()
+            )
+        }
+        Extract { path, data, .. } => {
+            let keys = data
+                .as_object()
+                .map(|o| o.keys().cloned().collect::<Vec<_>>().join(", "))
+                .unwrap_or_default();
+            format!("extract: {} → keys: {}", path.bold(), keys)
+        }
+        Diff {
+            a,
+            b,
+            added,
+            removed,
+            ..
+        } => {
+            format!("diff: {} → {} +{} -{}", a.bold(), b, added, removed)
+        }
+        Lint {
+            errors_count,
+            warnings_count,
+            ..
+        } => {
+            format!("lint: {} errors, {} warnings", errors_count, warnings_count)
+        }
+        Template {
+            output, rendered, ..
+        } => {
+            format!(
+                "template: {} → {}",
+                output.bold(),
+                if *rendered {
+                    "ok".to_string()
+                } else {
+                    "failed".to_string()
+                }
+            )
+        }
+        Snapshot { path, id, .. } => {
+            format!("snapshot: {} → {}", path.bold(), id)
+        }
+        Restore { id, restored } => {
+            format!(
+                "restore: {} → {}",
+                id,
+                if *restored {
+                    "ok".to_string()
+                } else {
+                    "failed".to_string()
+                }
+            )
+        }
+        Git { op, output, .. } => {
+            let status = output
+                .get("error")
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "ok".to_string());
+            format!("git {:?} → {}", op, status)
+        }
+        Http {
+            method,
+            url,
+            status,
+            ..
+        } => {
+            format!("http: {} {} → {}", method, url, status)
+        }
+        If {
+            condition_met,
+            branch,
+            results,
+            ..
+        } => {
+            format!(
+                "if ({}) → {} ({} steps)",
+                if *condition_met { "true" } else { "false" },
+                branch,
+                results.len()
+            )
+        }
+        Each { items, results, .. } => {
+            format!("each: {} items → {} results", items.len(), results.len())
         }
         Parallel { results, .. } => {
             format!("parallel: {} sub-steps", results.len())
