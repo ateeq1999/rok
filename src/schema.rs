@@ -54,6 +54,8 @@ pub enum Step {
     Bash {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         cmd: String,
         #[serde(default)]
         timeout_ms: Option<u64>,
@@ -63,6 +65,8 @@ pub enum Step {
     Read {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         #[serde(default)]
         max_bytes: Option<usize>,
@@ -72,6 +76,8 @@ pub enum Step {
     Write {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         content: String,
         #[serde(default = "default_true")]
@@ -80,18 +86,24 @@ pub enum Step {
     Patch {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         edits: Vec<PatchEdit>,
     },
     Mv {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         from: String,
         to: String,
     },
     Cp {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         from: String,
         to: String,
         #[serde(default)]
@@ -100,6 +112,8 @@ pub enum Step {
     Rm {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         #[serde(default)]
         recursive: bool,
@@ -107,11 +121,15 @@ pub enum Step {
     Mkdir {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
     },
     Grep {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         pattern: String,
         path: String,
         #[serde(default)]
@@ -124,6 +142,8 @@ pub enum Step {
     Replace {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         pattern: String,
         replacement: String,
         path: String,
@@ -137,6 +157,8 @@ pub enum Step {
     Scan {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         #[serde(default = "default_depth")]
         depth: usize,
@@ -148,6 +170,8 @@ pub enum Step {
     Summarize {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         #[serde(default)]
         focus: String,
@@ -155,6 +179,8 @@ pub enum Step {
     Extract {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         #[serde(default)]
         pick: Vec<String>,
@@ -162,6 +188,8 @@ pub enum Step {
     Diff {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         a: String,
         b: String,
         #[serde(default = "default_diff_format")]
@@ -170,6 +198,8 @@ pub enum Step {
     Lint {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         #[serde(default = "default_lint_tool")]
         tool: LintTool,
@@ -177,6 +207,8 @@ pub enum Step {
     Template {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         #[serde(default)]
         name: String,
         #[serde(default)]
@@ -190,17 +222,23 @@ pub enum Step {
     Snapshot {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         path: String,
         snapshot_id: String,
     },
     Restore {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         snapshot_id: String,
     },
     Git {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         op: GitOp,
         #[serde(default)]
         args: Vec<String>,
@@ -208,6 +246,8 @@ pub enum Step {
     Http {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         method: String,
         url: String,
         #[serde(default)]
@@ -220,6 +260,8 @@ pub enum Step {
     If {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         condition: Condition,
         then: Vec<Step>,
         #[serde(default)]
@@ -228,6 +270,8 @@ pub enum Step {
     Each {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         over: EachOver,
         #[serde(default = "default_each_as", rename = "as")]
         as_: String,
@@ -238,8 +282,68 @@ pub enum Step {
     Parallel {
         #[serde(default)]
         id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
         steps: Vec<Step>,
     },
+}
+
+impl Step {
+    pub fn get_id(&self) -> &str {
+        match self {
+            Step::Bash { id, .. } => id,
+            Step::Read { id, .. } => id,
+            Step::Write { id, .. } => id,
+            Step::Patch { id, .. } => id,
+            Step::Mv { id, .. } => id,
+            Step::Cp { id, .. } => id,
+            Step::Rm { id, .. } => id,
+            Step::Mkdir { id, .. } => id,
+            Step::Grep { id, .. } => id,
+            Step::Replace { id, .. } => id,
+            Step::Scan { id, .. } => id,
+            Step::Summarize { id, .. } => id,
+            Step::Extract { id, .. } => id,
+            Step::Diff { id, .. } => id,
+            Step::Lint { id, .. } => id,
+            Step::Template { id, .. } => id,
+            Step::Snapshot { id, .. } => id,
+            Step::Restore { id, .. } => id,
+            Step::Git { id, .. } => id,
+            Step::Http { id, .. } => id,
+            Step::If { id, .. } => id,
+            Step::Each { id, .. } => id,
+            Step::Parallel { id, .. } => id,
+        }
+    }
+
+    pub fn get_depends_on(&self) -> &[String] {
+        match self {
+            Step::Bash { depends_on, .. } => depends_on,
+            Step::Read { depends_on, .. } => depends_on,
+            Step::Write { depends_on, .. } => depends_on,
+            Step::Patch { depends_on, .. } => depends_on,
+            Step::Mv { depends_on, .. } => depends_on,
+            Step::Cp { depends_on, .. } => depends_on,
+            Step::Rm { depends_on, .. } => depends_on,
+            Step::Mkdir { depends_on, .. } => depends_on,
+            Step::Grep { depends_on, .. } => depends_on,
+            Step::Replace { depends_on, .. } => depends_on,
+            Step::Scan { depends_on, .. } => depends_on,
+            Step::Summarize { depends_on, .. } => depends_on,
+            Step::Extract { depends_on, .. } => depends_on,
+            Step::Diff { depends_on, .. } => depends_on,
+            Step::Lint { depends_on, .. } => depends_on,
+            Step::Template { depends_on, .. } => depends_on,
+            Step::Snapshot { depends_on, .. } => depends_on,
+            Step::Restore { depends_on, .. } => depends_on,
+            Step::Git { depends_on, .. } => depends_on,
+            Step::Http { depends_on, .. } => depends_on,
+            Step::If { depends_on, .. } => depends_on,
+            Step::Each { depends_on, .. } => depends_on,
+            Step::Parallel { depends_on, .. } => depends_on,
+        }
+    }
 }
 
 fn default_regex() -> bool {
@@ -284,6 +388,10 @@ fn default_each_parallel() -> bool {
 
 fn default_each_as() -> String {
     "item".to_string()
+}
+
+fn default_depends_on() -> Vec<String> {
+    Vec::new()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

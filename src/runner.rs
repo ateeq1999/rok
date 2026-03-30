@@ -3,6 +3,7 @@ use crate::refs;
 use crate::schema::{Condition, EachOver, Output, Payload, Step, StepResult, StepTypeResult};
 use chrono::Utc;
 use rayon::prelude::*;
+use std::collections::HashMap;
 use std::time::Instant;
 
 pub struct Runner {
@@ -17,29 +18,36 @@ impl Runner {
 
     pub fn run(&self) -> Output {
         let start = Instant::now();
-        let mut results = Vec::new();
+
+        let execution_order = self.build_execution_order();
+
+        let mut results_map: HashMap<usize, StepResult> = HashMap::new();
         let mut steps_ok = 0;
         let mut steps_failed = 0;
         let mut stopped = false;
 
-        for (index, step) in self.payload.steps.iter().enumerate() {
+        for (original_index, step) in execution_order {
             if stopped {
-                results.push(StepResult {
-                    index,
-                    step_type: StepTypeResult::Bash {
-                        cmd: "".to_string(),
-                        stdout: "".to_string(),
-                        stderr: "Skipped due to previous error".to_string(),
-                        exit_code: -1,
+                results_map.insert(
+                    original_index,
+                    StepResult {
+                        index: original_index,
+                        step_type: StepTypeResult::Bash {
+                            cmd: "".to_string(),
+                            stdout: "".to_string(),
+                            stderr: "Skipped due to previous error".to_string(),
+                            exit_code: -1,
+                        },
+                        status: "skipped".to_string(),
+                        duration_ms: 0,
+                        stopped_pipeline: Some(true),
                     },
-                    status: "skipped".to_string(),
-                    duration_ms: 0,
-                    stopped_pipeline: Some(true),
-                });
+                );
                 continue;
             }
 
-            let result = self.execute_step(step, index, &results);
+            let results_vec: Vec<StepResult> = results_map.values().cloned().collect();
+            let result = self.execute_step(step, original_index, &results_vec);
             if result.status == "ok" {
                 steps_ok += 1;
             } else {
@@ -48,8 +56,12 @@ impl Runner {
                     stopped = true;
                 }
             }
-            results.push(result);
+            results_map.insert(original_index, result);
         }
+
+        let results: Vec<StepResult> = (0..self.payload.steps.len())
+            .map(|i| results_map.remove(&i).unwrap())
+            .collect();
 
         let duration_ms = start.elapsed().as_millis() as u64;
         let status = if stopped || steps_failed > 0 {
@@ -74,6 +86,73 @@ impl Runner {
         self.save_history(&output);
 
         output
+    }
+
+    fn build_execution_order(&self) -> Vec<(usize, &Step)> {
+        let mut id_to_index: HashMap<String, usize> = HashMap::new();
+        for (i, step) in self.payload.steps.iter().enumerate() {
+            let id = step.get_id();
+            if !id.is_empty() {
+                id_to_index.insert(id.to_string(), i);
+            }
+        }
+
+        let mut in_degree: HashMap<usize, usize> = HashMap::new();
+        let mut deps: HashMap<usize, Vec<usize>> = HashMap::new();
+
+        for (i, step) in self.payload.steps.iter().enumerate() {
+            in_degree.insert(i, 0);
+            let mut step_deps = Vec::new();
+            for dep_id in step.get_depends_on() {
+                if let Some(&dep_index) = id_to_index.get(dep_id) {
+                    step_deps.push(dep_index);
+                    *in_degree.entry(i).or_insert(0) += 1;
+                }
+            }
+            deps.insert(i, step_deps);
+        }
+
+        let mut queue: Vec<usize> = in_degree
+            .iter()
+            .filter(|(_, &d)| d == 0)
+            .map(|(&k, _)| k)
+            .collect();
+
+        queue.sort();
+
+        let mut execution_order = Vec::new();
+        let mut visited = vec![false; self.payload.steps.len()];
+
+        while let Some(i) = queue.pop() {
+            if visited[i] {
+                continue;
+            }
+            visited[i] = true;
+            execution_order.push((i, &self.payload.steps[i]));
+
+            for (j, _) in self.payload.steps.iter().enumerate() {
+                if let Some(j_deps) = deps.get(&j) {
+                    if j_deps.contains(&i) {
+                        if let Some(deg) = in_degree.get_mut(&j) {
+                            *deg -= 1;
+                            if *deg == 0 {
+                                queue.push(j);
+                                queue.sort();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (i, step) in self.payload.steps.iter().enumerate() {
+            if !step.get_depends_on().is_empty() && !visited[i] {
+                eprintln!("Warning: step {} has unmet dependencies", step.get_id());
+                execution_order.push((i, step));
+            }
+        }
+
+        execution_order
     }
 
     fn save_history(&self, output: &Output) {
@@ -552,36 +631,61 @@ impl Runner {
                     id,
                     timeout_ms,
                     retry,
+                    depends_on,
                     ..
                 } => Step::Bash {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     cmd: refs::substitute_vars(cmd, var, val),
                     timeout_ms: *timeout_ms,
                     retry: retry.clone(),
                 },
-                Step::Read { path, id, .. } => Step::Read {
+                Step::Read {
+                    path,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Read {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     max_bytes: None,
                     encoding: None,
                 },
                 Step::Write {
-                    path, content, id, ..
+                    path,
+                    content,
+                    id,
+                    depends_on,
+                    ..
                 } => Step::Write {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     content: refs::substitute_vars(content, var, val),
                     create_dirs: true,
                 },
                 Step::Patch {
-                    path, edits, id, ..
+                    path,
+                    edits,
+                    id,
+                    depends_on,
+                    ..
                 } => Step::Patch {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     edits: edits.clone(),
                 },
-                Step::Mv { from, to, id, .. } => Step::Mv {
+                Step::Mv {
+                    from,
+                    to,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Mv {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     from: refs::substitute_vars(from, var, val),
                     to: refs::substitute_vars(to, var, val),
                 },
@@ -590,9 +694,11 @@ impl Runner {
                     to,
                     recursive,
                     id,
+                    depends_on,
                     ..
                 } => Step::Cp {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     from: refs::substitute_vars(from, var, val),
                     to: refs::substitute_vars(to, var, val),
                     recursive: *recursive,
@@ -601,14 +707,22 @@ impl Runner {
                     path,
                     recursive,
                     id,
+                    depends_on,
                     ..
                 } => Step::Rm {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     recursive: *recursive,
                 },
-                Step::Mkdir { path, id, .. } => Step::Mkdir {
+                Step::Mkdir {
+                    path,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Mkdir {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                 },
                 Step::Grep {
@@ -617,9 +731,11 @@ impl Runner {
                     ext,
                     regex,
                     id,
+                    depends_on,
                     ..
                 } => Step::Grep {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     pattern: refs::substitute_vars(pattern, var, val),
                     path: refs::substitute_vars(path, var, val),
                     ext: ext.clone(),
@@ -633,9 +749,11 @@ impl Runner {
                     ext,
                     regex,
                     id,
+                    depends_on,
                     ..
                 } => Step::Replace {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     pattern: refs::substitute_vars(pattern, var, val),
                     replacement: refs::substitute_vars(replacement, var, val),
                     path: refs::substitute_vars(path, var, val),
@@ -649,36 +767,63 @@ impl Runner {
                     include,
                     output,
                     id,
+                    depends_on,
                     ..
                 } => Step::Scan {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     depth: *depth,
                     include: include.clone(),
                     output: output.clone(),
                 },
                 Step::Summarize {
-                    path, focus, id, ..
+                    path,
+                    focus,
+                    id,
+                    depends_on,
+                    ..
                 } => Step::Summarize {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     focus: focus.clone(),
                 },
-                Step::Extract { path, pick, id, .. } => Step::Extract {
+                Step::Extract {
+                    path,
+                    pick,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Extract {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     pick: pick.clone(),
                 },
                 Step::Diff {
-                    a, b, format, id, ..
+                    a,
+                    b,
+                    format,
+                    id,
+                    depends_on,
+                    ..
                 } => Step::Diff {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     a: refs::substitute_vars(a, var, val),
                     b: refs::substitute_vars(b, var, val),
                     format: format.clone(),
                 },
-                Step::Lint { path, tool, id, .. } => Step::Lint {
+                Step::Lint {
+                    path,
+                    tool,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Lint {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     tool: tool.clone(),
                 },
@@ -689,9 +834,11 @@ impl Runner {
                     output,
                     vars,
                     id,
+                    depends_on,
                     ..
                 } => Step::Template {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     name: name.clone(),
                     builtin: builtin.clone(),
                     source: source.clone(),
@@ -702,20 +849,33 @@ impl Runner {
                     path,
                     snapshot_id,
                     id,
+                    depends_on,
                     ..
                 } => Step::Snapshot {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     path: refs::substitute_vars(path, var, val),
                     snapshot_id: snapshot_id.clone(),
                 },
                 Step::Restore {
-                    snapshot_id, id, ..
+                    snapshot_id,
+                    id,
+                    depends_on,
+                    ..
                 } => Step::Restore {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     snapshot_id: refs::substitute_vars(snapshot_id, var, val),
                 },
-                Step::Git { op, args, id, .. } => Step::Git {
+                Step::Git {
+                    op,
+                    args,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Git {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     op: op.clone(),
                     args: args
                         .iter()
@@ -729,9 +889,11 @@ impl Runner {
                     expect_status,
                     body,
                     id,
+                    depends_on,
                     ..
                 } => Step::Http {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     method: method.clone(),
                     url: refs::substitute_vars(url, var, val),
                     headers: headers.clone(),
@@ -743,9 +905,11 @@ impl Runner {
                     then,
                     else_,
                     id,
+                    depends_on,
                     ..
                 } => Step::If {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     condition: condition.clone(),
                     then: then.iter().map(|s| sub(s, var, val)).collect(),
                     else_: else_.iter().map(|s| sub(s, var, val)).collect(),
@@ -756,16 +920,24 @@ impl Runner {
                     parallel,
                     step,
                     id,
+                    depends_on,
                     ..
                 } => Step::Each {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     over: over.clone(),
                     as_: as_.clone(),
                     parallel: *parallel,
                     step: Box::new(sub(step, var, val)),
                 },
-                Step::Parallel { steps, id, .. } => Step::Parallel {
+                Step::Parallel {
+                    steps,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Parallel {
                     id: id.clone(),
+                    depends_on: depends_on.clone(),
                     steps: steps.iter().map(|s| sub(s, var, val)).collect(),
                 },
             }

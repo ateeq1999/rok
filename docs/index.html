@@ -28,7 +28,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            line-height: 1.6;
+            line-height: 1.7;
             color: var(--text);
             background: var(--bg);
         }
@@ -37,34 +37,35 @@
             position: fixed;
             left: 0;
             top: 0;
-            width: 260px;
+            width: 280px;
             height: 100vh;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border);
-            padding: 2rem;
+            padding: 1.5rem;
             overflow-y: auto;
+            z-index: 100;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--primary);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
         .logo-icon {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background: var(--primary);
             color: white;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 1.2rem;
         }
 
         .nav {
@@ -72,14 +73,15 @@
         }
 
         .nav-item {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .nav-link {
             color: var(--text-secondary);
             text-decoration: none;
-            padding: 0.5rem 0;
+            padding: 0.4rem 0;
             display: block;
+            font-size: 0.9rem;
             transition: color 0.2s;
         }
 
@@ -95,40 +97,49 @@
         .nav-section {
             font-weight: 600;
             color: var(--text);
-            margin-top: 1.5rem;
+            margin-top: 1.25rem;
             margin-bottom: 0.5rem;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.08em;
+            padding-top: 0.5rem;
         }
 
         .main {
-            margin-left: 260px;
-            padding: 3rem;
-            max-width: 900px;
+            margin-left: 280px;
+            padding: 2.5rem 3rem;
+            max-width: 950px;
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2.75rem;
             font-weight: 700;
             margin-bottom: 1rem;
             color: var(--text);
         }
 
         h2 {
-            font-size: 1.75rem;
+            font-size: 1.8rem;
             font-weight: 600;
             margin-top: 3rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             padding-bottom: 0.5rem;
             border-bottom: 2px solid var(--border);
         }
 
         h3 {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 600;
             margin-top: 2rem;
             margin-bottom: 0.75rem;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
         }
 
         p {
@@ -139,19 +150,21 @@
         code {
             background: var(--code-bg);
             color: var(--code-text);
-            padding: 0.2rem 0.4rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 4px;
-            font-size: 0.9em;
-            font-family: 'Fira Code', 'Monaco', monospace;
+            font-size: 0.875em;
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
         }
 
         pre {
             background: var(--code-bg);
             color: var(--code-text);
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 8px;
             overflow-x: auto;
             margin: 1rem 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         pre code {
@@ -161,7 +174,7 @@
 
         .badge {
             display: inline-block;
-            padding: 0.25rem 0.5rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 4px;
             font-size: 0.75rem;
             font-weight: 600;
@@ -171,15 +184,17 @@
         .badge-success { background: #dcfce7; color: #166534; }
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-error { background: #fee2e2; color: #991b1b; }
+        .badge-new { background: #dbeafe; color: #1e40af; }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0;
+            font-size: 0.9rem;
         }
 
         th, td {
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
@@ -187,13 +202,22 @@
         th {
             font-weight: 600;
             background: var(--bg-secondary);
+            color: var(--text);
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: var(--bg-secondary);
         }
 
         .hero {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
             color: white;
             padding: 3rem;
-            border-radius: 12px;
+            border-radius: 16px;
             margin-bottom: 2rem;
         }
 
@@ -204,7 +228,7 @@
 
         .hero p {
             color: rgba(255,255,255,0.9);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
         }
 
         .button {
@@ -232,27 +256,66 @@
         .example {
             background: var(--bg-secondary);
             border-left: 4px solid var(--primary);
-            padding: 1rem;
-            margin: 1rem 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            border-radius: 0 8px 8px 0;
         }
 
-        .step-grid {
+        .example-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1rem;
-            margin: 1rem 0;
+            margin: 1.5rem 0;
         }
 
-        .step-card {
+        .feature-card {
             background: var(--bg-secondary);
-            padding: 1rem;
-            border-radius: 8px;
+            padding: 1.25rem;
+            border-radius: 10px;
             border: 1px solid var(--border);
         }
 
-        .step-card code {
-            background: var(--primary);
-            color: white;
+        .feature-card h4 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .feature-card p {
+            margin-bottom: 0;
+            font-size: 0.875rem;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .note {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .note-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.25rem;
         }
 
         footer {
@@ -261,9 +324,10 @@
             border-top: 1px solid var(--border);
             text-align: center;
             color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .sidebar {
                 display: none;
             }
@@ -286,37 +350,90 @@
             <li class="nav-item"><a href="#quickstart" class="nav-link">Quick Start</a></li>
             
             <li class="nav-section">Core Concepts</li>
+            <li class="nav-item"><a href="#task-file" class="nav-link">Task File</a></li>
             <li class="nav-item"><a href="#steps" class="nav-link">Steps</a></li>
             <li class="nav-item"><a href="#refs" class="nav-link">References</a></li>
             <li class="nav-item"><a href="#conditionals" class="nav-link">Conditionals</a></li>
+            <li class="nav-item"><a href="#loops" class="nav-link">Loops & Parallel</a></li>
+            
+            <li class="nav-section">File Operations</li>
+            <li class="nav-item"><a href="#read" class="nav-link">read</a></li>
+            <li class="nav-item"><a href="#write" class="nav-link">write</a></li>
+            <li class="nav-item"><a href="#file-ops" class="nav-link">mv, cp, rm, mkdir</a></li>
+            <li class="nav-item"><a href="#patch" class="nav-link">patch</a></li>
+            
+            <li class="nav-section">Search & Analysis</li>
+            <li class="nav-item"><a href="#grep" class="nav-link">grep</a></li>
+            <li class="nav-item"><a href="#scan" class="nav-link">scan</a></li>
+            <li class="nav-item"><a href="#extract" class="nav-link">extract</a></li>
+            <li class="nav-item"><a href="#summarize" class="nav-link">summarize</a></li>
+            <li class="nav-item"><a href="#lint" class="nav-link">lint</a></li>
+            <li class="nav-item"><a href="#diff" class="nav-link">diff</a></li>
+            
+            <li class="nav-section">Advanced</li>
+            <li class="nav-item"><a href="#template" class="nav-link">template</a></li>
+            <li class="nav-item"><a href="#templates" class="nav-link">Template System</a></li>
+            <li class="nav-item"><a href="#git" class="nav-link">git</a></li>
+            <li class="nav-item"><a href="#http" class="nav-link">http</a></li>
+            <li class="nav-item"><a href="#snapshot" class="nav-link">snapshot/restore</a></li>
+            <li class="nav-item"><a href="#bash" class="nav-link">bash</a></li>
             
             <li class="nav-section">Features</li>
-            <li class="nav-item"><a href="#templates" class="nav-link">Templates</a></li>
-            <li class="nav-item"><a href="#tasks" class="nav-link">Task Files</a></li>
             <li class="nav-item"><a href="#env" class="nav-link">Environment Variables</a></li>
             <li class="nav-item"><a href="#timeout" class="nav-link">Timeouts & Retries</a></li>
+            <li class="nav-item"><a href="#tasks" class="nav-link">Task Commands</a></li>
             
-            <li class="nav-section">Reference</li>
-            <li class="nav-item"><a href="#cli" class="nav-link">CLI Commands</a></li>
-            <li class="nav-item"><a href="#schema" class="nav-link">JSON Schema</a></li>
-            <li class="nav-item"><a href="api.html" class="nav-link">API Reference →</a></li>
+            <li class="nav-section">CLI</li>
+            <li class="nav-item"><a href="#cli" class="nav-link">Commands</a></li>
+            <li class="nav-item"><a href="#options" class="nav-link">Options</a></li>
         </ul>
     </nav>
 
     <main class="main">
         <section id="intro">
             <div class="hero">
-                <h1>rok - Run One, Know All</h1>
-                <p>Execute multi-step tasks from JSON - the ultimate automation tool for developers and AI agents.</p>
+                <h1>rok</h1>
+                <p>Run One, Know All - Execute multi-step tasks from JSON</p>
                 <div style="margin-top: 1.5rem;">
                     <a href="#install" class="button button-primary">Get Started</a>
                     <a href="https://github.com/ateeq1999/rok" class="button">GitHub</a>
+                </div>
+            </div>
+
+            <h2>What is rok?</h2>
+            <p>rok is a powerful CLI tool that executes multi-step tasks defined in JSON. It's designed for developers and AI agents who need to automate complex workflows.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🚀 20+ Step Types</h4>
+                    <p>File operations, search, code analysis, HTTP requests, git operations, and more.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔗 Data Flow</h4>
+                    <p>Pass data between steps using references and conditionals.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📋 Templates</h4>
+                    <p>Create reusable templates with props and inheritance.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⏱️ Timeouts & Retries</h4>
+                    <p>Built-in support for per-step timeouts and retry logic.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🌐 Environment Variables</h4>
+                    <p>Use <code>{{env.VAR}}</code> syntax in any field.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📚 Self-Documenting</h4>
+                    <p>Built-in docs server with <code>rok serve</code>.</p>
                 </div>
             </div>
         </section>
 
         <section id="install">
             <h2>Installation</h2>
+            
             <h3>From crates.io</h3>
             <pre><code>cargo install rok-cli</code></pre>
             
@@ -325,199 +442,620 @@
 cd rok
 cargo install --path .</code></pre>
             
-            <h3>Verify Installation</h3>
+            <h3>Verify</h3>
             <pre><code>rok --version</code></pre>
         </section>
 
         <section id="quickstart">
             <h2>Quick Start</h2>
-            <h3>Basic Usage</h3>
-            <pre><code># Run from file
-rok -f task.json
+            
+            <h3>Run from File</h3>
+            <pre><code>rok -f task.json</code></pre>
+            
+            <h3>Run from stdin</h3>
+            <pre><code>echo '{"steps":[{"type":"bash","cmd":"echo hello"}]}' | rok</code></pre>
+            
+            <h3>Run from Inline JSON</h3>
+            <pre><code>rok -j '{"steps":[{"type":"bash","cmd":"echo hello"}]}'</code></pre>
 
-# Run from stdin
-echo '{"steps":[{"type":"bash","cmd":"echo hello"}]}' | rok
-
-# Run from inline JSON
-rok -j '{"steps":[{"type":"bash","cmd":"echo hello"}]}'</code></pre>
-
-            <h3>Example: File Operations</h3>
-            <pre><code>{
+            <div class="example">
+                <div class="example-title">Example: Create a React Component</div>
+                <pre><code>{
   "steps": [
     { "type": "mkdir", "path": "src/components" },
-    { "type": "write", "path": "src/components/Hello.tsx", "content": "export const Hello = () => <div>Hello World</div>" },
-    { "type": "bash", "cmd": "npm run build" }
+    { "type": "template", "builtin": "react-component", "output": "src/components/Button.tsx", "vars": { "name": "Button" } }
   ]
 }</code></pre>
+            </div>
         </section>
 
-        <section id="steps">
-            <h2>Steps</h2>
-            <p>rok provides 20+ built-in step types organized by category:</p>
+        <section id="task-file">
+            <h2>Task File Structure</h2>
+            <p>A complete rok task file supports the following fields:</p>
             
-            <h3>File Operations</h3>
-            <div class="step-grid">
-                <div class="step-card"><code>read</code> - Read file contents</div>
-                <div class="step-card"><code>write</code> - Write content to file</div>
-                <div class="step-card"><code>mv</code> - Move/rename files</div>
-                <div class="step-card"><code>cp</code> - Copy files</div>
-                <div class="step-card"><code>rm</code> - Remove files</div>
-                <div class="step-card"><code>mkdir</code> - Create directories</div>
-                <div class="step-card"><code>patch</code> - Apply edits to files</div>
-            </div>
-
-            <h3>Search & Analysis</h3>
-            <div class="step-grid">
-                <div class="step-card"><code>grep</code> - Search in files</div>
-                <div class="step-card"><code>scan</code> - Scan directory tree</div>
-                <div class="step-card"><code>extract</code> - Extract data from files</div>
-                <div class="step-card"><code>summarize</code> - Summarize code</div>
-                <div class="step-card"><code>lint</code> - Lint code</div>
-                <div class="step-card"><code>diff</code> - Show differences</div>
-            </div>
-
-            <h3>Other</h3>
-            <div class="step-grid">
-                <div class="step-card"><code>bash</code> - Run shell commands</div>
-                <div class="step-card"><code>template</code> - Render templates</div>
-                <div class="step-card"><code>git</code> - Git operations</div>
-                <div class="step-card"><code>http</code> - HTTP requests</div>
-                <div class="step-card"><code>snapshot</code> - Save snapshot</div>
-                <div class="step-card"><code>restore</code> - Restore snapshot</div>
-            </div>
-        </section>
-
-        <section id="refs">
-            <h2>References</h2>
-            <p>Pass data between steps using refs:</p>
-            <pre><code>{
-  "steps": [
-    { "type": "scan", "path": "./src", "depth": 2 },
-    { "type": "each", "over": {"ref": 0, "pick": "tree.*"}, "step": { "type": "bash", "cmd": "echo {{item}}" }}
-  ]
-}</code></pre>
-        </section>
-
-        <section id="conditionals">
-            <h2>Conditionals</h2>
-            <pre><code>{
-  "steps": [
-    { "type": "grep", "pattern": "TODO", "path": "./src" },
-    {
-      "type": "if",
-      "condition": { "type": "grep_has_results", "ref": 0 },
-      "then": [
-        { "type": "bash", "cmd": "echo Found TODOs!" }
-      ]
-    }
-  ]
-}</code></pre>
-        </section>
-
-        <section id="templates">
-            <h2>Templates</h2>
-            <p>Create reusable templates with props:</p>
-            <pre><code># Create a new template
-rok init-template my-component
-
-# List available templates
-rok templates</code></pre>
-            
-            <p>Templates support:</p>
-            <ul>
-                <li>Custom props with validation</li>
-                <li>Inheritance (extends field)</li>
-                <li>Derived transforms (pluralize, camelcase, etc.)</li>
-            </ul>
-        </section>
-
-        <section id="tasks">
-            <h2>Task Files</h2>
-            <p>Save and reuse tasks:</p>
-            <pre><code># Save current payload as a named task
-rok -f task.json save my-task -d "Build the project"
-
-# Run saved task
-rok run my-task
-
-# List all tasks
-rok list</code></pre>
-        </section>
-
-        <section id="env">
-            <h2>Environment Variables</h2>
-            <p>Use <code>{{env.VAR_NAME}}</code> in any string field:</p>
-            <pre><code>{
-  "steps": [
-    { "type": "bash", "cmd": "echo {{env.USER}}" }
-  ]
-}</code></pre>
-        </section>
-
-        <section id="timeout">
-            <h2>Timeouts & Retries</h2>
-            <pre><code>{
-  "steps": [
-    {
-      "type": "bash",
-      "cmd": "make build",
-      "timeout_ms": 60000,
-      "retry": {
-        "count": 3,
-        "delay_ms": 2000,
-        "backoff": true
-      }
-    }
-  ]
-}</code></pre>
-        </section>
-
-        <section id="cli">
-            <h2>CLI Commands</h2>
-            <table>
-                <tr><th>Command</th><th>Description</th></tr>
-                <tr><td><code>rok templates</code></td><td>List available templates</td></tr>
-                <tr><td><code>rok init-template [name]</code></td><td>Create a new template</td></tr>
-                <tr><td><code>rok validate-template [path]</code></td><td>Validate a template schema</td></tr>
-                <tr><td><code>rok run &lt;task&gt;</code></td><td>Run a saved task</td></tr>
-                <tr><td><code>rok save &lt;name&gt;</code></td><td>Save current payload as task</td></tr>
-                <tr><td><code>rok list</code></td><td>List saved tasks</td></tr>
-                <tr><td><code>rok edit &lt;task&gt;</code></td><td>Edit a saved task</td></tr>
-                <tr><td><code>rok watch</code></td><td>Watch files and re-run</td></tr>
-                <tr><td><code>rok history</code></td><td>Show execution history</td></tr>
-                <tr><td><code>rok replay [id]</code></td><td>Replay a previous run</td></tr>
-            </table>
-
-            <h3>Options</h3>
-            <table>
-                <tr><th>Option</th><th>Description</th></tr>
-                <tr><td><code>-f, --file FILE</code></td><td>Path to JSON file</td></tr>
-                <tr><td><code>-j, --json JSON</code></td><td>Inline JSON payload</td></tr>
-                <tr><td><code>-o, --output FORMAT</code></td><td>Output format: json, pretty, silent</td></tr>
-                <tr><td><code>-v, --verbose</code></td><td>Enable verbose output</td></tr>
-                <tr><td><code>-q, --quiet</code></td><td>Suppress output</td></tr>
-                <tr><td><code>--dry-run</code></td><td>Preview without executing</td></tr>
-            </table>
-        </section>
-
-        <section id="schema">
-            <h2>JSON Schema</h2>
-            <p>Complete task file schema:</p>
             <pre><code>{
   "name": "my-task",
   "description": "Task description",
   "version": "1.0.0",
+  "author": "Your Name",
+  
   "options": {
     "cwd": ".",
     "stop_on_error": true,
     "timeout_ms": 30000,
     "env": { "KEY": "value" }
   },
+  
   "props": {
     "version": "1.0.0"
   },
+  
   "steps": []
 }</code></pre>
+            
+            <h3>Top-Level Fields</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td>name</td><td>string</td><td>Task name</td></tr>
+                <tr><td>description</td><td>string</td><td>Task description</td></tr>
+                <tr><td>version</td><td>string</td><td>Task version</td></tr>
+                <tr><td>author</td><td>string</td><td>Task author</td></tr>
+                <tr><td>options</td><td>object</td><td>Execution options</td></tr>
+                <tr><td>props</td><td>object</td><td>Reusable variables</td></tr>
+                <tr><td>steps</td><td>array</td><td>Array of steps to execute</td></tr>
+            </table>
+
+            <h3>Options</h3>
+            <table>
+                <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+                <tr><td>cwd</td><td>"."</td><td>Working directory</td></tr>
+                <tr><td>stop_on_error</td><td>true</td><td>Stop on first error</td></tr>
+                <tr><td>timeout_ms</td><td>30000</td><td>Global timeout</td></tr>
+                <tr><td>env</td><td>{}</td><td>Environment variables</td></tr>
+            </table>
+        </section>
+
+        <section id="steps">
+            <h2>Steps Overview</h2>
+            <p>Steps are the core building blocks of rok. Each step performs a specific action.</p>
+            
+            <h3>All Step Types</h3>
+            <table>
+                <tr><th>Category</th><th>Steps</th></tr>
+                <tr><td><strong>File</strong></td><td>read, write, mv, cp, rm, mkdir, patch</td></tr>
+                <tr><td><strong>Search</strong></td><td>grep, scan, extract</td></tr>
+                <tr><td><strong>Analysis</strong></td><td>summarize, lint, diff</td></tr>
+                <tr><td><strong>System</strong></td><td>bash, http, git</td></tr>
+                <tr><td><strong>Control</strong></td><td>if, each, parallel</td></tr>
+                <tr><td><strong>Template</strong></td><td>template</td></tr>
+                <tr><td><strong>Snapshot</strong></td><td>snapshot, restore</td></tr>
+            </table>
+            
+            <p>All steps support these optional fields:</p>
+            <ul>
+                <li><code>id</code> - A unique identifier for referencing</li>
+            </ul>
+        </section>
+
+        <section id="bash">
+            <h2>bash</h2>
+            <p>Execute shell commands.</p>
+            
+            <pre><code>{
+  "type": "bash",
+  "cmd": "npm run build",
+  "timeout_ms": 60000,
+  "retry": {
+    "count": 3,
+    "delay_ms": 1000,
+    "backoff": true
+  }
+}</code></pre>
+            
+            <h3>Fields</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>cmd</td><td>string</td><td>Yes</td><td>Shell command to execute</td></tr>
+                <tr><td>id</td><td>string</td><td>No</td><td>Step identifier</td></tr>
+                <tr><td>timeout_ms</td><td>number</td><td>No</td><td>Timeout in milliseconds</td></tr>
+                <tr><td>retry</td><td>object</td><td>No</td><td>Retry configuration</td></tr>
+            </table>
+
+            <h4>Retry Configuration</h4>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                <tr><td>count</td><td>number</td><td>3</td><td>Number of retry attempts</td></tr>
+                <tr><td>delay_ms</td><td>number</td><td>1000</td><td>Delay between retries</td></tr>
+                <tr><td>backoff</td><td>boolean</td><td>false</td><td>Exponential backoff</td></tr>
+            </table>
+        </section>
+
+        <section id="read">
+            <h2>read</h2>
+            <p>Read file contents.</p>
+            
+            <pre><code>{
+  "type": "read",
+  "path": "src/main.rs",
+  "max_bytes": 1048576,
+  "encoding": "utf-8"
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>path</td><td>string</td><td>Yes</td><td>File path to read</td></tr>
+                <tr><td>max_bytes</td><td>number</td><td>No</td><td>Maximum bytes to read</td></tr>
+                <tr><td>encoding</td><td>string</td><td>No</td><td>File encoding (default: utf-8)</td></tr>
+            </table>
+        </section>
+
+        <section id="write">
+            <h2>write</h2>
+            <p>Write content to a file.</p>
+            
+            <pre><code>{
+  "type": "write",
+  "path": "output.txt",
+  "content": "Hello World",
+  "create_dirs": true
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>path</td><td>string</td><td>Yes</td><td>Output file path</td></tr>
+                <tr><td>content</td><td>string</td><td>Yes</td><td>Content to write</td></tr>
+                <tr><td>create_dirs</td><td>boolean</td><td>No</td><td>Create parent directories (default: true)</td></tr>
+            </table>
+        </section>
+
+        <section id="file-ops">
+            <h2>File Operations: mv, cp, rm, mkdir</h2>
+            
+            <h3>mv - Move/Rename</h3>
+            <pre><code>{
+  "type": "mv",
+  "from": "old.txt",
+  "to": "new.txt"
+}</code></pre>
+            
+            <h3>cp - Copy</h3>
+            <pre><code>{
+  "type": "cp",
+  "from": "source.txt",
+  "to": "dest.txt",
+  "recursive": true
+}</code></pre>
+            
+            <h3>rm - Remove</h3>
+            <pre><code>{
+  "type": "rm",
+  "path": "temp/",
+  "recursive": true
+}</code></pre>
+            
+            <h3>mkdir - Create Directory</h3>
+            <pre><code>{
+  "type": "mkdir",
+  "path": "src/components"
+}</code></pre>
+        </section>
+
+        <section id="patch">
+            <h2>patch</h2>
+            <p>Apply edits to a file.</p>
+            
+            <pre><code>{
+  "type": "patch",
+  "path": "src/main.rs",
+  "edits": [
+    { "find": "fn old()", "replace": "fn new()" },
+    { "find": "// TODO: implement", "replace": "// Done" }
+  ]
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>path</td><td>string</td><td>Yes</td><td>File to patch</td></tr>
+                <tr><td>edits</td><td>array</td><td>Yes</td><td>Array of edit objects</td></tr>
+            </table>
+        </section>
+
+        <section id="grep">
+            <h2>grep</h2>
+            <p>Search for patterns in files.</p>
+            
+            <pre><code>{
+  "type": "grep",
+  "pattern": "TODO",
+  "path": "./src",
+  "ext": ["rs", "js", "ts"],
+  "regex": true,
+  "context_lines": 2
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>pattern</td><td>string</td><td>Yes</td><td>Search pattern</td></tr>
+                <tr><td>path</td><td>string</td><td>Yes</td><td>Directory to search</td></tr>
+                <tr><td>ext</td><td>array</td><td>No</td><td>File extensions to filter</td></tr>
+                <tr><td>regex</td><td>boolean</td><td>No</td><td>Use regex (default: false)</td></tr>
+                <tr><td>context_lines</td><td>number</td><td>No</td><td>Lines before/after match</td></tr>
+            </table>
+        </section>
+
+        <section id="scan">
+            <h2>scan</h2>
+            <p>Scan directory tree and get file listing.</p>
+            
+            <pre><code>{
+  "type": "scan",
+  "path": "./src",
+  "depth": 3,
+  "include": ["*.rs", "*.toml"],
+  "output": "tree"
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>path</td><td>string</td><td>Yes</td><td>Directory to scan</td></tr>
+                <tr><td>depth</td><td>number</td><td>No</td><td>Max depth (default: 3)</td></tr>
+                <tr><td>include</td><td>array</td><td>No</td><td>File patterns to include</td></tr>
+                <tr><td>output</td><td>string</td><td>No</td><td>Output format: summary, tree, list</td></tr>
+            </table>
+        </section>
+
+        <section id="extract">
+            <h2>extract</h2>
+            <p>Extract data from JSON/YAML files using JSONPath.</p>
+            
+            <pre><code>{
+  "type": "extract",
+  "path": "package.json",
+  "pick": ["name", "version", "dependencies"]
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>path</td><td>string</td><td>Yes</td><td>File to extract from</td></tr>
+                <tr><td>pick</td><td>array</td><td>No</td><td>Keys to extract</td></tr>
+            </table>
+        </section>
+
+        <section id="summarize">
+            <h2>summarize</h2>
+            <p>Summarize code structure (exports, functions, imports).</p>
+            
+            <pre><code>{
+  "type": "summarize",
+  "path": "./src",
+  "focus": "exports"
+}</code></pre>
+        </section>
+
+        <section id="lint">
+            <h2>lint</h2>
+            <p>Run linters on code files.</p>
+            
+            <pre><code>{
+  "type": "lint",
+  "path": "./src",
+  "tool": "clippy"
+}</code></pre>
+            
+            <table>
+                <tr><th>Tool</th><th>Description</th></tr>
+                <tr><td>auto</td><td>Auto-detect tool</td></tr>
+                <tr><td>clippy</td><td>Rust linter</td></tr>
+                <tr><td>eslint</td><td>JavaScript/TypeScript</td></tr>
+                <tr><td>biome</td><td>Fast linter</td></tr>
+                <tr><td>ruff</td><td>Python linter</td></tr>
+            </table>
+        </section>
+
+        <section id="diff">
+            <h2>diff</h2>
+            <p>Show differences between two files.</p>
+            
+            <pre><code>{
+  "type": "diff",
+  "a": "old.txt",
+  "b": "new.txt",
+  "format": "unified"
+}</code></pre>
+            
+            <table>
+                <tr><th>Format</th><th>Description</th></tr>
+                <tr><td>unified</td><td>Unified diff format</td></tr>
+                <tr><td>json</td><td>JSON output</td></tr>
+                <tr><td>stat</td><td>Statistics only</td></tr>
+            </table>
+        </section>
+
+        <section id="template">
+            <h2>template</h2>
+            <p>Render template files with variables.</p>
+            
+            <pre><code>{
+  "type": "template",
+  "builtin": "react-component",
+  "output": "Component.tsx",
+  "vars": {
+    "name": "Button",
+    "props": "onClick"
+  }
+}</code></pre>
+            
+            <h3>Built-in Templates</h3>
+            <table>
+                <tr><th>Template</th><th>Description</th></tr>
+                <tr><td>react-component</td><td>React functional component</td></tr>
+                <tr><td>react-route</td><td>React Router route</td></tr>
+                <tr><td>rust-module</td><td>Rust module</td></tr>
+                <tr><td>api-handler</td><td>API handler</td></tr>
+                <tr><td>test-file</td><td>Test file</td></tr>
+            </table>
+        </section>
+
+        <section id="templates">
+            <h2>Custom Templates</h2>
+            <p>Create your own templates in <code>.rok/templates/</code></p>
+            
+            <h3>Create a Template</h3>
+            <pre><code>rok init-template my-template</code></pre>
+            
+            <h3>Template Schema (.rok-template.json)</h3>
+            <pre><code>{
+  "name": "my-template",
+  "description": "My custom template",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "tags": ["custom", "template"],
+  "extends": "base-template",
+  "output": [
+    { "from": "template.txt", "to": "{{name}}.txt" }
+  ],
+  "props": {
+    "name": {
+      "prop_type": "string",
+      "required": true,
+      "description": "The name"
+    }
+  }
+}</code></pre>
+            
+            <h3>Template Filters</h3>
+            <p>Available in templates:</p>
+            <ul>
+                <li><code>{{name | uppercase}}</code></li>
+                <li><code>{{name | lowercase}}</code></li>
+                <li><code>{{name | capitalize}}</code></li>
+                <li><code>{{name | camelcase}}</code></li>
+                <li><code>{{name | snakecase}}</code></li>
+                <li><code>{{name | kebabcase}}</code></li>
+                <li><code>{{name | pascalcase}}</code></li>
+                <li><code>{{name | pluralize}}</code></li>
+                <li><code>{{name | singularize}}</code></li>
+            </ul>
+        </section>
+
+        <section id="git">
+            <h2>git</h2>
+            <p>Run git commands.</p>
+            
+            <pre><code>{
+  "type": "git",
+  "op": "commit",
+  "args": ["-m", "commit message"]
+}</code></pre>
+            
+            <h3>Operations</h3>
+            <table>
+                <tr><th>Op</th><th>Description</th></tr>
+                <tr><td>status</td><td>Show working tree status</td></tr>
+                <tr><td>add</td><td>Add files</td></tr>
+                <tr><td>commit</td><td>Commit changes</td></tr>
+                <tr><td>diff</td><td>Show changes</td></tr>
+                <tr><td>branch</td><td>Manage branches</td></tr>
+                <tr><td>log</td><td>Show commit log</td></tr>
+            </table>
+        </section>
+
+        <section id="http">
+            <h2>http</h2>
+            <p>Make HTTP requests.</p>
+            
+            <pre><code>{
+  "type": "http",
+  "method": "GET",
+  "url": "https://api.github.com/users/{{env.USER}}",
+  "headers": {
+    "Authorization": "Bearer {{env.TOKEN}}",
+    "Accept": "application/json"
+  },
+  "expect_status": 200
+}</code></pre>
+            
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td>method</td><td>string</td><td>Yes</td><td>HTTP method (GET, POST, etc.)</td></tr>
+                <tr><td>url</td><td>string</td><td>Yes</td><td>Request URL</td></tr>
+                <tr><td>headers</td><td>object</td><td>No</td><td>Request headers</td></tr>
+                <tr><td>body</td><td>string</td><td>No</td><td>Request body</td></tr>
+                <tr><td>expect_status</td><td>number</td><td>No</td><td>Expected status code</td></tr>
+            </table>
+        </section>
+
+        <section id="snapshot">
+            <h2>snapshot & restore</h2>
+            <p>Save and restore file snapshots for safety during risky operations.</p>
+            
+            <pre><code>{
+  "steps": [
+    { "type": "snapshot", "path": ".", "snapshot_id": "before-refactor" },
+    { "type": "bash", "cmd": "rm -rf src" },
+    {
+      "type": "if",
+      "condition": { "type": "step_failed", "ref": 1 },
+      "then": [
+        { "type": "restore", "snapshot_id": "before-refactor" }
+      ]
+    }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="refs">
+            <h2>References</h2>
+            <p>Pass data between steps using the <code>ref</code> system.</p>
+            
+            <h3>Basic Reference</h3>
+            <pre><code>{
+  "steps": [
+    { "type": "scan", "path": "./src", "depth": 2 },
+    { "type": "each", "over": {"ref": 0, "pick": "tree.*"}, "step": { "type": "bash", "cmd": "echo {{item}}" } }
+  ]
+}</code></pre>
+            
+            <h3>JSONPath</h3>
+            <pre><code>{
+  "steps": [
+    { "type": "extract", "path": "package.json", "pick": ["name", "version"] },
+    { "type": "bash", "cmd": "echo {{ref:0.name}}" }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="conditionals">
+            <h2>Conditionals (if)</h2>
+            <p>Execute steps conditionally based on results.</p>
+            
+            <pre><code>{
+  "type": "if",
+  "condition": { "type": "grep_has_results", "ref": 0 },
+  "then": [
+    { "type": "bash", "cmd": "echo Found TODOs!" }
+  ],
+  "else": [
+    { "type": "bash", "cmd": "echo No TODOs found" }
+  ]
+}</code></pre>
+            
+            <h3>Condition Types</h3>
+            <table>
+                <tr><th>Type</th><th>Description</th></tr>
+                <tr><td>exists</td><td>Check if path exists</td></tr>
+                <tr><td>contains</td><td>Check if file contains pattern</td></tr>
+                <tr><td>grep_has_results</td><td>Check if grep found matches</td></tr>
+                <tr><td>step_ok</td><td>Check if step succeeded</td></tr>
+                <tr><td>step_failed</td><td>Check if step failed</td></tr>
+                <tr><td>file_changed</td><td>Check if file changed</td></tr>
+            </table>
+        </section>
+
+        <section id="loops">
+            <h2>Loops (each) & Parallel</h2>
+            
+            <h3>each - Iterate</h3>
+            <pre><code>{
+  "type": "each",
+  "over": ["a", "b", "c"],
+  "as": "item",
+  "parallel": false,
+  "step": {
+    "type": "bash",
+    "cmd": "echo {{item}}"
+  }
+}</code></pre>
+            
+            <h3>parallel - Run Simultaneously</h3>
+            <pre><code>{
+  "type": "parallel",
+  "steps": [
+    { "type": "bash", "cmd": "task1" },
+    { "type": "bash", "cmd": "task2" },
+    { "type": "bash", "cmd": "task3" }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="env">
+            <h2>Environment Variables</h2>
+            <p>Use <code>{{env.VAR_NAME}}</code> in any string field.</p>
+            
+            <pre><code>{
+  "steps": [
+    { "type": "bash", "cmd": "echo Hello {{env.USER}}" },
+    { "type": "http", "url": "https://api.{{env.DOMAIN}}/data" }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="timeout">
+            <h2>Timeouts & Retries</h2>
+            <p>Add reliability to commands with timeouts and retries.</p>
+            
+            <pre><code>{
+  "type": "bash",
+  "cmd": "make build",
+  "timeout_ms": 60000,
+  "retry": {
+    "count": 3,
+    "delay_ms": 2000,
+    "backoff": true
+  }
+}</code></pre>
+        </section>
+
+        <section id="tasks">
+            <h2>Task Commands</h2>
+            <p>Save and manage reusable tasks.</p>
+            
+            <h3>Save a Task</h3>
+            <pre><code>rok -f task.json save build -d "Build the project"</code></pre>
+            
+            <h3>Run a Task</h3>
+            <pre><code>rok run build</code></pre>
+            
+            <h3>List Tasks</h3>
+            <pre><code>rok list</code></pre>
+            
+            <h3>Edit a Task</h3>
+            <pre><code>rok edit build</code></pre>
+        </section>
+
+        <section id="cli">
+            <h2>CLI Commands</h2>
+            
+            <table>
+                <tr><th>Command</th><th>Description</th></tr>
+                <tr><td><code>rok -f file.json</code></td><td>Run task from file</code></td></tr>
+                <tr><td><code>rok templates</code></td><td>List available templates</code></tr>
+                <tr><td><code>rok init-template [name]</code></td><td>Create a new template</code></tr>
+                <tr><td><code>rok validate-template [path]</code></td><td>Validate a template</code></tr>
+                <tr><td><code>rok run &lt;task&gt;</code></td><td>Run a saved task</code></tr>
+                <tr><td><code>rok save &lt;name&gt;</code></td><td>Save current payload</code></tr>
+                <tr><td><code>rok list</code></td><td>List saved tasks</code></tr>
+                <tr><td><code>rok edit &lt;task&gt;</code></td><td>Edit a task</code></tr>
+                <tr><td><code>rok watch</code></td><td>Watch and re-run</code></tr>
+                <tr><td><code>rok history</code></td><td>Show execution history</code></tr>
+                <tr><td><code>rok replay [id]</code></td><td>Replay a previous run</code></tr>
+                <tr><td><code>rok serve</code></td><td>Serve documentation</code></tr>
+            </table>
+        </section>
+
+        <section id="options">
+            <h2>CLI Options</h2>
+            
+            <table>
+                <tr><th>Option</th><th>Description</th></tr>
+                <tr><td><code>-f, --file FILE</code></td><td>Path to JSON file</td></tr>
+                <tr><td><code>-j, --json JSON</code></td><td>Inline JSON payload</td></tr>
+                <tr><td><code>-o, --output FORMAT</code></td><td>Output: json, pretty, silent</td></tr>
+                <tr><td><code>-v, --verbose</code></td><td>Enable verbose output</td></tr>
+                <tr><td><code>-q, --quiet</code></td><td>Suppress output</td></tr>
+                <tr><td><code>--dry-run</code></td><td>Preview without executing</td></tr>
+                <tr><td><code>-p, --port</code></td><td>Port for serve command</td></tr>
+            </table>
         </section>
 
         <footer>
@@ -527,17 +1065,13 @@ rok list</code></pre>
     </main>
 
     <script>
-        // Simple smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
             });
         });
 
-        // Update active nav on scroll
         const sections = document.querySelectorAll('section');
         const navLinks = document.querySelectorAll('.nav-link');
 
@@ -545,7 +1079,7 @@ rok list</code></pre>
             let current = '';
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
-                if (scrollY >= sectionTop - 100) {
+                if (scrollY >= sectionTop - 150) {
                     current = section.getAttribute('id');
                 }
             });
