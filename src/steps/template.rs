@@ -249,12 +249,20 @@ fn register_filters(tera: &mut Tera) {
         "singularize",
         |value: &Value, _: &HashMap<String, Value>| {
             let s = value.as_str().unwrap_or("");
-            let singular = if s.ends_with("ies") {
-                format!("{}y", &s[..s.len() - 3])
-            } else if s.ends_with("es") && !s.ends_with("ss") {
-                format!("{}", &s[..s.len() - 2])
-            } else if s.ends_with("s") && !s.ends_with("ss") {
-                format!("{}", &s[..s.len() - 1])
+            let singular = if let Some(stripped) = s.strip_suffix("ies") {
+                format!("{}y", stripped)
+            } else if let Some(stripped) = s.strip_suffix("es") {
+                if !s.ends_with("ss") {
+                    stripped.to_string()
+                } else {
+                    s.to_string()
+                }
+            } else if let Some(stripped) = s.strip_suffix("s") {
+                if !s.ends_with("ss") {
+                    stripped.to_string()
+                } else {
+                    s.to_string()
+                }
             } else {
                 s.to_string()
             };

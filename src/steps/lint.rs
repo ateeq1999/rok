@@ -44,12 +44,11 @@ fn detect_linter(cwd: &std::path::Path) -> LintTool {
         .max_depth(2)
         .into_iter()
         .filter_map(|e| e.ok())
-        .map(|e| {
+        .filter_map(|e| {
             e.path()
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
         })
-        .flatten()
         .collect();
 
     if files

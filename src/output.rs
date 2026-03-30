@@ -45,7 +45,7 @@ fn format_pretty(output: &Output) -> String {
             format_step_type(result)
         ));
 
-        s.push_str("\n");
+        s.push('\n');
     }
 
     s

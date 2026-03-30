@@ -148,12 +148,10 @@ fn resolve_jsonpath(value: &Value, path: &str) -> Option<Value> {
                     }
                 }
             }
+        } else if let Some(v) = current.get(*part) {
+            current = v.clone();
         } else {
-            if let Some(v) = current.get(*part) {
-                current = v.clone();
-            } else {
-                return None;
-            }
+            return None;
         }
     }
 

@@ -6,23 +6,47 @@ use std::io::{self, Read};
 
 #[derive(Parser, Debug)]
 #[command(name = "rok")]
-#[command(version = "0.2.0")]
+#[command(version = option_env!("CARGO_PKG_VERSION").unwrap_or("0.2.0"))]
 #[command(about = "Run One, Know All - Execute multi-step tasks from JSON")]
+#[command(long_about = "rok - AI Agent Task Runner
+
+A CLI tool that collapses multi-step operations into a single JSON invocation.
+
+EXAMPLES:
+  rok -f task.json                    Run from file
+  echo '{\"steps\":[{\"type\":\"bash\",\"cmd\":\"echo hello\"}]}' | rok    Run from stdin
+  rok templates                       List available templates
+  rok --help                          Show this help
+
+For more info, see: https://github.com/ateeq1999/rok")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
 
-    #[arg(short = 'j', long = "json", conflicts_with_all = ["file", "stdin"])]
+    #[arg(short = 'j', long = "json", conflicts_with_all = ["file", "stdin"], help = "JSON payload inline")]
     pub json: Option<String>,
 
-    #[arg(short = 'f', long = "file", conflicts_with = "json")]
+    #[arg(
+        short = 'f',
+        long = "file",
+        conflicts_with = "json",
+        help = "Path to JSON file"
+    )]
     pub file: Option<String>,
 
-    #[arg(short = 'o', long = "output", default_value = "json")]
+    #[arg(
+        short = 'o',
+        long = "output",
+        default_value = "json",
+        help = "Output format: json, pretty, silent"
+    )]
     pub output: OutputFormat,
 
-    #[arg(long = "dry-run")]
+    #[arg(long = "dry-run", help = "Preview steps without executing")]
     pub dry_run: bool,
+
+    #[arg(long = "verbose", help = "Enable verbose output")]
+    pub verbose: bool,
 }
 
 #[derive(Debug, Subcommand)]

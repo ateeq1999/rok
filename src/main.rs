@@ -18,7 +18,7 @@ fn main() {
     let cli = Cli::parse();
 
     if let Some(cli::Commands::Templates) = cli.command {
-        let templates = steps::template_discovery::list_templates(&std::path::Path::new("."));
+        let templates = steps::template_discovery::list_templates(std::path::Path::new("."));
         let json = serde_json::to_string_pretty(&templates).unwrap_or_default();
         println!("{}", json);
         std::process::exit(0);

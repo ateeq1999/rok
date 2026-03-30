@@ -403,6 +403,7 @@ pub fn list_templates(cwd: &Path) -> Vec<TemplateInfo> {
     TemplateDiscovery::discover(cwd)
 }
 
+#[allow(dead_code)]
 pub fn validate_prop(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     match prop_def.prop_type.as_str() {
         "string" => validate_string(prop_def, value),
@@ -414,9 +415,10 @@ pub fn validate_prop(prop_def: &PropDefinition, value: &str) -> Result<(), Strin
     }
 }
 
+#[allow(dead_code)]
 fn validate_string(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     if prop_def.required && value.is_empty() {
-        return Err(format!("Required prop is empty"));
+        return Err("Required prop is empty".to_string());
     }
 
     if let Some(pattern) = &prop_def.pattern {
@@ -443,6 +445,7 @@ fn validate_string(prop_def: &PropDefinition, value: &str) -> Result<(), String>
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_enum(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     if prop_def.required && value.is_empty() {
         return Err("Required prop is empty".to_string());
@@ -457,6 +460,7 @@ fn validate_enum(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_boolean(_prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     if value.is_empty() {
         return Ok(());
@@ -470,6 +474,7 @@ fn validate_boolean(_prop_def: &PropDefinition, value: &str) -> Result<(), Strin
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_path(_prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     if value.is_empty() {
         return Ok(());
@@ -483,6 +488,7 @@ fn validate_path(_prop_def: &PropDefinition, value: &str) -> Result<(), String> 
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_array(_prop_def: &PropDefinition, value: &str) -> Result<(), String> {
     if value.is_empty() {
         return Ok(());

@@ -185,7 +185,7 @@ impl Runner {
                 vars,
             } => {
                 let mut result = crate::steps::template::run(
-                    &name,
+                    name,
                     builtin,
                     source,
                     output,
