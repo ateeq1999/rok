@@ -213,7 +213,8 @@ When completing a task, update the todo.md:
 - [x] **4.23** Generate shell completions (bash, zsh, fish) (2026-03-30)
   - Added completion instructions in --help
 
-- [ ] **4.24** Add man pages
+- [x] **4.24** Add man pages (2026-03-30)
+  - Added docs/rok.1 man page
 
 ---
 
