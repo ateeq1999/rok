@@ -1,0 +1,27 @@
+{
+  "name": "my-template",
+  "description": "A custom template for testing",
+  "version": "1.0.0",
+  "author": "test",
+  "tags": ["test", "custom"],
+  "output": [
+    {
+      "from": "template.txt",
+      "to": "{{name}}.txt"
+    }
+  ],
+  "props": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "The name for the generated file",
+      "example": "hello"
+    },
+    "content": {
+      "type": "string",
+      "required": false,
+      "description": "Content to write",
+      "default": "Hello World"
+    }
+  }
+}

@@ -1,14 +1,17 @@
 use crate::error::RokError;
 use crate::schema::Payload;
-use clap::{Parser, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 use std::fs;
 use std::io::{self, Read};
 
 #[derive(Parser, Debug)]
 #[command(name = "rok")]
-#[command(version = "0.1.0")]
+#[command(version = "0.2.0")]
 #[command(about = "Run One, Know All - Execute multi-step tasks from JSON")]
 pub struct Cli {
+    #[command(subcommand)]
+    pub command: Option<Commands>,
+
     #[arg(short = 'j', long = "json", conflicts_with_all = ["file", "stdin"])]
     pub json: Option<String>,
 
@@ -20,6 +23,12 @@ pub struct Cli {
 
     #[arg(long = "dry-run")]
     pub dry_run: bool,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum Commands {
+    #[command(about = "List available templates")]
+    Templates,
 }
 
 #[derive(Debug, Clone, ValueEnum)]

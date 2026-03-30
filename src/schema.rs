@@ -121,6 +121,8 @@ pub enum Step {
     },
     Template {
         #[serde(default)]
+        name: String,
+        #[serde(default)]
         builtin: String,
         #[serde(default)]
         source: String,

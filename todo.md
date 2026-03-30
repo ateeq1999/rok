@@ -39,10 +39,12 @@ When completing a task, update the todo.md:
 
 ### Phase 1: Template Engine Core
 
-- [ ] **3.1** Create template discovery system
+- [x] **3.1** Create template discovery system (2026-03-30)
   - Search paths: `./.rok/templates/`, `~/.rok/templates/`, built-in
   - Accepts: `.rok-template.json` schema files
   - Returns: list of available templates with metadata
+  - Added: `rok templates` CLI command
+  - Added: `name` field to template step for custom template lookup
   
 - [ ] **3.2** Define `.rok-template.json` schema
   - `name`, `description`, `version`, `author`, `tags`

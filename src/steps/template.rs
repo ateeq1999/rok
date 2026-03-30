@@ -1,26 +1,44 @@
 use crate::schema::StepResult;
 use crate::schema::StepTypeResult;
+use crate::steps::template_discovery;
 use std::collections::HashMap;
 use std::fs;
+use std::path::Path;
 use std::time::Instant;
 use tera::Tera;
 
 pub fn run(
+    name: &str,
     builtin: &str,
     source: &str,
     output: &str,
     vars: &HashMap<String, String>,
-    cwd: &std::path::Path,
+    cwd: &Path,
 ) -> StepResult {
     let start = Instant::now();
 
-    let template_content = if !builtin.is_empty() {
+    let template_content = if !name.is_empty() {
+        get_custom_template(name, cwd)
+    } else if !builtin.is_empty() {
         get_builtin_template(builtin)
     } else if !source.is_empty() {
         fs::read_to_string(cwd.join(source)).unwrap_or_default()
     } else {
         String::new()
     };
+
+    if template_content.is_empty() {
+        return StepResult {
+            index: 0,
+            step_type: StepTypeResult::Template {
+                output: output.to_string(),
+                rendered: false,
+            },
+            status: "error".to_string(),
+            duration_ms: 0,
+            stopped_pipeline: None,
+        };
+    }
 
     let mut tera = Tera::default();
     let rendered = tera
@@ -63,6 +81,24 @@ pub fn run(
             stopped_pipeline: None,
         },
     }
+}
+
+fn get_custom_template(name: &str, cwd: &Path) -> String {
+    let templates = template_discovery::list_templates(cwd);
+
+    for template in templates {
+        if template.name == name {
+            if let Some(first_output) = template.outputs.first() {
+                let template_dir = cwd.join(".rok").join("templates").join(&template.name);
+                let template_file = template_dir.join(&first_output.from);
+                if template_file.exists() {
+                    return fs::read_to_string(&template_file).unwrap_or_default();
+                }
+            }
+        }
+    }
+
+    String::new()
 }
 
 fn get_builtin_template(name: &str) -> String {

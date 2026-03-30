@@ -16,4 +16,5 @@ pub mod scan;
 pub mod snapshot;
 pub mod summarize;
 pub mod template;
+pub mod template_discovery;
 pub mod write;

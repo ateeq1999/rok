@@ -178,13 +178,20 @@ impl Runner {
                 result
             }
             Step::Template {
+                name,
                 builtin,
                 source,
                 output,
                 vars,
             } => {
-                let mut result =
-                    crate::steps::template::run(builtin, source, output, vars, &self.config.cwd);
+                let mut result = crate::steps::template::run(
+                    &name,
+                    builtin,
+                    source,
+                    output,
+                    vars,
+                    &self.config.cwd,
+                );
                 result.index = index;
                 result
             }
@@ -473,11 +480,13 @@ impl Runner {
                     tool: tool.clone(),
                 },
                 Step::Template {
+                    name,
                     builtin,
                     source,
                     output,
                     vars,
                 } => Step::Template {
+                    name: name.clone(),
                     builtin: builtin.clone(),
                     source: source.clone(),
                     output: refs::substitute_vars(output, var, val),
