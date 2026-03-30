@@ -222,6 +222,132 @@ fn main() {
         std::process::exit(0);
     }
 
+    if let Some(cli::Commands::Watch {
+        file,
+        watch,
+        interval,
+    }) = &cli.command
+    {
+        let file_path = file.clone().unwrap_or_else(|| {
+            eprintln!("Error: --file required for watch mode");
+            std::process::exit(1);
+        });
+
+        let watch_paths = watch.clone().unwrap_or_else(|| vec![".".to_string()]);
+
+        println!("Watching {:?} for changes (Ctrl+C to stop)...", watch_paths);
+
+        loop {
+            let payload: schema::Payload =
+                serde_json::from_str(&std::fs::read_to_string(&file_path).unwrap_or_else(|e| {
+                    eprintln!("Error reading file: {}", e);
+                    std::process::exit(1);
+                }))
+                .unwrap_or_else(|e| {
+                    eprintln!("Error parsing JSON: {}", e);
+                    std::process::exit(1);
+                });
+
+            let config = match Config::from_options(payload.options.clone()) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("Error: {}", e.message);
+                    std::process::exit(i32::from(e.code));
+                }
+            };
+
+            println!(
+                "\n--- Running at {} ---",
+                chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+            );
+            let runner = Runner::new(config, payload);
+            let output = runner.run();
+            let formatted = format_output(&output, &cli.output);
+            if !formatted.is_empty() {
+                println!("{}", formatted);
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(*interval));
+        }
+    }
+
+    if let Some(cli::Commands::History { count }) = &cli.command {
+        let history_file = std::path::Path::new(".rok/history.json");
+        if !history_file.exists() {
+            println!("No execution history found.");
+            std::process::exit(0);
+        }
+
+        let history: Vec<serde_json::Value> =
+            serde_json::from_str(&std::fs::read_to_string(history_file).unwrap_or_default())
+                .unwrap_or_default();
+
+        if history.is_empty() {
+            println!("No execution history found.");
+        } else {
+            println!("Execution history (last {}):", count);
+            for entry in history.iter().take(*count) {
+                println!(
+                    "  {} - {} - {} steps - {}ms",
+                    entry["run_id"].as_str().unwrap_or("?"),
+                    entry["status"].as_str().unwrap_or("?"),
+                    entry["steps_total"].as_u64().unwrap_or(0),
+                    entry["duration_ms"].as_u64().unwrap_or(0)
+                );
+            }
+        }
+        std::process::exit(0);
+    }
+
+    if let Some(cli::Commands::Replay { run_id }) = &cli.command {
+        let history_file = std::path::Path::new(".rok/history.json");
+        if !history_file.exists() {
+            eprintln!("No execution history found.");
+            std::process::exit(1);
+        }
+
+        let history: Vec<serde_json::Value> =
+            serde_json::from_str(&std::fs::read_to_string(history_file).unwrap_or_default())
+                .unwrap_or_default();
+
+        let target_id = run_id.clone().unwrap_or_else(|| {
+            history
+                .first()
+                .map(|e| e["run_id"].as_str().unwrap_or("").to_string())
+                .unwrap_or_default()
+        });
+
+        let entry = history
+            .iter()
+            .find(|e| e["run_id"].as_str() == Some(&target_id));
+
+        if let Some(entry) = entry {
+            let payload_json = entry["payload"].as_str().unwrap_or("{}");
+            let payload: schema::Payload =
+                serde_json::from_str(payload_json).expect("Failed to parse payload");
+
+            let config = match Config::from_options(payload.options.clone()) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("Error: {}", e.message);
+                    std::process::exit(i32::from(e.code));
+                }
+            };
+
+            println!("Replaying run {}...", target_id);
+            let runner = Runner::new(config, payload);
+            let output = runner.run();
+            let formatted = format_output(&output, &cli.output);
+            if !formatted.is_empty() {
+                println!("{}", formatted);
+            }
+            std::process::exit(0);
+        } else {
+            eprintln!("Run {} not found in history.", target_id);
+            std::process::exit(1);
+        }
+    }
+
     fn read_input() -> String {
         use std::io::Write;
         let mut input = String::new();

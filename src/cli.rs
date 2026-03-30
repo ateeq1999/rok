@@ -94,6 +94,40 @@ pub enum Commands {
         #[arg(help = "Task name")]
         name: String,
     },
+
+    #[command(about = "Watch files and re-run on changes")]
+    Watch {
+        #[arg(help = "Path to JSON file")]
+        file: Option<String>,
+
+        #[arg(short = 'w', long = "watch", help = "Files/dirs to watch")]
+        watch: Option<Vec<String>>,
+
+        #[arg(
+            short = 'i',
+            long = "interval",
+            default_value = "1000",
+            help = "Polling interval in ms"
+        )]
+        interval: u64,
+    },
+
+    #[command(about = "Show execution history")]
+    History {
+        #[arg(
+            short = 'n',
+            long = "count",
+            default_value = "10",
+            help = "Number of entries to show"
+        )]
+        count: usize,
+    },
+
+    #[command(about = "Replay a previous execution")]
+    Replay {
+        #[arg(help = "Run ID")]
+        run_id: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, ValueEnum)]

@@ -166,15 +166,15 @@ When completing a task, update the todo.md:
 
 ### Phase 3: CLI Enhancements
 
-- [ ] **4.12** Add `rok watch` command
+- [x] **4.12** Add `rok watch` command (2026-03-30)
   - Watch for file changes
   - Re-run on change
 
-- [ ] **4.13** Add `rok history` command
+- [x] **4.13** Add `rok history` command (2026-03-30)
   - Show execution history
   - With timing and status
 
-- [ ] **4.14** Add `rok replay <run-id>` command
+- [x] **4.14** Add `rok replay <run-id>` command (2026-03-30)
   - Re-run a previous execution
   - Useful for debugging
 
@@ -184,7 +184,7 @@ When completing a task, update the todo.md:
   - `depends_on`: [step_id, ...]
   - Wait for dependencies before running
 
-- [ ] **4.16** Add environment variable expansion
+- [x] **4.16** Add environment variable expansion (2026-03-30)
   - `{{env.VAR_NAME}}` in any string field
   - Load from `.env` automatically
 

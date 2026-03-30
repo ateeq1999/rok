@@ -185,3 +185,12 @@ pub fn substitute_vars(template: &str, var_name: &str, value: &str) -> String {
     let pattern = format!("{{{{{}}}}}", var_name);
     template.replace(&pattern, value)
 }
+
+pub fn substitute_env_vars(template: &str) -> String {
+    let re = regex::Regex::new(r"\{\{env\.(\w+)\}\}").unwrap();
+    re.replace_all(template, |caps: &regex::Captures| {
+        let var_name = &caps[1];
+        std::env::var(var_name).unwrap_or_else(|_| caps[0].to_string())
+    })
+    .to_string()
+}

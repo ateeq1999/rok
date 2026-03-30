@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::refs;
 use crate::schema::{Condition, EachOver, Output, Payload, Step, StepResult, StepTypeResult};
+use chrono::Utc;
 use rayon::prelude::*;
 use std::time::Instant;
 
@@ -61,30 +62,78 @@ impl Runner {
             "ok".to_string()
         };
 
-        Output {
+        let output = Output {
             status,
             steps_total: self.payload.steps.len(),
             steps_ok,
             steps_failed,
             duration_ms,
             results,
+        };
+
+        self.save_history(&output);
+
+        output
+    }
+
+    fn save_history(&self, output: &Output) {
+        let run_id = format!("{}", Utc::now().format("%Y%m%d-%H%M%S"));
+
+        let history_entry = serde_json::json!({
+            "run_id": run_id,
+            "status": output.status,
+            "steps_total": output.steps_total,
+            "steps_ok": output.steps_ok,
+            "steps_failed": output.steps_failed,
+            "duration_ms": output.duration_ms,
+            "payload": serde_json::to_string(&self.payload).unwrap_or_default(),
+            "timestamp": Utc::now().to_rfc3339(),
+        });
+
+        let history_file = std::path::Path::new(".rok/history.json");
+        let mut history: Vec<serde_json::Value> = if history_file.exists() {
+            serde_json::from_str(&std::fs::read_to_string(history_file).unwrap_or_default())
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+
+        history.insert(0, history_entry);
+
+        if history.len() > 100 {
+            history.truncate(100);
         }
+
+        if let Some(parent) = history_file.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
+        let _ = std::fs::write(
+            history_file,
+            serde_json::to_string_pretty(&history).unwrap_or_default(),
+        );
     }
 
     fn execute_step(&self, step: &Step, index: usize, prev_results: &[StepResult]) -> StepResult {
         match step {
             Step::Bash { cmd, .. } => {
-                let mut result = crate::steps::bash::run(cmd, &self.config.cwd, &self.config.env);
+                let cmd_with_env = refs::substitute_env_vars(cmd);
+                let mut result =
+                    crate::steps::bash::run(&cmd_with_env, &self.config.cwd, &self.config.env);
                 result.index = index;
                 result
             }
             Step::Read { path, .. } => {
-                let mut result = crate::steps::read::run(path, &self.config.cwd);
+                let path_with_env = refs::substitute_env_vars(path);
+                let mut result = crate::steps::read::run(&path_with_env, &self.config.cwd);
                 result.index = index;
                 result
             }
             Step::Write { path, content, .. } => {
-                let mut result = crate::steps::write::run(path, content, &self.config.cwd);
+                let path_with_env = refs::substitute_env_vars(path);
+                let content_with_env = refs::substitute_env_vars(content);
+                let mut result =
+                    crate::steps::write::run(&path_with_env, &content_with_env, &self.config.cwd);
                 result.index = index;
                 result
             }
@@ -127,8 +176,15 @@ impl Runner {
                 regex,
                 ..
             } => {
-                let mut result =
-                    crate::steps::grep::run(pattern, path, ext, *regex, &self.config.cwd);
+                let pattern_with_env = refs::substitute_env_vars(pattern);
+                let path_with_env = refs::substitute_env_vars(path);
+                let mut result = crate::steps::grep::run(
+                    &pattern_with_env,
+                    &path_with_env,
+                    ext,
+                    *regex,
+                    &self.config.cwd,
+                );
                 result.index = index;
                 result
             }
@@ -140,10 +196,13 @@ impl Runner {
                 regex,
                 ..
             } => {
+                let pattern_with_env = refs::substitute_env_vars(pattern);
+                let replacement_with_env = refs::substitute_env_vars(replacement);
+                let path_with_env = refs::substitute_env_vars(path);
                 let mut result = crate::steps::replace::run(
-                    pattern,
-                    replacement,
-                    path,
+                    &pattern_with_env,
+                    &replacement_with_env,
+                    &path_with_env,
                     ext,
                     *regex,
                     &self.config.cwd,
