@@ -38,12 +38,27 @@ impl Default for Options {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RetryConfig {
+    #[serde(default = "default_retry_count")]
+    pub count: usize,
+    #[serde(default = "default_retry_delay")]
+    pub delay_ms: u64,
+    #[serde(default)]
+    pub backoff: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum Step {
     Bash {
         #[serde(default)]
         id: String,
         cmd: String,
+        #[serde(default)]
+        timeout_ms: Option<u64>,
+        #[serde(default)]
+        retry: Option<RetryConfig>,
     },
     Read {
         #[serde(default)]
@@ -233,6 +248,14 @@ fn default_regex() -> bool {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_retry_count() -> usize {
+    3
+}
+
+fn default_retry_delay() -> u64 {
+    1000
 }
 
 fn default_depth() -> usize {

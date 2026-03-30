@@ -116,10 +116,23 @@ impl Runner {
 
     fn execute_step(&self, step: &Step, index: usize, prev_results: &[StepResult]) -> StepResult {
         match step {
-            Step::Bash { cmd, .. } => {
+            Step::Bash {
+                cmd,
+                timeout_ms,
+                retry,
+                ..
+            } => {
                 let cmd_with_env = refs::substitute_env_vars(cmd);
-                let mut result =
-                    crate::steps::bash::run(&cmd_with_env, &self.config.cwd, &self.config.env);
+
+                let result = if let Some(retry_config) = retry {
+                    self.run_with_retry(&cmd_with_env, timeout_ms, retry_config)
+                } else if let Some(timeout) = timeout_ms {
+                    self.run_with_timeout(&cmd_with_env, *timeout)
+                } else {
+                    crate::steps::bash::run(&cmd_with_env, &self.config.cwd, &self.config.env)
+                };
+
+                let mut result = result;
                 result.index = index;
                 result
             }
@@ -315,6 +328,75 @@ impl Runner {
         }
     }
 
+    fn run_with_timeout(&self, cmd: &str, timeout_ms: u64) -> crate::schema::StepResult {
+        use std::sync::mpsc;
+        use std::thread;
+        use std::time::Duration;
+
+        let (tx, rx) = mpsc::channel();
+        let cmd_owned = cmd.to_string();
+        let cwd = self.config.cwd.clone();
+        let env = self.config.env.clone();
+
+        thread::spawn(move || {
+            let result = crate::steps::bash::run(&cmd_owned, &cwd, &env);
+            let _ = tx.send(result);
+        });
+
+        match rx.recv_timeout(Duration::from_millis(timeout_ms)) {
+            Ok(result) => result,
+            Err(_) => crate::schema::StepResult {
+                index: 0,
+                step_type: crate::schema::StepTypeResult::Bash {
+                    cmd: cmd.to_string(),
+                    stdout: String::new(),
+                    stderr: format!("Command timed out after {}ms", timeout_ms),
+                    exit_code: -1,
+                },
+                status: "error".to_string(),
+                duration_ms: timeout_ms,
+                stopped_pipeline: None,
+            },
+        }
+    }
+
+    fn run_with_retry(
+        &self,
+        cmd: &str,
+        timeout_ms: &Option<u64>,
+        retry_config: &crate::schema::RetryConfig,
+    ) -> crate::schema::StepResult {
+        let mut last_result: Option<crate::schema::StepResult> = None;
+        let mut delay = retry_config.delay_ms;
+
+        for attempt in 0..retry_config.count {
+            if attempt > 0 {
+                std::thread::sleep(std::time::Duration::from_millis(delay));
+                if retry_config.backoff {
+                    delay *= 2;
+                }
+            }
+
+            let result = if let Some(timeout) = timeout_ms {
+                self.run_with_timeout(cmd, *timeout)
+            } else {
+                let cmd_with_env = refs::substitute_env_vars(cmd);
+                crate::steps::bash::run(&cmd_with_env, &self.config.cwd, &self.config.env)
+            };
+
+            if result.status == "ok" {
+                return result;
+            }
+
+            last_result = Some(result);
+        }
+
+        last_result.unwrap_or_else(|| {
+            let cmd_with_env = refs::substitute_env_vars(cmd);
+            crate::steps::bash::run(&cmd_with_env, &self.config.cwd, &self.config.env)
+        })
+    }
+
     fn run_if(
         &self,
         condition: &Condition,
@@ -465,9 +547,17 @@ impl Runner {
     fn substitute_step(&self, step: &Step, var_name: &str, value: &str) -> Step {
         fn sub(step: &Step, var: &str, val: &str) -> Step {
             match step {
-                Step::Bash { cmd, id, .. } => Step::Bash {
+                Step::Bash {
+                    cmd,
+                    id,
+                    timeout_ms,
+                    retry,
+                    ..
+                } => Step::Bash {
                     id: id.clone(),
                     cmd: refs::substitute_vars(cmd, var, val),
+                    timeout_ms: *timeout_ms,
+                    retry: retry.clone(),
                 },
                 Step::Read { path, id, .. } => Step::Read {
                     id: id.clone(),

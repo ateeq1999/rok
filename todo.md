@@ -188,11 +188,11 @@ When completing a task, update the todo.md:
   - `{{env.VAR_NAME}}` in any string field
   - Load from `.env` automatically
 
-- [ ] **4.17** Add step timeout override
+- [x] **4.17** Add step timeout override (2026-03-30)
   - Per-step timeout_ms
   - Override global timeout
 
-- [ ] **4.18** Add step retry logic
+- [x] **4.18** Add step retry logic (2026-03-30)
   - `retry`: { count, delay_ms, backoff }
   - Auto-retry failed steps
 
