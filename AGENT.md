@@ -289,3 +289,24 @@ When writing rok payloads:
 
 - [GitHub](https://github.com/ateeq1999/rok)
 - [Crates.io](https://crates.io/crates/rok-cli)
+
+---
+
+## v5 Roadmap: Agent Efficiency Features
+
+Planned features to reduce token usage and accelerate coding tasks:
+
+### Coming Soon
+- **Batch multi-file edit** - Replace across 100s of files in one step
+- **Import management** - Auto-add/remove/organize imports
+- **Symbol refactoring** - Rename across entire codebase
+- **Selective file loading** - Only load relevant files
+- **Incremental mode** - Only process changed files
+- **Dependency graph** - Understand file relationships
+- **Example-based generation** - Generate from 2-3 examples
+
+### Already Available
+- Step dependencies - Control execution order with `depends_on`
+- Templates - Reusable code patterns
+- Control flow - `if`/`each` for dynamic workflows
+- History/replay - Debug previous runs
