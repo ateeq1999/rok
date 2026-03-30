@@ -4,11 +4,39 @@ An AI coding agent task runner that collapses multi-step operations into a singl
 
 ## Installation
 
+### From Source
+
 ```bash
-cargo install rok
+# Clone and build
+git clone https://github.com/ateeq1999/rok.git
+cd rok
+cargo build --release
+
+# Install globally
+cargo install --path .
 ```
 
-Or download pre-built binaries from [GitHub Releases](https://github.com/ateeq1999/rok/releases).
+### Pre-built Binaries
+
+Download from [GitHub Releases](https://github.com/ateeq1999/rok/releases).
+
+### Local Development Setup
+
+```bash
+# Add to PATH temporarily (Windows PowerShell)
+$env:PATH += ";D:\Ateeg\Tools\rok\target\release"
+
+# Or add permanently (Windows PowerShell)
+[System.Environment]::SetEnvironmentVariable(
+    "PATH",
+    [System.Environment]::GetEnvironmentVariable("PATH","User") + ";D:\Ateeg\Tools\rok\target\release",
+    "User"
+)
+
+# Verify
+rok --version
+rok --help
+```
 
 ## Usage
 
@@ -71,6 +99,65 @@ rok --json '...' --dry-run
   "durationMs": 150,
   "results": [...]
 }
+```
+
+## Template System (v3)
+
+### List Available Templates
+
+```bash
+rok templates
+```
+
+### Use a Template
+
+```bash
+# Use built-in template
+echo '{"steps":[{"type":"template","builtin":"react-component","output":"./Button.tsx","vars":{"name":"Button"}}]}' | rok -f -
+
+# Use custom template
+echo '{"steps":[{"type":"template","name":"my-template","output":"./file.txt","vars":{"name":"value"}}]}' | rok -f -
+```
+
+### Create Custom Templates
+
+Place templates in `.rok/templates/<template-name>/` with a `.rok-template.json` schema file:
+
+```json
+{
+  "name": "my-template",
+  "description": "My custom template",
+  "version": "1.0.0",
+  "author": "you",
+  "tags": ["custom", "template"],
+  "output": [
+    { "from": "template.txt", "to": "{{name}}.txt" }
+  ],
+  "props": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "The name",
+      "example": "myfile"
+    }
+  }
+}
+```
+
+### Template Filters
+
+Templates support filters for transforming values:
+
+```text
+{{ name | camelcase }}   # helloWorld
+{{ name | snakecase }}   # hello_world
+{{ name | kebabcase }}   # hello-world
+{{ name | pascalcase }}  # HelloWorld
+{{ name | pluralize }}   # items
+{{ name | singularize }} # item
+{{ name | uppercase }}   # HELLO
+{{ name | lowercase }}   # hello
+{{ name | capitalize }}  # Hello
 ```
 
 ## Exit Codes
