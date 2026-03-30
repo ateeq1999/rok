@@ -69,12 +69,12 @@ When completing a task, update the todo.md:
 
 ### Phase 2: Template CLI Commands
 
-- [ ] **3.5** Add `rok init-template` command
+- [x] **3.5** Add `rok init-template` command (2026-03-30)
   - Interactive wizard to create new templates
   - Generates `.rok-template.json` and template files
   - Supports all prop types
 
-- [ ] **3.6** Add `rok validate-template` command
+- [x] **3.6** Add `rok validate-template` command (2026-03-30)
   - Validates `.rok-template.json` schema
   - Checks template syntax
   - Reports errors with line numbers
@@ -91,7 +91,7 @@ When completing a task, update the todo.md:
   - New field: `props` (prop values)
   - Merge with existing `builtin` support
 
-- [ ] **3.9** Implement template inheritance
+- [x] **3.9** Implement template inheritance (2026-03-30)
   - `extends` field in schema
   - Override specific outputs/props
   - Chain inheritance (A extends B extends C)
@@ -105,7 +105,7 @@ When completing a task, update the todo.md:
 
 ### Phase 4: Template Discovery API
 
-- [ ] **3.11** Add `rok templates` JSON endpoint
+- [x] **3.11** Add `rok templates` JSON endpoint (2026-03-30)
   - Returns all discoverable templates
   - Includes: name, description, tags, props, outputs
   - Used by agents for template discovery

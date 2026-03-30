@@ -66,6 +66,8 @@ pub struct TemplateSchema {
     #[serde(default)]
     pub tags: Vec<String>,
     #[serde(default)]
+    pub extends: Option<String>,
+    #[serde(default)]
     pub output: Vec<TemplateOutput>,
     #[serde(default)]
     pub props: HashMap<String, PropDefinition>,
@@ -397,10 +399,62 @@ impl TemplateDiscovery {
         let schema: TemplateSchema = serde_json::from_str(&content)?;
         Ok(schema)
     }
+
+    #[allow(dead_code)]
+    pub fn load_schema(path: &Path) -> Result<TemplateSchema, Box<dyn std::error::Error>> {
+        let content = fs::read_to_string(path)?;
+        let schema: TemplateSchema = serde_json::from_str(&content)?;
+        Ok(schema)
+    }
+}
+
+fn load_template_schema_file(path: &Path) -> Result<TemplateSchema, Box<dyn std::error::Error>> {
+    let content = fs::read_to_string(path)?;
+    let schema: TemplateSchema = serde_json::from_str(&content)?;
+    Ok(schema)
 }
 
 pub fn list_templates(cwd: &Path) -> Vec<TemplateInfo> {
     TemplateDiscovery::discover(cwd)
+}
+
+#[allow(dead_code)]
+pub fn resolve_inheritance(schema: &TemplateSchema, cwd: &Path) -> TemplateSchema {
+    let mut result = schema.clone();
+
+    if let Some(parent_name) = &schema.extends {
+        let templates = list_templates(cwd);
+
+        if templates.iter().any(|t| &t.name == parent_name) {
+            let parent_schema_path = cwd
+                .join(".rok/templates")
+                .join(parent_name)
+                .join(".rok-template.json");
+
+            if let Ok(parent_schema) = load_template_schema_file(&parent_schema_path) {
+                let resolved_parent = resolve_inheritance(&parent_schema, cwd);
+
+                if result.description.is_empty() {
+                    result.description = resolved_parent.description;
+                }
+                if result.author.is_empty() {
+                    result.author = resolved_parent.author;
+                }
+                if result.tags.is_empty() {
+                    result.tags = resolved_parent.tags;
+                }
+                if result.output.is_empty() {
+                    result.output = resolved_parent.output;
+                }
+
+                for (key, val) in resolved_parent.props {
+                    result.props.entry(key).or_insert(val);
+                }
+            }
+        }
+    }
+
+    result
 }
 
 #[allow(dead_code)]
@@ -496,6 +550,55 @@ fn validate_array(_prop_def: &PropDefinition, value: &str) -> Result<(), String>
 
     if !value.starts_with('[') && !value.contains(',') {
         return Err("Array value must be JSON array or comma-separated".to_string());
+    }
+
+    Ok(())
+}
+
+pub fn validate_template(path: &Path) -> Result<(), String> {
+    let content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read template: {}", e))?;
+
+    let schema: TemplateSchema =
+        serde_json::from_str(&content).map_err(|e| format!("Invalid JSON: {}", e))?;
+
+    if schema.name.is_empty() {
+        return Err("Template name is required".to_string());
+    }
+
+    if schema.output.is_empty() {
+        return Err("At least one output is required".to_string());
+    }
+
+    for output in &schema.output {
+        if output.from.is_empty() {
+            return Err("Output 'from' field is required".to_string());
+        }
+        if output.to.is_empty() {
+            return Err("Output 'to' field is required".to_string());
+        }
+    }
+
+    for (prop_name, prop_def) in &schema.props {
+        if prop_def.prop_type.is_empty() {
+            return Err(format!("Prop '{}' has no type", prop_name));
+        }
+
+        let valid_types = ["string", "enum", "boolean", "path", "array"];
+        if !valid_types.contains(&prop_def.prop_type.as_str()) {
+            return Err(format!(
+                "Prop '{}' has invalid type '{}'. Valid types: {}",
+                prop_name,
+                prop_def.prop_type,
+                valid_types.join(", ")
+            ));
+        }
+
+        if prop_def.prop_type == "enum"
+            && (prop_def.values.is_none() || prop_def.values.as_ref().unwrap().is_empty())
+        {
+            return Err(format!("Prop '{}' is enum but has no values", prop_name));
+        }
     }
 
     Ok(())

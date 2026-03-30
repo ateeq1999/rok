@@ -23,7 +23,12 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
 
-    #[arg(short = 'j', long = "json", conflicts_with_all = ["file", "stdin"], help = "JSON payload inline")]
+    #[arg(
+        short = 'j',
+        long = "json",
+        conflicts_with = "file",
+        help = "JSON payload inline"
+    )]
     pub json: Option<String>,
 
     #[arg(
@@ -53,6 +58,18 @@ pub struct Cli {
 pub enum Commands {
     #[command(about = "List available templates")]
     Templates,
+
+    #[command(about = "Create a new template interactively")]
+    InitTemplate {
+        #[arg(help = "Template name")]
+        name: Option<String>,
+    },
+
+    #[command(about = "Validate a template schema")]
+    ValidateTemplate {
+        #[arg(help = "Path to template directory or .rok-template.json")]
+        path: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, ValueEnum)]

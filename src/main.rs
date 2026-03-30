@@ -24,6 +24,83 @@ fn main() {
         std::process::exit(0);
     }
 
+    if let Some(cli::Commands::InitTemplate { name }) = &cli.command {
+        let template_name = name.clone().unwrap_or_else(|| {
+            println!("Enter template name: ");
+            read_input()
+        });
+
+        println!("Creating template: {}", template_name);
+
+        let template_dir = std::path::Path::new(".rok/templates").join(&template_name);
+        std::fs::create_dir_all(&template_dir).expect("Failed to create template directory");
+
+        let schema = steps::template_discovery::TemplateSchema {
+            name: template_name.clone(),
+            description: String::new(),
+            version: "1.0.0".to_string(),
+            author: String::new(),
+            tags: vec![],
+            extends: None,
+            output: vec![steps::template_discovery::TemplateOutput {
+                from: "template.txt".to_string(),
+                to: "{{name}}.txt".to_string(),
+                condition: None,
+            }],
+            props: std::collections::HashMap::new(),
+            hooks: None,
+            post_generate: vec![],
+        };
+
+        let schema_path = template_dir.join(".rok-template.json");
+        let schema_json =
+            serde_json::to_string_pretty(&schema).expect("Failed to serialize schema");
+        std::fs::write(&schema_path, &schema_json).expect("Failed to write schema");
+
+        std::fs::write(template_dir.join("template.txt"), "{{ name }}\n")
+            .expect("Failed to write template");
+
+        println!("✅ Template created at: {}", template_dir.display());
+        println!("   Edit .rok-template.json to add props");
+        std::process::exit(0);
+    }
+
+    if let Some(cli::Commands::ValidateTemplate { path }) = &cli.command {
+        let template_path = path.clone().unwrap_or_else(|| ".".to_string());
+        let cwd = std::path::Path::new(&template_path);
+
+        let template_file = if cwd.is_file() {
+            cwd.to_path_buf()
+        } else {
+            cwd.join(".rok-template.json")
+        };
+
+        if !template_file.exists() {
+            eprintln!("❌ Template schema not found: {}", template_file.display());
+            std::process::exit(1);
+        }
+
+        match steps::template_discovery::validate_template(&template_file) {
+            Ok(_) => {
+                println!("✅ Template is valid!");
+                std::process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("❌ Template validation failed:");
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    fn read_input() -> String {
+        use std::io::Write;
+        let mut input = String::new();
+        std::io::stdout().flush().ok();
+        std::io::stdin().read_line(&mut input).ok();
+        input.trim().to_string()
+    }
+
     let payload = match cli.parse_payload() {
         Ok(p) => p,
         Err(e) => {
