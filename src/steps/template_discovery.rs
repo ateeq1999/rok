@@ -24,14 +24,27 @@ pub enum TemplateSource {
     User,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PropInfo {
     pub prop_type: String,
     pub required: bool,
     pub description: String,
+    #[serde(default)]
     pub example: Option<String>,
+    #[serde(default)]
     pub default: Option<String>,
+    #[serde(default)]
     pub values: Option<Vec<String>>,
+    #[serde(default)]
+    pub pattern: Option<String>,
+    #[serde(default)]
+    pub min: Option<u32>,
+    #[serde(default)]
+    pub max: Option<u32>,
+    #[serde(default)]
+    pub derive_from: Option<String>,
+    #[serde(default)]
+    pub derive: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,7 +54,7 @@ pub struct TemplateOutput {
     pub condition: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct TemplateSchema {
     pub name: String,
     #[serde(default)]
@@ -56,6 +69,30 @@ pub struct TemplateSchema {
     pub output: Vec<TemplateOutput>,
     #[serde(default)]
     pub props: HashMap<String, PropDefinition>,
+    #[serde(default)]
+    pub hooks: Option<TemplateHooks>,
+    #[serde(default)]
+    pub post_generate: Vec<PostGenerateAction>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TemplateHooks {
+    #[serde(default)]
+    pub before: Option<String>,
+    #[serde(default)]
+    pub after: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PostGenerateAction {
+    #[serde(rename = "type")]
+    pub action_type: String,
+    #[serde(default)]
+    pub cmd: Option<String>,
+    #[serde(default)]
+    pub path: Option<String>,
+    #[serde(default)]
+    pub tool: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,10 +109,43 @@ pub struct PropDefinition {
     pub default: Option<String>,
     #[serde(default)]
     pub values: Option<Vec<String>>,
+    #[serde(default)]
+    pub pattern: Option<String>,
+    #[serde(default)]
+    pub min: Option<u32>,
+    #[serde(default)]
+    pub max: Option<u32>,
+    #[serde(default)]
+    pub derive_from: Option<String>,
+    #[serde(default)]
+    pub derive: Option<Vec<String>>,
 }
 
 fn default_version() -> String {
     "1.0.0".to_string()
+}
+
+fn prop_info(
+    prop_type: &str,
+    required: bool,
+    description: &str,
+    example: Option<&str>,
+    default: Option<&str>,
+    values: Option<Vec<&str>>,
+) -> PropInfo {
+    PropInfo {
+        prop_type: prop_type.to_string(),
+        required,
+        description: description.to_string(),
+        example: example.map(String::from),
+        default: default.map(String::from),
+        values: values.map(|v| v.into_iter().map(String::from).collect()),
+        pattern: None,
+        min: None,
+        max: None,
+        derive_from: None,
+        derive: None,
+    }
 }
 
 pub struct TemplateDiscovery;
@@ -108,25 +178,18 @@ impl TemplateDiscovery {
                     let mut p = HashMap::new();
                     p.insert(
                         "component".to_string(),
-                        PropInfo {
-                            prop_type: "string".to_string(),
-                            required: true,
-                            description: "Component name".to_string(),
-                            example: Some("Dashboard".to_string()),
-                            default: None,
-                            values: None,
-                        },
+                        prop_info(
+                            "string",
+                            true,
+                            "Component name",
+                            Some("Dashboard"),
+                            None,
+                            None,
+                        ),
                     );
                     p.insert(
                         "path".to_string(),
-                        PropInfo {
-                            prop_type: "string".to_string(),
-                            required: true,
-                            description: "Route path".to_string(),
-                            example: Some("/dashboard".to_string()),
-                            default: None,
-                            values: None,
-                        },
+                        prop_info("string", true, "Route path", Some("/dashboard"), None, None),
                     );
                     p
                 },
@@ -151,14 +214,14 @@ impl TemplateDiscovery {
                     let mut p = HashMap::new();
                     p.insert(
                         "name".to_string(),
-                        PropInfo {
-                            prop_type: "string".to_string(),
-                            required: true,
-                            description: "Component name (PascalCase)".to_string(),
-                            example: Some("Button".to_string()),
-                            default: None,
-                            values: None,
-                        },
+                        prop_info(
+                            "string",
+                            true,
+                            "Component name (PascalCase)",
+                            Some("Button"),
+                            None,
+                            None,
+                        ),
                     );
                     p
                 },
@@ -183,14 +246,7 @@ impl TemplateDiscovery {
                     let mut p = HashMap::new();
                     p.insert(
                         "name".to_string(),
-                        PropInfo {
-                            prop_type: "string".to_string(),
-                            required: true,
-                            description: "Handler name".to_string(),
-                            example: Some("getUsers".to_string()),
-                            default: None,
-                            values: None,
-                        },
+                        prop_info("string", true, "Handler name", Some("getUsers"), None, None),
                     );
                     p
                 },
@@ -211,14 +267,7 @@ impl TemplateDiscovery {
                     let mut p = HashMap::new();
                     p.insert(
                         "name".to_string(),
-                        PropInfo {
-                            prop_type: "string".to_string(),
-                            required: true,
-                            description: "Module name".to_string(),
-                            example: Some("greeting".to_string()),
-                            default: None,
-                            values: None,
-                        },
+                        prop_info("string", true, "Module name", Some("greeting"), None, None),
                     );
                     p
                 },
@@ -239,14 +288,14 @@ impl TemplateDiscovery {
                     let mut p = HashMap::new();
                     p.insert(
                         "name".to_string(),
-                        PropInfo {
-                            prop_type: "string".to_string(),
-                            required: true,
-                            description: "Test subject name".to_string(),
-                            example: Some("MyComponent".to_string()),
-                            default: None,
-                            values: None,
-                        },
+                        prop_info(
+                            "string",
+                            true,
+                            "Test subject name",
+                            Some("MyComponent"),
+                            None,
+                            None,
+                        ),
                     );
                     p
                 },
@@ -325,6 +374,11 @@ impl TemplateDiscovery {
                                         example: v.example,
                                         default: v.default,
                                         values: v.values,
+                                        pattern: v.pattern,
+                                        min: v.min,
+                                        max: v.max,
+                                        derive_from: v.derive_from,
+                                        derive: v.derive,
                                     },
                                 )
                             })

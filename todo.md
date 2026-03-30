@@ -46,12 +46,12 @@ When completing a task, update the todo.md:
   - Added: `rok templates` CLI command
   - Added: `name` field to template step for custom template lookup
   
-- [ ] **3.2** Define `.rok-template.json` schema
+- [x] **3.2** Define `.rok-template.json` schema (2026-03-30)
   - `name`, `description`, `version`, `author`, `tags`
   - `output[]`: `{ from, to, condition? }`
   - `props`: prop definitions with types (string, enum, boolean, path, array)
-  - `hooks`: { before?, after? }
-  - `post_generate`: run commands after generation
+  - Added: hooks, post_generate support
+  - Added: derive_from, derive, pattern, min, max for props
 
 - [ ] **3.3** Implement prop type system
   - `string`: basic text input
