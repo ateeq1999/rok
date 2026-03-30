@@ -293,6 +293,27 @@ fn register_filters(tera: &mut Tera) {
             }
         }
     });
+
+    tera.register_filter("split", |value: &Value, args: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let delimiter = args.get("0").and_then(|v| v.as_str()).unwrap_or(",");
+        let result: Vec<Value> = s
+            .split(delimiter)
+            .map(|part| Value::String(part.to_string()))
+            .collect();
+        Ok(Value::Array(result))
+    });
+
+    tera.register_filter("join", |value: &Value, args: &HashMap<String, Value>| {
+        let arr = value.as_array().cloned().unwrap_or_default();
+        let separator = args.get("0").and_then(|v| v.as_str()).unwrap_or(",");
+        let result: String = arr
+            .iter()
+            .map(|v| v.as_str().unwrap_or(""))
+            .collect::<Vec<_>>()
+            .join(separator);
+        Ok(Value::String(result))
+    });
 }
 
 fn is_vowel(c: char) -> bool {

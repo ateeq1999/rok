@@ -61,11 +61,11 @@ When completing a task, update the todo.md:
   - `array`: JSON array or comma-separated validation
   - Added: validate_prop function for all types
 
-- [ ] **3.4** Build template syntax parser (Tera-based)
+- [x] **3.4** Build template syntax parser (Tera-based) (2026-03-30)
   - Basic slot: `{{prop_name}}`
   - Derived transforms: `{{prop_name | pluralize}}`, `{{prop_name | camelcase}}`, etc.
   - Conditional block: `{% if prop %}...{% endif %}`
-  - Each block: `{% for item in array_prop %}...{% endfor %}`
+  - Each block: `{% for item in array_prop %}...{% endfor %}` (requires JSON arrays in vars)
 
 ### Phase 2: Template CLI Commands
 
