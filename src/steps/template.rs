@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
-use tera::Tera;
+use tera::{Tera, Value};
 
 pub fn run(
     name: &str,
@@ -41,6 +41,8 @@ pub fn run(
     }
 
     let mut tera = Tera::default();
+    register_filters(&mut tera);
+
     let rendered = tera
         .render_str(
             &template_content,
@@ -156,4 +158,135 @@ describe('{{name}}', () => {
         .to_string(),
         _ => String::new(),
     }
+}
+
+fn register_filters(tera: &mut Tera) {
+    tera.register_filter("camelcase", |value: &Value, _: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let words: Vec<&str> = s
+            .split(|c: char| !c.is_alphanumeric())
+            .filter(|w| !w.is_empty())
+            .collect();
+        let mut result = String::new();
+        for (i, word) in words.iter().enumerate() {
+            if i == 0 {
+                result.push_str(&word.to_lowercase());
+            } else {
+                let mut chars = word.chars();
+                if let Some(first) = chars.next() {
+                    result.push(first.to_uppercase().next().unwrap_or(first));
+                    result.extend(chars.flat_map(|c| c.to_lowercase()));
+                }
+            }
+        }
+        Ok(Value::String(result))
+    });
+
+    tera.register_filter("snakecase", |value: &Value, _: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let mut result = String::new();
+        for (i, c) in s.chars().enumerate() {
+            if c.is_uppercase() && i > 0 {
+                result.push('_');
+            }
+            result.push(c.to_lowercase().next().unwrap_or(c));
+        }
+        result = result.split_whitespace().collect::<Vec<_>>().join("_");
+        Ok(Value::String(result))
+    });
+
+    tera.register_filter("kebabcase", |value: &Value, _: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let mut result = String::new();
+        for (i, c) in s.chars().enumerate() {
+            if c.is_uppercase() && i > 0 {
+                result.push('-');
+            }
+            result.push(c.to_lowercase().next().unwrap_or(c));
+        }
+        result = result.split_whitespace().collect::<Vec<_>>().join("-");
+        Ok(Value::String(result))
+    });
+
+    tera.register_filter("pascalcase", |value: &Value, _: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let words: Vec<&str> = s
+            .split(|c: char| !c.is_alphanumeric())
+            .filter(|w| !w.is_empty())
+            .collect();
+        let mut result = String::new();
+        for word in words {
+            let mut chars = word.chars();
+            if let Some(first) = chars.next() {
+                result.push(first.to_uppercase().next().unwrap_or(first));
+                result.extend(chars.flat_map(|c| c.to_lowercase()));
+            }
+        }
+        Ok(Value::String(result))
+    });
+
+    tera.register_filter("pluralize", |value: &Value, _: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let plural = if s.ends_with("s")
+            || s.ends_with("x")
+            || s.ends_with("z")
+            || s.ends_with("ch")
+            || s.ends_with("sh")
+        {
+            format!("{}es", s)
+        } else if s.ends_with("y")
+            && s.len() > 1
+            && !is_vowel(s.chars().nth(s.len() - 2).unwrap_or('a'))
+        {
+            format!("{}ies", &s[..s.len() - 1])
+        } else {
+            format!("{}s", s)
+        };
+        Ok(Value::String(plural))
+    });
+
+    tera.register_filter(
+        "singularize",
+        |value: &Value, _: &HashMap<String, Value>| {
+            let s = value.as_str().unwrap_or("");
+            let singular = if s.ends_with("ies") {
+                format!("{}y", &s[..s.len() - 3])
+            } else if s.ends_with("es") && !s.ends_with("ss") {
+                format!("{}", &s[..s.len() - 2])
+            } else if s.ends_with("s") && !s.ends_with("ss") {
+                format!("{}", &s[..s.len() - 1])
+            } else {
+                s.to_string()
+            };
+            Ok(Value::String(singular))
+        },
+    );
+
+    tera.register_filter("uppercase", |value: &Value, _: &HashMap<String, Value>| {
+        Ok(Value::String(value.as_str().unwrap_or("").to_uppercase()))
+    });
+
+    tera.register_filter("lowercase", |value: &Value, _: &HashMap<String, Value>| {
+        Ok(Value::String(value.as_str().unwrap_or("").to_lowercase()))
+    });
+
+    tera.register_filter("capitalize", |value: &Value, _: &HashMap<String, Value>| {
+        let s = value.as_str().unwrap_or("");
+        let mut chars = s.chars();
+        match chars.next() {
+            None => Ok(Value::String(String::new())),
+            Some(first) => {
+                let rest: String = chars.flat_map(|c| c.to_lowercase()).collect();
+                Ok(Value::String(format!(
+                    "{}{}",
+                    first.to_uppercase().next().unwrap_or(first),
+                    rest
+                )))
+            }
+        }
+    });
+}
+
+fn is_vowel(c: char) -> bool {
+    matches!(c, 'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U')
 }
