@@ -303,13 +303,16 @@ v1.0.0 - <date> - Initial release
 
 ### Current Version
 ```
-v2.0.0 (commit 016267d)
+v0.3.0 (commit e87d7b8)
 ```
 
-### Next Priority
-1. Template discovery system (3.1)
-2. Template schema definition (3.2)
-3. Prop type system (3.3)
+### Scripts Added
+- `scripts/publish.sh` - Publish to crates.io and GitHub
+- `scripts/install.sh` - Install locally
+- `scripts/dev.sh` - Development helper (build, test, clippy, fmt)
+
+### Files Added
+- `AGENT.md` - Documentation for AI agents
 
 ### Testing Commands
 
