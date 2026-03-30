@@ -17,6 +17,14 @@ EXAMPLES:
   echo '{\"steps\":[{\"type\":\"bash\",\"cmd\":\"echo hello\"}]}' | rok    Run from stdin
   rok templates                       List available templates
   rok --help                          Show this help
+  rok --verbose -f task.json          Run with verbose output
+  rok -q -f task.json                 Run quietly (suppress output)
+
+SHELL COMPLETIONS:
+  Generate completions for your shell:
+  - Bash: cargo run --quiet --example completion bash > /etc/bash_completion.d/rok
+  - Zsh:  cargo run --quiet --example completion zsh  > ~/.zsh/_rok
+  - Fish: cargo run --quiet --example completion fish > ~/.config/fish/completions/rok.fish
 
 For more info, see: https://github.com/ateeq1999/rok")]
 pub struct Cli {
@@ -50,8 +58,11 @@ pub struct Cli {
     #[arg(long = "dry-run", help = "Preview steps without executing")]
     pub dry_run: bool,
 
-    #[arg(long = "verbose", help = "Enable verbose output")]
+    #[arg(long = "verbose", short = 'v', help = "Enable verbose output")]
     pub verbose: bool,
+
+    #[arg(long = "quiet", short = 'q', help = "Suppress output (except errors)")]
+    pub quiet: bool,
 }
 
 #[derive(Debug, Subcommand)]

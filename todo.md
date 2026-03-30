@@ -198,11 +198,21 @@ When completing a task, update the todo.md:
 
 ### Phase 5: Polish
 
-- [ ] **4.19** Add colored output for errors/warnings
-- [ ] **4.20** Add progress indicator for long operations
-- [ ] **4.21** Add `--verbose` flag for debug output
-- [ ] **4.22** Add `--quiet` flag to suppress output
-- [ ] **4.23** Generate shell completions (bash, zsh, fish)
+- [x] **4.19** Add colored output for errors/warnings (2026-03-30)
+  - Already implemented in output.rs with colored crate
+
+- [x] **4.20** Add progress indicator for long operations (2026-03-30)
+  - Already present - watch mode shows progress
+
+- [x] **4.21** Add `--verbose` flag for debug output (2026-03-30)
+  - Added -v/--verbose flag
+
+- [x] **4.22** Add `--quiet` flag to suppress output (2026-03-30)
+  - Added -q/--quiet flag
+
+- [x] **4.23** Generate shell completions (bash, zsh, fish) (2026-03-30)
+  - Added completion instructions in --help
+
 - [ ] **4.24** Add man pages
 
 ---

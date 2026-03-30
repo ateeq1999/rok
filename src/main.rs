@@ -436,8 +436,19 @@ fn main() {
 
     let formatted = format_output(&output, &cli.output);
 
-    if !formatted.is_empty() {
+    if cli.quiet {
+        if output.status != "ok" {
+            eprintln!("Error: {} steps failed", output.steps_failed);
+        }
+    } else if !formatted.is_empty() {
         println!("{}", formatted);
+    }
+
+    if cli.verbose {
+        eprintln!(
+            "[verbose] Execution completed: {} ok, {} failed in {}ms",
+            output.steps_ok, output.steps_failed, output.duration_ms
+        );
     }
 
     let exit_code = match output.status.as_str() {

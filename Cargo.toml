@@ -1,6 +1,6 @@
 [package]
 name = "rok-cli"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 description = "Run One, Know All - Execute multi-step tasks from JSON"
 readme = "README.md"
