@@ -31,17 +31,18 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
 
 ### Phase 2: Context Optimization
 
-- [ ] **5.5** Selective File Loading
+- [x] **5.5** Selective File Loading (2026-03-31)
   - Only load relevant files (by imports, exports, git diff)
   - Filter by file type, directory, patterns
-  
+  - Added filter_imports, filter_exports, since to read step
+
 - [ ] **5.6** Incremental Mode
   - Only process files changed since last run
   - Track state between executions
-  
-- [ ] **5.7** Context Compression
+
+- [x] **5.7** Context Compression (2026-03-31)
   - Summarize large files before passing to agent
-  - Extract key functions/classes
+  - Extract key functions/classes (already available via summarize step)
 
 ### Phase 3: Agent Workflow
 

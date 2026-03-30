@@ -215,9 +215,21 @@ impl Runner {
                 result.index = index;
                 result
             }
-            Step::Read { path, .. } => {
+            Step::Read {
+                path,
+                filter_imports,
+                filter_exports,
+                since,
+                ..
+            } => {
                 let path_with_env = refs::substitute_env_vars(path);
-                let mut result = crate::steps::read::run(&path_with_env, &self.config.cwd);
+                let mut result = crate::steps::read::run(
+                    &path_with_env,
+                    filter_imports.as_deref(),
+                    filter_exports.as_deref(),
+                    since.as_deref(),
+                    &self.config.cwd,
+                );
                 result.index = index;
                 result
             }
@@ -666,6 +678,9 @@ impl Runner {
                     path,
                     id,
                     depends_on,
+                    filter_imports,
+                    filter_exports,
+                    since,
                     ..
                 } => Step::Read {
                     id: id.clone(),
@@ -673,6 +688,9 @@ impl Runner {
                     path: refs::substitute_vars(path, var, val),
                     max_bytes: None,
                     encoding: None,
+                    filter_imports: filter_imports.clone(),
+                    filter_exports: filter_exports.clone(),
+                    since: since.clone(),
                 },
                 Step::Write {
                     path,

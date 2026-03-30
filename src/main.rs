@@ -461,7 +461,25 @@ fn main() {
         for (i, step) in payload.steps.iter().enumerate() {
             let step_str = match step {
                 schema::Step::Bash { cmd, .. } => format!("  {}: bash {}", i, cmd),
-                schema::Step::Read { path, .. } => format!("  {}: read {}", i, path),
+                schema::Step::Read {
+                    path,
+                    filter_imports,
+                    filter_exports,
+                    since,
+                    ..
+                } => {
+                    let mut s = format!("  {}: read {}", i, path);
+                    if let Some(fi) = filter_imports {
+                        s.push_str(&format!(" import:{}", fi));
+                    }
+                    if let Some(fe) = filter_exports {
+                        s.push_str(&format!(" export:{}", fe));
+                    }
+                    if let Some(since_time) = since {
+                        s.push_str(&format!(" since:{}", since_time));
+                    }
+                    s
+                }
                 schema::Step::Write { path, .. } => format!("  {}: write {}", i, path),
                 schema::Step::Patch { path, .. } => format!("  {}: patch {}", i, path),
                 schema::Step::Mv { from, to, .. } => format!("  {}: mv {} → {}", i, from, to),

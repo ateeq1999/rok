@@ -70,8 +70,21 @@ fn format_step_type(result: &crate::schema::StepResult) -> String {
             }
             s
         }
-        Read { path, files, .. } => {
-            format!("read: {} → {} files", path.bold(), files.len())
+        Read {
+            path,
+            files,
+            files_filtered,
+            filter_reason,
+            ..
+        } => {
+            let mut s = format!("read: {} → {} files", path.bold(), files.len());
+            if *files_filtered > 0 {
+                s.push_str(&format!(" ({} filtered)", files_filtered));
+            }
+            if let Some(ref reason) = filter_reason {
+                s.push_str(&format!(" - {}", reason));
+            }
+            s
         }
         Write { path, .. } => {
             format!("write: {}", path.bold())

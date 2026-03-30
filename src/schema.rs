@@ -72,6 +72,12 @@ pub enum Step {
         max_bytes: Option<usize>,
         #[serde(default)]
         encoding: Option<String>,
+        #[serde(default, alias = "filter_imports")]
+        filter_imports: Option<String>,
+        #[serde(default, alias = "filter_exports")]
+        filter_exports: Option<String>,
+        #[serde(default)]
+        since: Option<String>,
     },
     Write {
         #[serde(default)]
@@ -570,6 +576,8 @@ pub enum StepTypeResult {
     Read {
         path: String,
         files: Vec<FileContent>,
+        files_filtered: usize,
+        filter_reason: Option<String>,
     },
     Write {
         path: String,
