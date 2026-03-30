@@ -402,3 +402,95 @@ impl TemplateDiscovery {
 pub fn list_templates(cwd: &Path) -> Vec<TemplateInfo> {
     TemplateDiscovery::discover(cwd)
 }
+
+pub fn validate_prop(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
+    match prop_def.prop_type.as_str() {
+        "string" => validate_string(prop_def, value),
+        "enum" => validate_enum(prop_def, value),
+        "boolean" => validate_boolean(prop_def, value),
+        "path" => validate_path(prop_def, value),
+        "array" => validate_array(prop_def, value),
+        _ => Err(format!("Unknown prop type: {}", prop_def.prop_type)),
+    }
+}
+
+fn validate_string(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
+    if prop_def.required && value.is_empty() {
+        return Err(format!("Required prop is empty"));
+    }
+
+    if let Some(pattern) = &prop_def.pattern {
+        let re = regex::Regex::new(pattern);
+        if let Ok(re) = re {
+            if !re.is_match(value) {
+                return Err(format!("Value does not match pattern: {}", pattern));
+            }
+        }
+    }
+
+    if let Some(min) = prop_def.min {
+        if value.len() < min as usize {
+            return Err(format!("Value must be at least {} characters", min));
+        }
+    }
+
+    if let Some(max) = prop_def.max {
+        if value.len() > max as usize {
+            return Err(format!("Value must be at most {} characters", max));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_enum(prop_def: &PropDefinition, value: &str) -> Result<(), String> {
+    if prop_def.required && value.is_empty() {
+        return Err("Required prop is empty".to_string());
+    }
+
+    if let Some(values) = &prop_def.values {
+        if !values.contains(&value.to_string()) {
+            return Err(format!("Value must be one of: {}", values.join(", ")));
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_boolean(_prop_def: &PropDefinition, value: &str) -> Result<(), String> {
+    if value.is_empty() {
+        return Ok(());
+    }
+
+    let lower = value.to_lowercase();
+    if !["true", "false", "1", "0", "yes", "no"].contains(&lower.as_str()) {
+        return Err("Boolean value must be true/false or yes/no".to_string());
+    }
+
+    Ok(())
+}
+
+fn validate_path(_prop_def: &PropDefinition, value: &str) -> Result<(), String> {
+    if value.is_empty() {
+        return Ok(());
+    }
+
+    let path = std::path::Path::new(value);
+    if path.is_absolute() {
+        return Err("Path should be relative".to_string());
+    }
+
+    Ok(())
+}
+
+fn validate_array(_prop_def: &PropDefinition, value: &str) -> Result<(), String> {
+    if value.is_empty() {
+        return Ok(());
+    }
+
+    if !value.starts_with('[') && !value.contains(',') {
+        return Err("Array value must be JSON array or comma-separated".to_string());
+    }
+
+    Ok(())
+}

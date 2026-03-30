@@ -53,12 +53,13 @@ When completing a task, update the todo.md:
   - Added: hooks, post_generate support
   - Added: derive_from, derive, pattern, min, max for props
 
-- [ ] **3.3** Implement prop type system
-  - `string`: basic text input
-  - `enum`: predefined values
-  - `boolean`: true/false toggle
-  - `path`: file/directory path
-  - `array`: list of items
+- [x] **3.3** Implement prop type system (2026-03-30)
+  - `string`: basic text input with pattern, min, max validation
+  - `enum`: predefined values validation
+  - `boolean`: true/false toggle validation
+  - `path`: relative path validation
+  - `array`: JSON array or comma-separated validation
+  - Added: validate_prop function for all types
 
 - [ ] **3.4** Build template syntax parser (Tera-based)
   - Basic slot: `{{prop_name}}`
