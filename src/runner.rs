@@ -73,27 +73,27 @@ impl Runner {
 
     fn execute_step(&self, step: &Step, index: usize, prev_results: &[StepResult]) -> StepResult {
         match step {
-            Step::Bash { cmd } => {
+            Step::Bash { cmd, .. } => {
                 let mut result = crate::steps::bash::run(cmd, &self.config.cwd, &self.config.env);
                 result.index = index;
                 result
             }
-            Step::Read { path } => {
+            Step::Read { path, .. } => {
                 let mut result = crate::steps::read::run(path, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Write { path, content } => {
+            Step::Write { path, content, .. } => {
                 let mut result = crate::steps::write::run(path, content, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Patch { path, edits } => {
+            Step::Patch { path, edits, .. } => {
                 let mut result = crate::steps::patch::run(path, edits, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Mv { from, to } => {
+            Step::Mv { from, to, .. } => {
                 let mut result = crate::steps::mv::run(from, to, &self.config.cwd);
                 result.index = index;
                 result
@@ -102,17 +102,20 @@ impl Runner {
                 from,
                 to,
                 recursive,
+                ..
             } => {
                 let mut result = crate::steps::cp::run(from, to, *recursive, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Rm { path, recursive } => {
+            Step::Rm {
+                path, recursive, ..
+            } => {
                 let mut result = crate::steps::rm::run(path, *recursive, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Mkdir { path } => {
+            Step::Mkdir { path, .. } => {
                 let mut result = crate::steps::mkdir::run(path, &self.config.cwd);
                 result.index = index;
                 result
@@ -122,6 +125,7 @@ impl Runner {
                 path,
                 ext,
                 regex,
+                ..
             } => {
                 let mut result =
                     crate::steps::grep::run(pattern, path, ext, *regex, &self.config.cwd);
@@ -134,6 +138,7 @@ impl Runner {
                 path,
                 ext,
                 regex,
+                ..
             } => {
                 let mut result = crate::steps::replace::run(
                     pattern,
@@ -151,28 +156,29 @@ impl Runner {
                 depth,
                 include,
                 output,
+                ..
             } => {
                 let mut result =
                     crate::steps::scan::run(path, *depth, include, output, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Summarize { path, focus } => {
+            Step::Summarize { path, focus, .. } => {
                 let mut result = crate::steps::summarize::run(path, focus, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Extract { path, pick } => {
+            Step::Extract { path, pick, .. } => {
                 let mut result = crate::steps::extract::run(path, pick, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Diff { a, b, format } => {
+            Step::Diff { a, b, format, .. } => {
                 let mut result = crate::steps::diff::run(a, b, format, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Lint { path, tool } => {
+            Step::Lint { path, tool, .. } => {
                 let mut result = crate::steps::lint::run(path, tool, &self.config.cwd);
                 result.index = index;
                 result
@@ -183,6 +189,7 @@ impl Runner {
                 source,
                 output,
                 vars,
+                ..
             } => {
                 let mut result = crate::steps::template::run(
                     name,
@@ -195,17 +202,20 @@ impl Runner {
                 result.index = index;
                 result
             }
-            Step::Snapshot { path, id } => {
-                let mut result = crate::steps::snapshot::snapshot(path, id, &self.config.cwd);
+            Step::Snapshot {
+                path, snapshot_id, ..
+            } => {
+                let mut result =
+                    crate::steps::snapshot::snapshot(path, snapshot_id, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Restore { id } => {
-                let mut result = crate::steps::snapshot::restore(id, &self.config.cwd);
+            Step::Restore { snapshot_id, .. } => {
+                let mut result = crate::steps::snapshot::restore(snapshot_id, &self.config.cwd);
                 result.index = index;
                 result
             }
-            Step::Git { op, args } => {
+            Step::Git { op, args, .. } => {
                 let mut result = crate::steps::git::run(op, args, &self.config.cwd);
                 result.index = index;
                 result
@@ -216,6 +226,7 @@ impl Runner {
                 headers,
                 expect_status,
                 body,
+                ..
             } => {
                 let mut result = crate::steps::http::run(
                     method,
@@ -232,14 +243,16 @@ impl Runner {
                 condition,
                 then,
                 else_,
+                ..
             } => self.run_if(condition, then, else_, index, prev_results),
             Step::Each {
                 over,
                 as_,
                 parallel,
                 step,
+                ..
             } => self.run_each(over, step, as_, *parallel, index, prev_results),
-            Step::Parallel { steps } => self.run_parallel(steps, index, prev_results),
+            Step::Parallel { steps, .. } => self.run_parallel(steps, index, prev_results),
         }
     }
 
@@ -393,21 +406,33 @@ impl Runner {
     fn substitute_step(&self, step: &Step, var_name: &str, value: &str) -> Step {
         fn sub(step: &Step, var: &str, val: &str) -> Step {
             match step {
-                Step::Bash { cmd } => Step::Bash {
+                Step::Bash { cmd, id, .. } => Step::Bash {
+                    id: id.clone(),
                     cmd: refs::substitute_vars(cmd, var, val),
                 },
-                Step::Read { path } => Step::Read {
+                Step::Read { path, id, .. } => Step::Read {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
+                    max_bytes: None,
+                    encoding: None,
                 },
-                Step::Write { path, content } => Step::Write {
+                Step::Write {
+                    path, content, id, ..
+                } => Step::Write {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     content: refs::substitute_vars(content, var, val),
+                    create_dirs: true,
                 },
-                Step::Patch { path, edits } => Step::Patch {
+                Step::Patch {
+                    path, edits, id, ..
+                } => Step::Patch {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     edits: edits.clone(),
                 },
-                Step::Mv { from, to } => Step::Mv {
+                Step::Mv { from, to, id, .. } => Step::Mv {
+                    id: id.clone(),
                     from: refs::substitute_vars(from, var, val),
                     to: refs::substitute_vars(to, var, val),
                 },
@@ -415,16 +440,26 @@ impl Runner {
                     from,
                     to,
                     recursive,
+                    id,
+                    ..
                 } => Step::Cp {
+                    id: id.clone(),
                     from: refs::substitute_vars(from, var, val),
                     to: refs::substitute_vars(to, var, val),
                     recursive: *recursive,
                 },
-                Step::Rm { path, recursive } => Step::Rm {
+                Step::Rm {
+                    path,
+                    recursive,
+                    id,
+                    ..
+                } => Step::Rm {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     recursive: *recursive,
                 },
-                Step::Mkdir { path } => Step::Mkdir {
+                Step::Mkdir { path, id, .. } => Step::Mkdir {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                 },
                 Step::Grep {
@@ -432,11 +467,15 @@ impl Runner {
                     path,
                     ext,
                     regex,
+                    id,
+                    ..
                 } => Step::Grep {
+                    id: id.clone(),
                     pattern: refs::substitute_vars(pattern, var, val),
                     path: refs::substitute_vars(path, var, val),
                     ext: ext.clone(),
                     regex: *regex,
+                    context_lines: None,
                 },
                 Step::Replace {
                     pattern,
@@ -444,38 +483,53 @@ impl Runner {
                     path,
                     ext,
                     regex,
+                    id,
+                    ..
                 } => Step::Replace {
+                    id: id.clone(),
                     pattern: refs::substitute_vars(pattern, var, val),
                     replacement: refs::substitute_vars(replacement, var, val),
                     path: refs::substitute_vars(path, var, val),
                     ext: ext.clone(),
                     regex: *regex,
+                    case_sensitive: true,
                 },
                 Step::Scan {
                     path,
                     depth,
                     include,
                     output,
+                    id,
+                    ..
                 } => Step::Scan {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     depth: *depth,
                     include: include.clone(),
                     output: output.clone(),
                 },
-                Step::Summarize { path, focus } => Step::Summarize {
+                Step::Summarize {
+                    path, focus, id, ..
+                } => Step::Summarize {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     focus: focus.clone(),
                 },
-                Step::Extract { path, pick } => Step::Extract {
+                Step::Extract { path, pick, id, .. } => Step::Extract {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     pick: pick.clone(),
                 },
-                Step::Diff { a, b, format } => Step::Diff {
+                Step::Diff {
+                    a, b, format, id, ..
+                } => Step::Diff {
+                    id: id.clone(),
                     a: refs::substitute_vars(a, var, val),
                     b: refs::substitute_vars(b, var, val),
                     format: format.clone(),
                 },
-                Step::Lint { path, tool } => Step::Lint {
+                Step::Lint { path, tool, id, .. } => Step::Lint {
+                    id: id.clone(),
                     path: refs::substitute_vars(path, var, val),
                     tool: tool.clone(),
                 },
@@ -485,21 +539,34 @@ impl Runner {
                     source,
                     output,
                     vars,
+                    id,
+                    ..
                 } => Step::Template {
+                    id: id.clone(),
                     name: name.clone(),
                     builtin: builtin.clone(),
                     source: source.clone(),
                     output: refs::substitute_vars(output, var, val),
                     vars: vars.clone(),
                 },
-                Step::Snapshot { path, id } => Step::Snapshot {
-                    path: refs::substitute_vars(path, var, val),
+                Step::Snapshot {
+                    path,
+                    snapshot_id,
+                    id,
+                    ..
+                } => Step::Snapshot {
                     id: id.clone(),
+                    path: refs::substitute_vars(path, var, val),
+                    snapshot_id: snapshot_id.clone(),
                 },
-                Step::Restore { id } => Step::Restore {
-                    id: refs::substitute_vars(id, var, val),
+                Step::Restore {
+                    snapshot_id, id, ..
+                } => Step::Restore {
+                    id: id.clone(),
+                    snapshot_id: refs::substitute_vars(snapshot_id, var, val),
                 },
-                Step::Git { op, args } => Step::Git {
+                Step::Git { op, args, id, .. } => Step::Git {
+                    id: id.clone(),
                     op: op.clone(),
                     args: args
                         .iter()
@@ -512,7 +579,10 @@ impl Runner {
                     headers,
                     expect_status,
                     body,
+                    id,
+                    ..
                 } => Step::Http {
+                    id: id.clone(),
                     method: method.clone(),
                     url: refs::substitute_vars(url, var, val),
                     headers: headers.clone(),
@@ -523,7 +593,10 @@ impl Runner {
                     condition,
                     then,
                     else_,
+                    id,
+                    ..
                 } => Step::If {
+                    id: id.clone(),
                     condition: condition.clone(),
                     then: then.iter().map(|s| sub(s, var, val)).collect(),
                     else_: else_.iter().map(|s| sub(s, var, val)).collect(),
@@ -533,13 +606,17 @@ impl Runner {
                     as_,
                     parallel,
                     step,
+                    id,
+                    ..
                 } => Step::Each {
+                    id: id.clone(),
                     over: over.clone(),
                     as_: as_.clone(),
                     parallel: *parallel,
                     step: Box::new(sub(step, var, val)),
                 },
-                Step::Parallel { steps } => Step::Parallel {
+                Step::Parallel { steps, id, .. } => Step::Parallel {
+                    id: id.clone(),
                     steps: steps.iter().map(|s| sub(s, var, val)).collect(),
                 },
             }

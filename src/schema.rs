@@ -41,46 +41,74 @@ impl Default for Options {
 #[serde(rename_all = "camelCase", tag = "type")]
 pub enum Step {
     Bash {
+        #[serde(default)]
+        id: String,
         cmd: String,
     },
     Read {
+        #[serde(default)]
+        id: String,
         path: String,
+        #[serde(default)]
+        max_bytes: Option<usize>,
+        #[serde(default)]
+        encoding: Option<String>,
     },
     Write {
+        #[serde(default)]
+        id: String,
         path: String,
         content: String,
+        #[serde(default = "default_true")]
+        create_dirs: bool,
     },
     Patch {
+        #[serde(default)]
+        id: String,
         path: String,
         edits: Vec<PatchEdit>,
     },
     Mv {
+        #[serde(default)]
+        id: String,
         from: String,
         to: String,
     },
     Cp {
+        #[serde(default)]
+        id: String,
         from: String,
         to: String,
         #[serde(default)]
         recursive: bool,
     },
     Rm {
+        #[serde(default)]
+        id: String,
         path: String,
         #[serde(default)]
         recursive: bool,
     },
     Mkdir {
+        #[serde(default)]
+        id: String,
         path: String,
     },
     Grep {
+        #[serde(default)]
+        id: String,
         pattern: String,
         path: String,
         #[serde(default)]
         ext: Vec<String>,
         #[serde(default = "default_regex")]
         regex: bool,
+        #[serde(default)]
+        context_lines: Option<usize>,
     },
     Replace {
+        #[serde(default)]
+        id: String,
         pattern: String,
         replacement: String,
         path: String,
@@ -88,8 +116,12 @@ pub enum Step {
         ext: Vec<String>,
         #[serde(default = "default_regex")]
         regex: bool,
+        #[serde(default = "default_true")]
+        case_sensitive: bool,
     },
     Scan {
+        #[serde(default)]
+        id: String,
         path: String,
         #[serde(default = "default_depth")]
         depth: usize,
@@ -99,27 +131,37 @@ pub enum Step {
         output: ScanOutput,
     },
     Summarize {
+        #[serde(default)]
+        id: String,
         path: String,
         #[serde(default)]
         focus: String,
     },
     Extract {
+        #[serde(default)]
+        id: String,
         path: String,
         #[serde(default)]
         pick: Vec<String>,
     },
     Diff {
+        #[serde(default)]
+        id: String,
         a: String,
         b: String,
         #[serde(default = "default_diff_format")]
         format: DiffFormat,
     },
     Lint {
+        #[serde(default)]
+        id: String,
         path: String,
         #[serde(default = "default_lint_tool")]
         tool: LintTool,
     },
     Template {
+        #[serde(default)]
+        id: String,
         #[serde(default)]
         name: String,
         #[serde(default)]
@@ -131,18 +173,26 @@ pub enum Step {
         vars: HashMap<String, String>,
     },
     Snapshot {
-        path: String,
+        #[serde(default)]
         id: String,
+        path: String,
+        snapshot_id: String,
     },
     Restore {
+        #[serde(default)]
         id: String,
+        snapshot_id: String,
     },
     Git {
+        #[serde(default)]
+        id: String,
         op: GitOp,
         #[serde(default)]
         args: Vec<String>,
     },
     Http {
+        #[serde(default)]
+        id: String,
         method: String,
         url: String,
         #[serde(default)]
@@ -153,12 +203,16 @@ pub enum Step {
         body: Option<String>,
     },
     If {
+        #[serde(default)]
+        id: String,
         condition: Condition,
         then: Vec<Step>,
         #[serde(default)]
         else_: Vec<Step>,
     },
     Each {
+        #[serde(default)]
+        id: String,
         over: EachOver,
         #[serde(default = "default_each_as", rename = "as")]
         as_: String,
@@ -167,12 +221,18 @@ pub enum Step {
         step: Box<Step>,
     },
     Parallel {
+        #[serde(default)]
+        id: String,
         steps: Vec<Step>,
     },
 }
 
 fn default_regex() -> bool {
     false
+}
+
+fn default_true() -> bool {
+    true
 }
 
 fn default_depth() -> usize {
@@ -307,7 +367,17 @@ pub enum Condition {
 #[serde(rename_all = "camelCase")]
 pub struct Payload {
     #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub version: Option<String>,
+    #[serde(default)]
+    pub author: Option<String>,
+    #[serde(default)]
     pub options: Options,
+    #[serde(default)]
+    pub props: HashMap<String, serde_json::Value>,
     pub steps: Vec<Step>,
 }
 

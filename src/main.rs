@@ -93,6 +93,135 @@ fn main() {
         }
     }
 
+    if let Some(cli::Commands::Run { name }) = &cli.command {
+        let task_path = std::path::Path::new(".rok/tasks").join(format!("{}.json", name));
+        if !task_path.exists() {
+            eprintln!("❌ Task not found: {}", name);
+            std::process::exit(1);
+        }
+        let task_json = std::fs::read_to_string(&task_path).expect("Failed to read task file");
+        let task_payload: schema::Payload =
+            serde_json::from_str(&task_json).expect("Failed to parse task file");
+
+        let config = match Config::from_options(task_payload.options.clone()) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Error: {}", e.message);
+                std::process::exit(i32::from(e.code));
+            }
+        };
+
+        let runner = Runner::new(config, task_payload);
+        let result = runner.run();
+        let output = format_output(&result, &cli.output);
+        println!("{}", output);
+        std::process::exit(0);
+    }
+
+    if let Some(cli::Commands::Save { name, description }) = &cli.command {
+        let payload = match cli.parse_payload() {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("Error: {}", e.message);
+                std::process::exit(i32::from(e.code));
+            }
+        };
+
+        let mut task_payload = payload;
+        if task_payload.name.is_none() {
+            task_payload.name = Some(name.clone());
+        }
+        if let Some(desc) = description {
+            task_payload.description = Some(desc.clone());
+        }
+
+        let tasks_dir = std::path::Path::new(".rok/tasks");
+        std::fs::create_dir_all(tasks_dir).expect("Failed to create tasks directory");
+
+        let task_path = tasks_dir.join(format!("{}.json", name));
+        let task_json =
+            serde_json::to_string_pretty(&task_payload).expect("Failed to serialize task");
+        std::fs::write(&task_path, task_json).expect("Failed to write task file");
+
+        println!("✅ Task saved: {}", name);
+        std::process::exit(0);
+    }
+
+    if let Some(cli::Commands::List) = cli.command {
+        let tasks_dir = std::path::Path::new(".rok/tasks");
+        if !tasks_dir.exists() {
+            println!("No saved tasks found.");
+            std::process::exit(0);
+        }
+
+        let mut tasks: Vec<serde_json::Value> = Vec::new();
+        if let Ok(entries) = std::fs::read_dir(tasks_dir) {
+            for entry in entries.flatten() {
+                if let Some(ext) = entry.path().extension() {
+                    if ext == "json" {
+                        if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                            if let Ok(task) = serde_json::from_str::<schema::Payload>(&content) {
+                                tasks.push(serde_json::json!({
+                                    "name": task.name.unwrap_or_else(|| entry.path().file_stem().unwrap_or_default().to_string_lossy().to_string()),
+                                    "description": task.description.unwrap_or_default(),
+                                    "version": task.version.unwrap_or_default(),
+                                    "author": task.author.unwrap_or_default(),
+                                    "steps": task.steps.len()
+                                }));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if tasks.is_empty() {
+            println!("No saved tasks found.");
+        } else {
+            println!("Saved tasks:");
+            for task in &tasks {
+                println!(
+                    "  {} - {} ({} steps)",
+                    task["name"],
+                    if task["description"].as_str().unwrap_or("").is_empty() {
+                        "no description"
+                    } else {
+                        task["description"].as_str().unwrap()
+                    },
+                    task["steps"]
+                );
+            }
+        }
+        std::process::exit(0);
+    }
+
+    #[allow(clippy::zombie_processes)]
+    if let Some(cli::Commands::Edit { name }) = &cli.command {
+        let task_path = std::path::Path::new(".rok/tasks").join(format!("{}.json", name));
+        if !task_path.exists() {
+            eprintln!("❌ Task not found: {}", name);
+            std::process::exit(1);
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            std::process::Command::new("notepad")
+                .arg(&task_path)
+                .spawn()
+                .expect("Failed to open editor");
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vi".to_string());
+            std::process::Command::new(editor)
+                .arg(&task_path)
+                .spawn()
+                .expect("Failed to open editor");
+        }
+
+        std::process::exit(0);
+    }
+
     fn read_input() -> String {
         use std::io::Write;
         let mut input = String::new();
@@ -121,14 +250,14 @@ fn main() {
         println!("Dry run - would execute {} steps:", payload.steps.len());
         for (i, step) in payload.steps.iter().enumerate() {
             let step_str = match step {
-                schema::Step::Bash { cmd } => format!("  {}: bash {}", i, cmd),
-                schema::Step::Read { path } => format!("  {}: read {}", i, path),
+                schema::Step::Bash { cmd, .. } => format!("  {}: bash {}", i, cmd),
+                schema::Step::Read { path, .. } => format!("  {}: read {}", i, path),
                 schema::Step::Write { path, .. } => format!("  {}: write {}", i, path),
                 schema::Step::Patch { path, .. } => format!("  {}: patch {}", i, path),
-                schema::Step::Mv { from, to } => format!("  {}: mv {} → {}", i, from, to),
+                schema::Step::Mv { from, to, .. } => format!("  {}: mv {} → {}", i, from, to),
                 schema::Step::Cp { from, to, .. } => format!("  {}: cp {} → {}", i, from, to),
                 schema::Step::Rm { path, .. } => format!("  {}: rm {}", i, path),
-                schema::Step::Mkdir { path } => format!("  {}: mkdir {}", i, path),
+                schema::Step::Mkdir { path, .. } => format!("  {}: mkdir {}", i, path),
                 schema::Step::Grep { pattern, path, .. } => {
                     format!("  {}: grep {} in {}", i, pattern, path)
                 }
@@ -153,17 +282,21 @@ fn main() {
                         output
                     )
                 }
-                schema::Step::Snapshot { path, id } => {
-                    format!("  {}: snapshot {} @ {}", i, path, id)
+                schema::Step::Snapshot {
+                    path, snapshot_id, ..
+                } => {
+                    format!("  {}: snapshot {} @ {}", i, path, snapshot_id)
                 }
-                schema::Step::Restore { id } => format!("  {}: restore {}", i, id),
+                schema::Step::Restore { snapshot_id, .. } => {
+                    format!("  {}: restore {}", i, snapshot_id)
+                }
                 schema::Step::Git { op, .. } => format!("  {}: git {:?}", i, op),
                 schema::Step::Http { method, url, .. } => {
                     format!("  {}: http {} {}", i, method, url)
                 }
                 schema::Step::If { condition, .. } => format!("  {}: if {:?}", i, condition),
                 schema::Step::Each { over, .. } => format!("  {}: each over {:?}", i, over),
-                schema::Step::Parallel { steps } => {
+                schema::Step::Parallel { steps, .. } => {
                     format!("  {}: parallel ({} steps)", i, steps.len())
                 }
             };

@@ -70,6 +70,30 @@ pub enum Commands {
         #[arg(help = "Path to template directory or .rok-template.json")]
         path: Option<String>,
     },
+
+    #[command(about = "Run a saved task")]
+    Run {
+        #[arg(help = "Task name")]
+        name: String,
+    },
+
+    #[command(about = "Save current payload as a named task")]
+    Save {
+        #[arg(help = "Task name")]
+        name: String,
+
+        #[arg(short = 'd', long = "description", help = "Task description")]
+        description: Option<String>,
+    },
+
+    #[command(about = "List saved tasks")]
+    List,
+
+    #[command(about = "Edit a saved task")]
+    Edit {
+        #[arg(help = "Task name")]
+        name: String,
+    },
 }
 
 #[derive(Debug, Clone, ValueEnum)]

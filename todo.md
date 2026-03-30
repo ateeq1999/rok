@@ -116,51 +116,51 @@ When completing a task, update the todo.md:
 
 ### Phase 1: Task Files
 
-- [ ] **4.1** Implement `.rok.json` task file support
+- [x] **4.1** Implement `.rok.json` task file support (2026-03-30)
   - Top-level schema: name, description, version, author
   - `options`: cwd, stop_on_error, timeout_ms, dry_run, env
   - `props`: reusable variables
   - `steps`: the actual workflow
 
-- [ ] **4.2** Add `rok save <name>` command
+- [x] **4.2** Add `rok save <name>` command (2026-03-30)
   - Saves current payload as named task
   - Stores in `.rok/tasks/<name>.json`
 
-- [ ] **4.3** Add `rok run <task-name>` command
+- [x] **4.3** Add `rok run <task-name>` command (2026-03-30)
   - Loads and executes saved task
   - Merges with CLI args
 
-- [ ] **4.4** Add `rok list` command
+- [x] **4.4** Add `rok list` command (2026-03-30)
   - Lists saved tasks
   - Shows name, description, last run
 
-- [ ] **4.5** Add `rok edit <task-name>` command
+- [x] **4.5** Add `rok edit <task-name>` command (2026-03-30)
   - Opens task in editor
   - Validates on save
 
 ### Phase 2: Enhanced Step Features
 
-- [ ] **4.6** Add `id` field to all steps
+- [x] **4.6** Add `id` field to all steps (2026-03-30)
   - Referenceable identifier
   - Useful for debugging and logging
 
-- [ ] **4.7** Add `max_bytes` to `read` step
+- [x] **4.7** Add `max_bytes` to `read` step (2026-03-30)
   - Limit file read size
   - Prevents huge file issues
 
-- [ ] **4.8** Add `create_dirs` to `write` step
+- [x] **4.8** Add `create_dirs` to `write` step (2026-03-30)
   - Auto-create parent directories
   - Default: true
 
-- [ ] **4.9** Add `case_sensitive` to `replace` step
+- [x] **4.9** Add `case_sensitive` to `replace` step (2026-03-30)
   - Option for case-insensitive replace
   - Default: true
 
-- [ ] **4.10** Add `context_lines` to `grep` step
+- [x] **4.10** Add `context_lines` to `grep` step (2026-03-30)
   - Include N lines before/after match
   - Default: 0
 
-- [ ] **4.11** Add `encoding` to `read` step
+- [x] **4.11** Add `encoding` to `read` step (2026-03-30)
   - Support different encodings
   - Default: UTF-8
 
