@@ -1,0 +1,11 @@
+{
+  "name": "rok-docs",
+  "version": "1.0.0",
+  "steps": [
+    {
+      "type": "http",
+      "method": "GET",
+      "url": "http://localhost:8080"
+    }
+  ]
+}

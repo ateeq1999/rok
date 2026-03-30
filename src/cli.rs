@@ -139,6 +139,17 @@ pub enum Commands {
         #[arg(help = "Run ID")]
         run_id: Option<String>,
     },
+
+    #[command(about = "Serve documentation website")]
+    Serve {
+        #[arg(
+            short = 'p',
+            long = "port",
+            default_value = "8080",
+            help = "Port to serve on"
+        )]
+        port: String,
+    },
 }
 
 #[derive(Debug, Clone, ValueEnum)]
