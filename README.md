@@ -1,174 +1,255 @@
 # rok - Run One, Know All
 
-An AI coding agent task runner that collapses multi-step operations into a single JSON invocation.
+> Execute multi-step tasks from JSON - the ultimate automation tool for developers and AI agents.
+
+[![Crates.io](https://img.shields.io/crates/v/rok-cli)](https://crates.io/crates/rok-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ateeq1999/rok)
+
+## What is rok?
+
+**rok** is a CLI tool that executes multi-step tasks defined in JSON format. It's designed for:
+- **Developer workflows** - Automate repetitive tasks
+- **AI agents** - Self-contained task execution
+- **CI/CD pipelines** - Complex build and deployment scripts
+- **Self-evolution** - Use rok to improve rok
 
 ## Installation
 
-### From Source
-
 ```bash
-# Clone and build
-git clone https://github.com/ateeq1999/rok.git
+# From crates.io
+cargo install rok-cli
+
+# From source
+git clone https://github.com/ateeq1999/rok
 cd rok
-cargo build --release
-
-# Install globally
 cargo install --path .
+
+# Local development
+cargo install --path . --force
 ```
 
-### Pre-built Binaries
+## Quick Start
 
-Download from [GitHub Releases](https://github.com/ateeq1999/rok/releases).
-
-### Local Development Setup
+### Basic Usage
 
 ```bash
-# Add to PATH temporarily (Windows PowerShell)
-$env:PATH += ";D:\Ateeg\Tools\rok\target\release"
+# Run from file
+rok -f task.json
 
-# Or add permanently (Windows PowerShell)
-[System.Environment]::SetEnvironmentVariable(
-    "PATH",
-    [System.Environment]::GetEnvironmentVariable("PATH","User") + ";D:\Ateeg\Tools\rok\target\release",
-    "User"
-)
+# Run from stdin
+echo '{"steps":[{"type":"bash","cmd":"echo hello"}]}' | rok
 
-# Verify
-rok --version
-rok --help
+# Run from inline JSON
+rok -j '{"steps":[{"type":"bash","cmd":"echo hello"}]}'
 ```
 
-## Usage
-
-```bash
-# JSON inline
-rok --json '{ "steps": [...] }'
-
-# From file
-rok --file ./task.json
-
-# Pipe from stdin
-echo '{ "steps": [...] }' | rok
-
-# Pretty output
-rok --json '...' --output pretty
-
-# Dry run
-rok --json '...' --dry-run
-```
-
-## JSON Payload
+### Example: File Operations
 
 ```json
 {
-  "options": {
-    "cwd": ".",
-    "stopOnError": true,
-    "timeoutMs": 30000,
-    "env": {}
-  },
   "steps": [
-    { "type": "bash", "cmd": "find . -name '*.rs'" },
-    { "type": "read", "path": "./src/**/*.rs" },
-    { "type": "write", "path": "./output.txt", "content": "..." },
-    { "type": "mkdir", "path": "./new-dir" },
-    { "type": "mv", "from": "old", "to": "new" },
-    { "type": "cp", "from": "src", "to": "dest", "recursive": true },
-    { "type": "rm", "path": "./file", "recursive": true },
-    { "type": "grep", "pattern": "TODO", "path": ".", "ext": ["rs", "toml"] },
-    { "type": "replace", "pattern": "foo", "replacement": "bar", "path": ".", "ext": ["rs"] },
+    { "type": "mkdir", "path": "src/components" },
+    { "type": "write", "path": "src/components/Hello.tsx", "content": "export const Hello = () => <div>Hello World</div>" },
+    { "type": "bash", "cmd": "npm run build" }
+  ]
+}
+```
+
+## Core Concepts
+
+### Steps
+
+rok provides 20+ built-in step types:
+
+| Category | Steps |
+|----------|-------|
+| **File Operations** | `read`, `write`, `mv`, `cp`, `rm`, `mkdir`, `patch` |
+| **Search** | `grep`, `scan`, `extract` |
+| **Code Analysis** | `summarize`, `lint`, `diff` |
+| **Templates** | `template` |
+| **Version Control** | `git`, `snapshot`, `restore` |
+| **Network** | `http` |
+| **Control Flow** | `if`, `each`, `parallel` |
+
+### References
+
+Pass data between steps using refs:
+
+```json
+{
+  "steps": [
+    { "type": "scan", "path": "./src", "depth": 2 },
+    { "type": "each", "over": {"ref": 0, "pick": "tree.*"}, "step": { "type": "bash", "cmd": "echo {{item}}" }}
+  ]
+}
+```
+
+### Conditionals
+
+```json
+{
+  "steps": [
+    { "type": "grep", "pattern": "TODO", "path": "./src" },
     {
-      "type": "parallel",
-      "steps": [
-        { "type": "mkdir", "path": "dir1" },
-        { "type": "mkdir", "path": "dir2" }
+      "type": "if",
+      "condition": { "type": "grep_has_results", "ref": 0 },
+      "then": [
+        { "type": "bash", "cmd": "echo Found TODOs!" }
       ]
     }
   ]
 }
 ```
 
-## Output
+## Advanced Features
+
+### Templates
+
+Create reusable templates:
+
+```bash
+rok init-template my-component
+```
+
+Templates support:
+- Custom props with validation
+- Inheritance (`extends` field)
+- Derived transforms (pluralize, camelcase, etc.)
+
+### Task Files
+
+Save and reuse tasks:
+
+```bash
+# Save current payload as a named task
+rok -f task.json save my-task -d "Build the project"
+
+# Run saved task
+rok run my-task
+
+# List all tasks
+rok list
+```
+
+### Environment Variables
+
+Use `{{env.VAR_NAME}}` in any string field:
 
 ```json
 {
-  "status": "ok",
-  "stepsTotal": 5,
-  "stepsOk": 5,
-  "stepsFailed": 0,
-  "durationMs": 150,
-  "results": [...]
+  "steps": [
+    { "type": "bash", "cmd": "echo {{env.USER}}" }
+  ]
 }
 ```
 
-## Template System (v3)
-
-### List Available Templates
-
-```bash
-rok templates
-```
-
-### Use a Template
-
-```bash
-# Use built-in template
-echo '{"steps":[{"type":"template","builtin":"react-component","output":"./Button.tsx","vars":{"name":"Button"}}]}' | rok -f -
-
-# Use custom template
-echo '{"steps":[{"type":"template","name":"my-template","output":"./file.txt","vars":{"name":"value"}}]}' | rok -f -
-```
-
-### Create Custom Templates
-
-Place templates in `.rok/templates/<template-name>/` with a `.rok-template.json` schema file:
+### Timeouts & Retries
 
 ```json
 {
-  "name": "my-template",
-  "description": "My custom template",
-  "version": "1.0.0",
-  "author": "you",
-  "tags": ["custom", "template"],
-  "output": [
-    { "from": "template.txt", "to": "{{name}}.txt" }
-  ],
-  "props": {
-    "name": {
-      "type": "string",
-      "required": true,
-      "description": "The name",
-      "example": "myfile"
+  "steps": [
+    {
+      "type": "bash",
+      "cmd": "make build",
+      "timeout_ms": 60000,
+      "retry": {
+        "count": 3,
+        "delay_ms": 2000,
+        "backoff": true
+      }
     }
-  }
+  ]
 }
 ```
 
-### Template Filters
+### Step Enhancements
 
-Templates support filters for transforming values:
+All steps support:
+- `id` - Referenceable identifier
+- Custom fields per step type (max_bytes, create_dirs, case_sensitive, context_lines, encoding)
 
-```text
-{{ name | camelcase }}   # helloWorld
-{{ name | snakecase }}   # hello_world
-{{ name | kebabcase }}   # hello-world
-{{ name | pascalcase }}  # HelloWorld
-{{ name | pluralize }}   # items
-{{ name | singularize }} # item
-{{ name | uppercase }}   # HELLO
-{{ name | lowercase }}   # hello
-{{ name | capitalize }}  # Hello
+## CLI Commands
+
+```
+rok - AI Agent Task Runner
+
+Commands:
+  templates          List available templates
+  init-template      Create a new template
+  validate-template  Validate a template schema
+  run                Run a saved task
+  save               Save current payload as task
+  list               List saved tasks
+  edit               Edit a saved task
+  watch              Watch files and re-run
+  history            Show execution history
+  replay             Replay a previous run
+
+Options:
+  -f, --file FILE    Path to JSON file
+  -j, --json JSON    Inline JSON payload
+  -o, --output       Output format: json, pretty, silent
+  -v, --verbose      Enable verbose output
+  -q, --quiet        Suppress output
+  --dry-run          Preview without executing
 ```
 
-## Exit Codes
+## Configuration
 
-| Code | Meaning |
-|------|---------|
-| 0 | All steps completed successfully |
-| 1 | One or more steps failed |
-| 2 | Invalid JSON payload |
-| 3 | Startup error |
+### Options
+
+```json
+{
+  "name": "my-task",
+  "description": "Build and deploy",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": true,
+    "timeout_ms": 30000,
+    "env": { "NODE_ENV": "production" }
+  },
+  "props": {
+    "version": "1.0.0"
+  },
+  "steps": []
+}
+```
+
+## Self-Evolution
+
+rok is self-hosting - use it to improve itself:
+
+```bash
+# Generate a new step module
+rok -f - <<'EOF'
+{
+  "steps": [
+    { "type": "template", "builtin": "rust-module", "output": "./src/steps/new_step.rs", "vars": { "name": "new_step" } }
+  ]
+}
+EOF
+```
+
+See [usage.md](usage.md) for more self-evolution patterns.
+
+## Development
+
+```bash
+# Build
+cargo build --release
+
+# Test
+cargo test
+
+# Lint
+cargo clippy -- -D warnings
+
+# Format
+cargo fmt
+```
 
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) for details.

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rok - Run One, Know All</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .nav {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 0;
+            display: block;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nav-section {
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .main {
+            margin-left: 260px;
+            padding: 3rem;
+            max-width: 900px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        code {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-family: 'Fira Code', 'Monaco', monospace;
+        }
+
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-error { background: #fee2e2; color: #991b1b; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            font-weight: 600;
+            background: var(--bg-secondary);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 3rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+        }
+
+        .button {
+            display: inline-block;
+            background: white;
+            color: var(--primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-right: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .button-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .example {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .step-card {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .step-card code {
+            background: var(--primary);
+            color: white;
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .main {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <span class="logo-icon">⚡</span>
+            rok
+        </div>
+        <ul class="nav">
+            <li class="nav-item"><a href="#intro" class="nav-link active">Introduction</a></li>
+            <li class="nav-item"><a href="#install" class="nav-link">Installation</a></li>
+            <li class="nav-item"><a href="#quickstart" class="nav-link">Quick Start</a></li>
+            
+            <li class="nav-section">Core Concepts</li>
+            <li class="nav-item"><a href="#steps" class="nav-link">Steps</a></li>
+            <li class="nav-item"><a href="#refs" class="nav-link">References</a></li>
+            <li class="nav-item"><a href="#conditionals" class="nav-link">Conditionals</a></li>
+            
+            <li class="nav-section">Features</li>
+            <li class="nav-item"><a href="#templates" class="nav-link">Templates</a></li>
+            <li class="nav-item"><a href="#tasks" class="nav-link">Task Files</a></li>
+            <li class="nav-item"><a href="#env" class="nav-link">Environment Variables</a></li>
+            <li class="nav-item"><a href="#timeout" class="nav-link">Timeouts & Retries</a></li>
+            
+            <li class="nav-section">Reference</li>
+            <li class="nav-item"><a href="#cli" class="nav-link">CLI Commands</a></li>
+            <li class="nav-item"><a href="#schema" class="nav-link">JSON Schema</a></li>
+        </ul>
+    </nav>
+
+    <main class="main">
+        <section id="intro">
+            <div class="hero">
+                <h1>rok - Run One, Know All</h1>
+                <p>Execute multi-step tasks from JSON - the ultimate automation tool for developers and AI agents.</p>
+                <div style="margin-top: 1.5rem;">
+                    <a href="#install" class="button button-primary">Get Started</a>
+                    <a href="https://github.com/ateeq1999/rok" class="button">GitHub</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="install">
+            <h2>Installation</h2>
+            <h3>From crates.io</h3>
+            <pre><code>cargo install rok-cli</code></pre>
+            
+            <h3>From Source</h3>
+            <pre><code>git clone https://github.com/ateeq1999/rok
+cd rok
+cargo install --path .</code></pre>
+            
+            <h3>Verify Installation</h3>
+            <pre><code>rok --version</code></pre>
+        </section>
+
+        <section id="quickstart">
+            <h2>Quick Start</h2>
+            <h3>Basic Usage</h3>
+            <pre><code># Run from file
+rok -f task.json
+
+# Run from stdin
+echo '{"steps":[{"type":"bash","cmd":"echo hello"}]}' | rok
+
+# Run from inline JSON
+rok -j '{"steps":[{"type":"bash","cmd":"echo hello"}]}'</code></pre>
+
+            <h3>Example: File Operations</h3>
+            <pre><code>{
+  "steps": [
+    { "type": "mkdir", "path": "src/components" },
+    { "type": "write", "path": "src/components/Hello.tsx", "content": "export const Hello = () => <div>Hello World</div>" },
+    { "type": "bash", "cmd": "npm run build" }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="steps">
+            <h2>Steps</h2>
+            <p>rok provides 20+ built-in step types organized by category:</p>
+            
+            <h3>File Operations</h3>
+            <div class="step-grid">
+                <div class="step-card"><code>read</code> - Read file contents</div>
+                <div class="step-card"><code>write</code> - Write content to file</div>
+                <div class="step-card"><code>mv</code> - Move/rename files</div>
+                <div class="step-card"><code>cp</code> - Copy files</div>
+                <div class="step-card"><code>rm</code> - Remove files</div>
+                <div class="step-card"><code>mkdir</code> - Create directories</div>
+                <div class="step-card"><code>patch</code> - Apply edits to files</div>
+            </div>
+
+            <h3>Search & Analysis</h3>
+            <div class="step-grid">
+                <div class="step-card"><code>grep</code> - Search in files</div>
+                <div class="step-card"><code>scan</code> - Scan directory tree</div>
+                <div class="step-card"><code>extract</code> - Extract data from files</div>
+                <div class="step-card"><code>summarize</code> - Summarize code</div>
+                <div class="step-card"><code>lint</code> - Lint code</div>
+                <div class="step-card"><code>diff</code> - Show differences</div>
+            </div>
+
+            <h3>Other</h3>
+            <div class="step-grid">
+                <div class="step-card"><code>bash</code> - Run shell commands</div>
+                <div class="step-card"><code>template</code> - Render templates</div>
+                <div class="step-card"><code>git</code> - Git operations</div>
+                <div class="step-card"><code>http</code> - HTTP requests</div>
+                <div class="step-card"><code>snapshot</code> - Save snapshot</div>
+                <div class="step-card"><code>restore</code> - Restore snapshot</div>
+            </div>
+        </section>
+
+        <section id="refs">
+            <h2>References</h2>
+            <p>Pass data between steps using refs:</p>
+            <pre><code>{
+  "steps": [
+    { "type": "scan", "path": "./src", "depth": 2 },
+    { "type": "each", "over": {"ref": 0, "pick": "tree.*"}, "step": { "type": "bash", "cmd": "echo {{item}}" }}
+  ]
+}</code></pre>
+        </section>
+
+        <section id="conditionals">
+            <h2>Conditionals</h2>
+            <pre><code>{
+  "steps": [
+    { "type": "grep", "pattern": "TODO", "path": "./src" },
+    {
+      "type": "if",
+      "condition": { "type": "grep_has_results", "ref": 0 },
+      "then": [
+        { "type": "bash", "cmd": "echo Found TODOs!" }
+      ]
+    }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="templates">
+            <h2>Templates</h2>
+            <p>Create reusable templates with props:</p>
+            <pre><code># Create a new template
+rok init-template my-component
+
+# List available templates
+rok templates</code></pre>
+            
+            <p>Templates support:</p>
+            <ul>
+                <li>Custom props with validation</li>
+                <li>Inheritance (extends field)</li>
+                <li>Derived transforms (pluralize, camelcase, etc.)</li>
+            </ul>
+        </section>
+
+        <section id="tasks">
+            <h2>Task Files</h2>
+            <p>Save and reuse tasks:</p>
+            <pre><code># Save current payload as a named task
+rok -f task.json save my-task -d "Build the project"
+
+# Run saved task
+rok run my-task
+
+# List all tasks
+rok list</code></pre>
+        </section>
+
+        <section id="env">
+            <h2>Environment Variables</h2>
+            <p>Use <code>{{env.VAR_NAME}}</code> in any string field:</p>
+            <pre><code>{
+  "steps": [
+    { "type": "bash", "cmd": "echo {{env.USER}}" }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="timeout">
+            <h2>Timeouts & Retries</h2>
+            <pre><code>{
+  "steps": [
+    {
+      "type": "bash",
+      "cmd": "make build",
+      "timeout_ms": 60000,
+      "retry": {
+        "count": 3,
+        "delay_ms": 2000,
+        "backoff": true
+      }
+    }
+  ]
+}</code></pre>
+        </section>
+
+        <section id="cli">
+            <h2>CLI Commands</h2>
+            <table>
+                <tr><th>Command</th><th>Description</th></tr>
+                <tr><td><code>rok templates</code></td><td>List available templates</td></tr>
+                <tr><td><code>rok init-template [name]</code></td><td>Create a new template</td></tr>
+                <tr><td><code>rok validate-template [path]</code></td><td>Validate a template schema</td></tr>
+                <tr><td><code>rok run &lt;task&gt;</code></td><td>Run a saved task</td></tr>
+                <tr><td><code>rok save &lt;name&gt;</code></td><td>Save current payload as task</td></tr>
+                <tr><td><code>rok list</code></td><td>List saved tasks</td></tr>
+                <tr><td><code>rok edit &lt;task&gt;</code></td><td>Edit a saved task</td></tr>
+                <tr><td><code>rok watch</code></td><td>Watch files and re-run</td></tr>
+                <tr><td><code>rok history</code></td><td>Show execution history</td></tr>
+                <tr><td><code>rok replay [id]</code></td><td>Replay a previous run</td></tr>
+            </table>
+
+            <h3>Options</h3>
+            <table>
+                <tr><th>Option</th><th>Description</th></tr>
+                <tr><td><code>-f, --file FILE</code></td><td>Path to JSON file</td></tr>
+                <tr><td><code>-j, --json JSON</code></td><td>Inline JSON payload</td></tr>
+                <tr><td><code>-o, --output FORMAT</code></td><td>Output format: json, pretty, silent</td></tr>
+                <tr><td><code>-v, --verbose</code></td><td>Enable verbose output</td></tr>
+                <tr><td><code>-q, --quiet</code></td><td>Suppress output</td></tr>
+                <tr><td><code>--dry-run</code></td><td>Preview without executing</td></tr>
+            </table>
+        </section>
+
+        <section id="schema">
+            <h2>JSON Schema</h2>
+            <p>Complete task file schema:</p>
+            <pre><code>{
+  "name": "my-task",
+  "description": "Task description",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": true,
+    "timeout_ms": 30000,
+    "env": { "KEY": "value" }
+  },
+  "props": {
+    "version": "1.0.0"
+  },
+  "steps": []
+}</code></pre>
+        </section>
+
+        <footer>
+            <p>rok - Run One, Know All &copy; 2026 Ateeq</p>
+            <p>MIT License</p>
+        </footer>
+    </main>
+
+    <script>
+        // Simple smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Update active nav on scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
