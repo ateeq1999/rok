@@ -153,6 +153,10 @@ pub enum Step {
         regex: bool,
         #[serde(default = "default_true")]
         case_sensitive: bool,
+        #[serde(default)]
+        glob: Option<String>,
+        #[serde(default)]
+        whole_word: bool,
     },
     Scan {
         #[serde(default)]
@@ -257,6 +261,19 @@ pub enum Step {
         #[serde(default)]
         body: Option<String>,
     },
+    Import {
+        #[serde(default)]
+        id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
+        path: String,
+        #[serde(default)]
+        add: Vec<String>,
+        #[serde(default)]
+        remove: Vec<String>,
+        #[serde(default)]
+        organize: bool,
+    },
     If {
         #[serde(default)]
         id: String,
@@ -311,6 +328,7 @@ impl Step {
             Step::Restore { id, .. } => id,
             Step::Git { id, .. } => id,
             Step::Http { id, .. } => id,
+            Step::Import { id, .. } => id,
             Step::If { id, .. } => id,
             Step::Each { id, .. } => id,
             Step::Parallel { id, .. } => id,
@@ -339,6 +357,7 @@ impl Step {
             Step::Restore { depends_on, .. } => depends_on,
             Step::Git { depends_on, .. } => depends_on,
             Step::Http { depends_on, .. } => depends_on,
+            Step::Import { depends_on, .. } => depends_on,
             Step::If { depends_on, .. } => depends_on,
             Step::Each { depends_on, .. } => depends_on,
             Step::Parallel { depends_on, .. } => depends_on,
@@ -640,6 +659,12 @@ pub enum StepTypeResult {
         status: u16,
         body: Option<String>,
     },
+    Import {
+        path: String,
+        added: Vec<String>,
+        removed: Vec<String>,
+        organized: bool,
+    },
     If {
         condition_met: bool,
         branch: String,
@@ -699,6 +724,7 @@ impl StepTypeResult {
             Self::Restore { .. } => "restore",
             Self::Git { .. } => "git",
             Self::Http { .. } => "http",
+            Self::Import { .. } => "import",
             Self::If { .. } => "if",
             Self::Each { .. } => "each",
             Self::Parallel { .. } => "parallel",

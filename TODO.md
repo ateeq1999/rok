@@ -8,13 +8,14 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
 
 ### Phase 1: Smart Code Operations
 
-- [ ] **5.1** Batch Multi-file Edit
+- [x] **5.1** Batch Multi-file Edit (2026-03-31)
   - Single step to find/replace across 100s of files
   - Support glob patterns, regex, whole-word matching
+  - Added `glob` and `whole_word` fields to replace step
   
-- [ ] **5.2** Import Management
+- [x] **5.2** Import Management (2026-03-31)
   - Auto-add missing imports
-  - Remove unused imports
+  - Remove unused imports  
   - Organize imports (sort, group by type)
   - Support: JS/TS, Python, Rust, Go
 

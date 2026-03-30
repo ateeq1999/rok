@@ -199,6 +199,24 @@ fn format_step_type(result: &crate::schema::StepResult) -> String {
         } => {
             format!("http: {} {} → {}", method, url, status)
         }
+        Import {
+            path,
+            added,
+            removed,
+            organized,
+        } => {
+            let mut s = format!("import: {}", path.bold());
+            if !added.is_empty() {
+                s.push_str(&format!(" +{} added", added.len()));
+            }
+            if !removed.is_empty() {
+                s.push_str(&format!(" -{} removed", removed.len()));
+            }
+            if *organized {
+                s.push_str(" organized");
+            }
+            s
+        }
         If {
             condition_met,
             branch,

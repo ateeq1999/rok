@@ -5,6 +5,7 @@ pub mod extract;
 pub mod git;
 pub mod grep;
 pub mod http;
+pub mod import;
 pub mod lint;
 pub mod mkdir;
 pub mod mv;

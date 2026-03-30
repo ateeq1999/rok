@@ -504,6 +504,22 @@ fn main() {
                 schema::Step::Http { method, url, .. } => {
                     format!("  {}: http {} {}", i, method, url)
                 }
+                schema::Step::Import {
+                    path,
+                    add,
+                    remove,
+                    organize,
+                    ..
+                } => {
+                    format!(
+                        "  {}: import {} (add: {}, remove: {}, organize: {})",
+                        i,
+                        path,
+                        add.len(),
+                        remove.len(),
+                        organize
+                    )
+                }
                 schema::Step::If { condition, .. } => format!("  {}: if {:?}", i, condition),
                 schema::Step::Each { over, .. } => format!("  {}: each over {:?}", i, over),
                 schema::Step::Parallel { steps, .. } => {

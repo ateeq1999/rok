@@ -1,4 +1,5 @@
 use crate::schema::{StepResult, StepTypeResult};
+use glob::Pattern;
 use rayon::prelude::*;
 use regex::Regex;
 use std::fs;
@@ -12,25 +13,29 @@ pub fn run(
     path: &str,
     ext: &[String],
     regex_mode: bool,
+    whole_word: bool,
+    glob_pattern: Option<&str>,
     cwd: &std::path::Path,
 ) -> StepResult {
     let start = Instant::now();
 
     let full_path = cwd.join(path);
 
-    let pattern = if regex_mode {
+    let pattern_str = if whole_word && !regex_mode {
+        format!(r"\b{}\b", regex::escape(pattern))
+    } else if regex_mode {
         pattern.to_string()
     } else {
         regex::escape(pattern)
     };
 
-    let re = match Regex::new(&pattern) {
+    let re = match Regex::new(&pattern_str) {
         Ok(r) => r,
         Err(_) => {
             return StepResult {
                 index: 0,
                 step_type: StepTypeResult::Replace {
-                    pattern: pattern.to_string(),
+                    pattern: pattern_str,
                     replacement: replacement.to_string(),
                     files_scanned: 0,
                     files_modified: 0,
@@ -43,11 +48,19 @@ pub fn run(
         }
     };
 
+    let glob_pattern = glob_pattern.and_then(|g| Pattern::new(g).ok());
+
     let files: Vec<_> = WalkDir::new(&full_path)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|e| e.path().is_file())
         .filter(|e| {
+            if let Some(ref gp) = glob_pattern {
+                let relative = e.path().strip_prefix(cwd).unwrap_or(e.path());
+                if !gp.matches(&relative.to_string_lossy()) {
+                    return false;
+                }
+            }
             if ext.is_empty() {
                 return true;
             }
@@ -70,11 +83,7 @@ pub fn run(
             let matches: Vec<_> = re.find_iter(&content).collect();
 
             if !matches.is_empty() {
-                let new_content = if regex_mode {
-                    re.replace_all(&content, replacement).to_string()
-                } else {
-                    content.replace(&pattern, replacement)
-                };
+                let new_content = re.replace_all(&content, replacement).to_string();
 
                 if new_content != content {
                     total_replacements.fetch_add(matches.len(), Ordering::Relaxed);
@@ -92,7 +101,7 @@ pub fn run(
     StepResult {
         index: 0,
         step_type: StepTypeResult::Replace {
-            pattern: pattern.to_string(),
+            pattern: pattern_str,
             replacement: replacement.to_string(),
             files_scanned,
             files_modified: files_modified.load(Ordering::Relaxed),

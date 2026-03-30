@@ -286,6 +286,8 @@ impl Runner {
                 path,
                 ext,
                 regex,
+                glob,
+                whole_word,
                 ..
             } => {
                 let pattern_with_env = refs::substitute_env_vars(pattern);
@@ -297,6 +299,8 @@ impl Runner {
                     &path_with_env,
                     ext,
                     *regex,
+                    *whole_word,
+                    glob.as_deref(),
                     &self.config.cwd,
                 );
                 result.index = index;
@@ -385,6 +389,24 @@ impl Runner {
                     headers,
                     *expect_status,
                     body,
+                    &self.config.cwd,
+                );
+                result.index = index;
+                result
+            }
+            Step::Import {
+                path,
+                add,
+                remove,
+                organize,
+                ..
+            } => {
+                let path_with_env = refs::substitute_env_vars(path);
+                let mut result = crate::steps::import::run(
+                    &path_with_env,
+                    add,
+                    remove,
+                    *organize,
                     &self.config.cwd,
                 );
                 result.index = index;
@@ -748,6 +770,8 @@ impl Runner {
                     path,
                     ext,
                     regex,
+                    glob,
+                    whole_word,
                     id,
                     depends_on,
                     ..
@@ -760,6 +784,8 @@ impl Runner {
                     ext: ext.clone(),
                     regex: *regex,
                     case_sensitive: true,
+                    glob: glob.clone(),
+                    whole_word: *whole_word,
                 },
                 Step::Scan {
                     path,
@@ -899,6 +925,22 @@ impl Runner {
                     headers: headers.clone(),
                     expect_status: *expect_status,
                     body: body.clone(),
+                },
+                Step::Import {
+                    path,
+                    add,
+                    remove,
+                    organize,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Import {
+                    id: id.clone(),
+                    depends_on: depends_on.clone(),
+                    path: refs::substitute_vars(path, var, val),
+                    add: add.clone(),
+                    remove: remove.clone(),
+                    organize: *organize,
                 },
                 Step::If {
                     condition,
