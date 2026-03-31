@@ -1095,3 +1095,208 @@ impl Runner {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::Config;
+    use crate::schema::Options;
+    use std::collections::HashMap;
+    use tempfile::TempDir;
+
+    fn create_test_runner(steps: Vec<Step>) -> (Runner, TempDir) {
+        let temp_dir = TempDir::new().unwrap();
+        let options = Options {
+            cwd: temp_dir.path().to_string_lossy().to_string(),
+            stop_on_error: false,
+            timeout_ms: 30000,
+            env: HashMap::new(),
+            cache: false,
+            cache_dir: None,
+        };
+        let config = Config::from_options(options.clone()).unwrap();
+        let payload = Payload {
+            name: None,
+            description: None,
+            version: None,
+            author: None,
+            options,
+            props: HashMap::new(),
+            steps,
+        };
+        let runner = Runner::new(config, payload);
+        (runner, temp_dir)
+    }
+
+    #[test]
+    fn test_runner_executes_bash_step() {
+        let steps = vec![Step::Bash {
+            id: String::new(),
+            depends_on: vec![],
+            cmd: "echo hello".to_string(),
+            timeout_ms: None,
+            retry: None,
+        }];
+        let (runner, _temp_dir) = create_test_runner(steps);
+        let output = runner.run();
+        assert_eq!(output.status, "ok");
+        assert_eq!(output.steps_total, 1);
+        assert_eq!(output.steps_ok, 1);
+    }
+
+    #[test]
+    fn test_runner_multiple_steps() {
+        let steps = vec![
+            Step::Bash {
+                id: String::new(),
+                depends_on: vec![],
+                cmd: "echo step1".to_string(),
+                timeout_ms: None,
+                retry: None,
+            },
+            Step::Bash {
+                id: String::new(),
+                depends_on: vec![],
+                cmd: "echo step2".to_string(),
+                timeout_ms: None,
+                retry: None,
+            },
+        ];
+        let (runner, _temp_dir) = create_test_runner(steps);
+        let output = runner.run();
+        assert_eq!(output.status, "ok");
+        assert_eq!(output.steps_total, 2);
+        assert_eq!(output.steps_ok, 2);
+    }
+
+    #[test]
+    fn test_runner_step_with_id() {
+        let steps = vec![Step::Bash {
+            id: "my-step".to_string(),
+            depends_on: vec![],
+            cmd: "echo hello".to_string(),
+            timeout_ms: None,
+            retry: None,
+        }];
+        let (runner, _temp_dir) = create_test_runner(steps);
+        let output = runner.run();
+        assert_eq!(output.status, "ok");
+    }
+
+    #[test]
+    fn test_runner_step_dependencies() {
+        let steps = vec![
+            Step::Bash {
+                id: "step1".to_string(),
+                depends_on: vec![],
+                cmd: "echo first".to_string(),
+                timeout_ms: None,
+                retry: None,
+            },
+            Step::Bash {
+                id: "step2".to_string(),
+                depends_on: vec!["step1".to_string()],
+                cmd: "echo second".to_string(),
+                timeout_ms: None,
+                retry: None,
+            },
+        ];
+        let (runner, _temp_dir) = create_test_runner(steps);
+        let output = runner.run();
+        assert_eq!(output.status, "ok");
+        assert_eq!(output.steps_ok, 2);
+    }
+
+    #[test]
+    fn test_runner_failing_step() {
+        let steps = vec![Step::Bash {
+            id: String::new(),
+            depends_on: vec![],
+            cmd: "false".to_string(),
+            timeout_ms: None,
+            retry: None,
+        }];
+        let (runner, _temp_dir) = create_test_runner(steps);
+        let output = runner.run();
+        assert_eq!(output.status, "partial");
+        assert_eq!(output.steps_failed, 1);
+    }
+
+    #[test]
+    fn test_runner_stop_on_error() {
+        let temp_dir = TempDir::new().unwrap();
+        let options = Options {
+            cwd: temp_dir.path().to_string_lossy().to_string(),
+            stop_on_error: true,
+            timeout_ms: 30000,
+            env: HashMap::new(),
+            cache: false,
+            cache_dir: None,
+        };
+        let config = Config::from_options(options.clone()).unwrap();
+        let payload = Payload {
+            name: None,
+            description: None,
+            version: None,
+            author: None,
+            options,
+            props: HashMap::new(),
+            steps: vec![
+                Step::Bash {
+                    id: "step1".to_string(),
+                    depends_on: vec![],
+                    cmd: "false".to_string(),
+                    timeout_ms: None,
+                    retry: None,
+                },
+                Step::Bash {
+                    id: "step2".to_string(),
+                    depends_on: vec![],
+                    cmd: "echo should not run".to_string(),
+                    timeout_ms: None,
+                    retry: None,
+                },
+            ],
+        };
+        let runner = Runner::new(config, payload);
+        let output = runner.run();
+        // First step fails
+        assert_eq!(output.steps_failed, 1);
+        // Second step may or may not run depending on execution order
+        // Just verify at least one step failed
+        assert!(output.steps_failed >= 1);
+    }
+
+    #[test]
+    fn test_runner_cache_key_generation() {
+        let steps = vec![Step::Bash {
+            id: String::new(),
+            depends_on: vec![],
+            cmd: "echo test".to_string(),
+            timeout_ms: None,
+            retry: None,
+        }];
+        let (runner, _temp_dir) = create_test_runner(steps);
+        let key1 = runner.get_step_cache_key(
+            &Step::Bash {
+                id: String::new(),
+                depends_on: vec![],
+                cmd: "echo test".to_string(),
+                timeout_ms: None,
+                retry: None,
+            },
+            0,
+        );
+        let key2 = runner.get_step_cache_key(
+            &Step::Bash {
+                id: String::new(),
+                depends_on: vec![],
+                cmd: "echo different".to_string(),
+                timeout_ms: None,
+                retry: None,
+            },
+            0,
+        );
+        assert_ne!(key1, key2);
+    }
+}

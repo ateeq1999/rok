@@ -198,7 +198,35 @@ Options:
 
 ## Configuration
 
-### Options
+### Configuration File (.rokrc)
+
+rok supports configuration files to set default options. Create a `.rokrc`, `rok.toml`, or `.rok/config.toml` file in your project root:
+
+```toml
+# .rokrc example
+[defaults]
+output = "pretty"
+cache = true
+stopOnError = true
+timeoutMs = 60000
+
+[env]
+NODE_ENV = "development"
+API_URL = "http://localhost:3000"
+
+[aliases]
+build = "cargo build --release"
+test = "cargo test --all"
+```
+
+Configuration file locations (checked in order):
+1. `.rokrc` - TOML format in project root
+2. `rok.toml` - TOML format in project root
+3. `.rok/config.toml` - TOML format in .rok directory
+
+### Task Options
+
+Options can also be specified in the task JSON:
 
 ```json
 {
@@ -217,6 +245,8 @@ Options:
   "steps": []
 }
 ```
+
+Note: Task options take precedence over configuration file defaults.
 
 ## Self-Evolution
 

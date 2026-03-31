@@ -1,5 +1,6 @@
 mod cli;
 mod config;
+mod config_file;
 mod error;
 mod output;
 mod refs;
@@ -10,6 +11,7 @@ mod steps;
 use clap::Parser;
 use cli::Cli;
 use config::Config;
+use config_file::apply_config;
 use error::ExitCode;
 use output::format_output;
 use runner::Runner;
@@ -182,7 +184,8 @@ fn main() {
         let task_payload: schema::Payload =
             serde_json::from_str(&task_json).expect("Failed to parse task file");
 
-        let config = match Config::from_options(task_payload.options.clone()) {
+        let options = apply_config(task_payload.options.clone());
+        let config = match Config::from_options(options) {
             Ok(c) => c,
             Err(e) => {
                 eprintln!("Error: {}", e.message);
@@ -327,7 +330,8 @@ fn main() {
                     std::process::exit(1);
                 });
 
-            let config = match Config::from_options(payload.options.clone()) {
+            let options = apply_config(payload.options.clone());
+            let config = match Config::from_options(options) {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("Error: {}", e.message);
@@ -405,7 +409,8 @@ fn main() {
             let payload: schema::Payload =
                 serde_json::from_str(payload_json).expect("Failed to parse payload");
 
-            let config = match Config::from_options(payload.options.clone()) {
+            let options = apply_config(payload.options.clone());
+            let config = match Config::from_options(options) {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("Error: {}", e.message);
@@ -448,7 +453,9 @@ fn main() {
         }
     };
 
-    let config = match Config::from_options(payload.options.clone()) {
+    // Apply configuration file settings
+    let options = apply_config(payload.options.clone());
+    let config = match Config::from_options(options) {
         Ok(c) => c,
         Err(e) => {
             eprintln!("Error: {}", e.message);
