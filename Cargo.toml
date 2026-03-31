@@ -10,6 +10,7 @@ repository = "https://github.com/ateeq1999/rok"
 homepage = "https://github.com/ateeq1999/rok"
 keywords = ["cli", "json", "automation", "task-runner", "ai"]
 categories = ["command-line-utilities", "development-tools"]
+exclude = [".qwen/**/*", ".claude/**/*", ".git/**/*"]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
