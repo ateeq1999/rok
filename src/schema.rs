@@ -328,6 +328,30 @@ pub enum Step {
         #[serde(default)]
         restore: bool,
     },
+    Boilerplate {
+        #[serde(default)]
+        id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
+        path: String,
+        #[serde(default)]
+        add_header: Option<String>,
+        #[serde(default)]
+        add_license: Option<String>,
+        #[serde(default)]
+        add_shebang: Option<String>,
+        #[serde(default)]
+        auto_imports: bool,
+    },
+    DeadCode {
+        #[serde(default)]
+        id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
+        path: String,
+        #[serde(default)]
+        include: Vec<String>,
+    },
     If {
         #[serde(default)]
         id: String,
@@ -386,6 +410,8 @@ impl Step {
             Step::Refactor { id, .. } => id,
             Step::Deps { id, .. } => id,
             Step::Checkpoint { id, .. } => id,
+            Step::Boilerplate { id, .. } => id,
+            Step::DeadCode { id, .. } => id,
             Step::If { id, .. } => id,
             Step::Each { id, .. } => id,
             Step::Parallel { id, .. } => id,
@@ -418,6 +444,8 @@ impl Step {
             Step::Refactor { depends_on, .. } => depends_on,
             Step::Deps { depends_on, .. } => depends_on,
             Step::Checkpoint { depends_on, .. } => depends_on,
+            Step::Boilerplate { depends_on, .. } => depends_on,
+            Step::DeadCode { depends_on, .. } => depends_on,
             Step::If { depends_on, .. } => depends_on,
             Step::Each { depends_on, .. } => depends_on,
             Step::Parallel { depends_on, .. } => depends_on,
@@ -591,7 +619,17 @@ pub struct Payload {
     pub options: Options,
     #[serde(default)]
     pub props: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub compose: Vec<ComposeTask>,
     pub steps: Vec<Step>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ComposeTask {
+    pub task: String,
+    #[serde(default)]
+    pub props: HashMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -751,6 +789,20 @@ pub enum StepTypeResult {
         action: String,
         steps_saved: usize,
     },
+    Boilerplate {
+        path: String,
+        header_added: bool,
+        license_added: bool,
+        shebang_added: bool,
+        imports_added: Vec<String>,
+    },
+    DeadCode {
+        path: String,
+        unused_functions: Vec<DeadCodeIssue>,
+        unused_variables: Vec<DeadCodeIssue>,
+        unused_imports: Vec<DeadCodeIssue>,
+        unreachable_code: Vec<DeadCodeIssue>,
+    },
     If {
         condition_met: bool,
         branch: String,
@@ -795,6 +847,16 @@ pub struct RefactorChange {
     pub new_text: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeadCodeIssue {
+    pub file: String,
+    pub line: usize,
+    pub symbol: String,
+    pub kind: String,
+    pub message: String,
+}
+
 impl StepTypeResult {
     #[allow(dead_code)]
     pub fn step_type_name(&self) -> &'static str {
@@ -823,6 +885,8 @@ impl StepTypeResult {
             Self::Refactor { .. } => "refactor",
             Self::Deps { .. } => "deps",
             Self::Checkpoint { .. } => "checkpoint",
+            Self::Boilerplate { .. } => "boilerplate",
+            Self::DeadCode { .. } => "dead_code",
             Self::If { .. } => "if",
             Self::Each { .. } => "each",
             Self::Parallel { .. } => "parallel",

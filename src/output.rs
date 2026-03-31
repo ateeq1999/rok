@@ -277,6 +277,38 @@ fn format_step_type(result: &crate::schema::StepResult) -> String {
                 steps_saved
             )
         }
+        Boilerplate {
+            path,
+            header_added,
+            license_added,
+            shebang_added,
+            imports_added,
+        } => {
+            let mut s = format!("boilerplate: {}", path.bold());
+            if *header_added {
+                s.push_str(" +header");
+            }
+            if *license_added {
+                s.push_str(" +license");
+            }
+            if *shebang_added {
+                s.push_str(" +shebang");
+            }
+            if !imports_added.is_empty() {
+                s.push_str(&format!(" +{} imports", imports_added.len()));
+            }
+            s
+        }
+        DeadCode {
+            path,
+            unused_functions,
+            unused_imports,
+            unreachable_code,
+            ..
+        } => {
+            let total = unused_functions.len() + unused_imports.len() + unreachable_code.len();
+            format!("dead_code: {} → {} issues found", path.bold(), total)
+        }
         If {
             condition_met,
             branch,

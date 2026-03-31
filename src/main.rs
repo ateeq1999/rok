@@ -1,5 +1,5 @@
-mod cli;
 mod cache;
+mod cli;
 mod config;
 mod config_file;
 mod error;
@@ -460,7 +460,10 @@ fn main() {
             println!("  Enabled: {}", cache_stats.enabled);
             println!("  Directory: {}", cache_stats.cache_dir);
             println!("  Total Entries: {}", cache_stats.total_entries);
-            println!("  Total Size: {} ({})", cache_stats.total_size_human, cache_stats.total_size_bytes);
+            println!(
+                "  Total Size: {} ({})",
+                cache_stats.total_size_human, cache_stats.total_size_bytes
+            );
 
             if let Some(oldest) = &cache_stats.oldest_entry {
                 println!("  Oldest Entry: {}", oldest);
@@ -501,7 +504,12 @@ fn main() {
             let mut found = false;
             if let Ok(entries) = std::fs::read_dir(checkpoint_dir) {
                 for entry in entries.flatten() {
-                    if entry.path().extension().map(|e| e == "json").unwrap_or(false) {
+                    if entry
+                        .path()
+                        .extension()
+                        .map(|e| e == "json")
+                        .unwrap_or(false)
+                    {
                         if let Ok(content) = std::fs::read_to_string(entry.path()) {
                             if let Ok(data) = serde_json::from_str::<serde_json::Value>(&content) {
                                 if !found {
@@ -670,6 +678,32 @@ fn main() {
                         checkpoint_id,
                         if *restore { "restore" } else { "save" }
                     )
+                }
+                schema::Step::Boilerplate {
+                    path,
+                    add_header,
+                    add_license,
+                    add_shebang,
+                    auto_imports,
+                    ..
+                } => {
+                    let mut s = format!("  {}: boilerplate {}", i, path);
+                    if add_header.is_some() {
+                        s.push_str(" +header");
+                    }
+                    if add_license.is_some() {
+                        s.push_str(" +license");
+                    }
+                    if add_shebang.is_some() {
+                        s.push_str(" +shebang");
+                    }
+                    if *auto_imports {
+                        s.push_str(" +auto-imports");
+                    }
+                    s
+                }
+                schema::Step::DeadCode { path, include, .. } => {
+                    format!("  {}: dead_code {} (include: {:?})", i, path, include)
                 }
                 schema::Step::If { condition, .. } => format!("  {}: if {:?}", i, condition),
                 schema::Step::Each { over, .. } => format!("  {}: each over {:?}", i, over),

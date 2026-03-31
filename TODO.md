@@ -25,10 +25,11 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
   - Preview changes before applying (dry_run mode)
   - Parallel execution via rayon, whole-word regex matching
 
-- [ ] **5.4** Boilerplate Auto-fill
+- [x] **5.4** Boilerplate Auto-fill (2026-03-31)
   - Detect file type, auto-add standard imports/headers
   - Add copyright headers, license blocks
   - Template-based scaffolding
+  - Added `boilerplate` step type
 
 ### Phase 2: Context Optimization
 
@@ -48,10 +49,11 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
 
 ### Phase 3: Agent Workflow
 
-- [ ] **5.8** Task Chaining
+- [x] **5.8** Task Chaining (2026-03-31)
   - Pass output of one step as input to next
   - Share state between task runs
-  
+  - Added `compose` field to payload for task orchestration
+
 - [x] **5.9** Checkpoint/Resume (2026-03-31)
   - Save progress mid-execution via `checkpoint` step
   - Stored in .rok/checkpoints/{id}.json
@@ -72,17 +74,18 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
 - [x] **5.12** Export/Import Scanner (2026-03-31)
   - `deps` step maps all imports/exports across codebase
   - `scan` step with output:"imports"|"exports" for targeted scan
-  
-- [ ] **5.13** Dead Code Detection
+
+- [x] **5.13** Dead Code Detection (2026-03-31)
   - Find unused functions/variables
   - Identify unreachable code
+  - Added `dead_code` step type
 
 ### Phase 5: Generation & Templates
 
 - [ ] **5.14** Example-based Generation
   - Agent provides 2-3 examples
   - Rok infers pattern and generates the rest
-  
+
 - [ ] **5.15** Scaffold from Spec
   - Generate entire file structures from minimal JSON
   - Multi-file template expansion

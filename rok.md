@@ -363,6 +363,85 @@ Write **one JSON payload** that describes the entire task. rok executes all step
 
 ---
 
+### Code Maintenance
+
+#### `boilerplate` — Add Boilerplate Code
+Automatically add headers, licenses, shebangs, and standard imports to files.
+
+```json
+{
+  "type": "boilerplate",
+  "path": "src/components/Button.tsx",
+  "add_header": "Copyright (c) 2024 My Company",
+  "add_license": "MIT",
+  "add_shebang": "#!/usr/bin/env node",
+  "auto_imports": true
+}
+```
+
+**Options**:
+- `add_header`: Add a comment header at the top of the file
+- `add_license`: Add a license block (supports: "mit", "apache", "gpl", "bsd", "isc", "unlicense", or custom text)
+- `add_shebang`: Add a shebang line for executable scripts
+- `auto_imports`: Automatically add standard imports based on code usage
+
+#### `dead_code` — Detect Unused Code
+Scan codebase for unused functions, variables, imports, and unreachable code.
+
+```json
+{
+  "type": "dead_code",
+  "path": "./src",
+  "include": ["ts", "tsx", "js"]
+}
+```
+
+**Output**:
+```json
+{
+  "path": "./src",
+  "unused_functions": [
+    {
+      "file": "src/utils.ts",
+      "line": 42,
+      "symbol": "unusedHelper",
+      "kind": "function",
+      "message": "Function 'unusedHelper' is defined but never used"
+    }
+  ],
+  "unused_imports": [...],
+  "unreachable_code": [...]
+}
+```
+
+---
+
+### Task Composition
+
+#### `compose` — Chain Multiple Tasks
+Reference and compose multiple task files into one orchestrated workflow.
+
+```json
+{
+  "name": "full-deploy",
+  "compose": [
+    { "task": "build", "props": { "env": "production" } },
+    { "task": "test" },
+    { "task": "deploy", "props": { "env": "prod" } }
+  ],
+  "steps": [
+    { "type": "bash", "cmd": "echo Deployment complete!" }
+  ]
+}
+```
+
+**Features**:
+- Pass props to composed tasks
+- Execute tasks in order (build → test → deploy)
+- Combine with regular steps for custom workflows
+
+---
+
 ### Network
 
 #### `http` — HTTP Request

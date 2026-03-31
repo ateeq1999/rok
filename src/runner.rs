@@ -673,6 +673,33 @@ impl Runner {
                 result.index = index;
                 result
             }
+            Step::Boilerplate {
+                path,
+                add_header,
+                add_license,
+                add_shebang,
+                auto_imports,
+                ..
+            } => {
+                let path_with_env = refs::substitute_env_vars(path);
+                let mut result = crate::steps::boilerplate::run(
+                    &path_with_env,
+                    add_header,
+                    add_license,
+                    add_shebang,
+                    *auto_imports,
+                    &self.config.cwd,
+                );
+                result.index = index;
+                result
+            }
+            Step::DeadCode { path, include, .. } => {
+                let path_with_env = refs::substitute_env_vars(path);
+                let mut result =
+                    crate::steps::dead_code::run(&path_with_env, include, &self.config.cwd);
+                result.index = index;
+                result
+            }
             Step::If {
                 condition,
                 then,
@@ -1259,6 +1286,36 @@ impl Runner {
                     checkpoint_id: checkpoint_id.clone(),
                     restore: *restore,
                 },
+                Step::Boilerplate {
+                    path,
+                    add_header,
+                    add_license,
+                    add_shebang,
+                    auto_imports,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Boilerplate {
+                    id: id.clone(),
+                    depends_on: depends_on.clone(),
+                    path: refs::substitute_vars(path, var, val),
+                    add_header: add_header.clone(),
+                    add_license: add_license.clone(),
+                    add_shebang: add_shebang.clone(),
+                    auto_imports: *auto_imports,
+                },
+                Step::DeadCode {
+                    path,
+                    include,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::DeadCode {
+                    id: id.clone(),
+                    depends_on: depends_on.clone(),
+                    path: refs::substitute_vars(path, var, val),
+                    include: include.clone(),
+                },
                 Step::If {
                     condition,
                     then,
@@ -1363,6 +1420,7 @@ mod tests {
             author: None,
             options,
             props: HashMap::new(),
+            compose: Vec::new(),
             steps,
         };
         let runner = Runner::new(config, payload);
@@ -1483,6 +1541,7 @@ mod tests {
             author: None,
             options,
             props: HashMap::new(),
+            compose: Vec::new(),
             steps: vec![
                 Step::Bash {
                     id: "step1".to_string(),
