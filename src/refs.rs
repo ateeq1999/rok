@@ -194,3 +194,220 @@ pub fn substitute_env_vars(template: &str) -> String {
     })
     .to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::schema::{GrepMatch, StepTypeResult};
+
+    #[test]
+    fn test_resolve_bash_ref() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Bash {
+                cmd: "echo hello".to_string(),
+                stdout: "hello\n".to_string(),
+                stderr: String::new(),
+                exit_code: 0,
+            },
+            status: "ok".to_string(),
+            duration_ms: 10,
+            stopped_pipeline: None,
+        }];
+
+        let value = resolve_ref(0, "*", &results);
+        assert!(value.is_some());
+        let v = value.unwrap();
+        assert_eq!(v["stdout"], "hello\n");
+        assert_eq!(v["exit_code"], 0);
+    }
+
+    #[test]
+    fn test_resolve_grep_ref() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Grep {
+                pattern: "TODO".to_string(),
+                matches: vec![
+                    GrepMatch {
+                        path: "src/main.rs".to_string(),
+                        line: 10,
+                        text: "// TODO: implement this".to_string(),
+                    },
+                    GrepMatch {
+                        path: "src/lib.rs".to_string(),
+                        line: 25,
+                        text: "// TODO: fix bug".to_string(),
+                    },
+                ],
+            },
+            status: "ok".to_string(),
+            duration_ms: 50,
+            stopped_pipeline: None,
+        }];
+
+        let value = resolve_ref(0, "matches", &results);
+        assert!(value.is_some());
+        let v = value.unwrap();
+        assert!(v.is_array());
+        assert_eq!(v.as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_resolve_grep_matches_paths() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Grep {
+                pattern: "TODO".to_string(),
+                matches: vec![
+                    GrepMatch {
+                        path: "src/main.rs".to_string(),
+                        line: 10,
+                        text: "// TODO: implement this".to_string(),
+                    },
+                    GrepMatch {
+                        path: "src/lib.rs".to_string(),
+                        line: 25,
+                        text: "// TODO: fix bug".to_string(),
+                    },
+                ],
+            },
+            status: "ok".to_string(),
+            duration_ms: 50,
+            stopped_pipeline: None,
+        }];
+
+        let value = resolve_ref(0, "matches[*].path", &results);
+        assert!(value.is_some());
+        let v = value.unwrap();
+        assert!(v.is_array());
+        let paths = v.as_array().unwrap();
+        assert_eq!(paths.len(), 2);
+        assert_eq!(paths[0], "src/main.rs");
+        assert_eq!(paths[1], "src/lib.rs");
+    }
+
+    #[test]
+    fn test_resolve_invalid_ref() {
+        let results: Vec<StepResult> = vec![];
+        let value = resolve_ref(0, "*", &results);
+        assert!(value.is_none());
+    }
+
+    #[test]
+    fn test_has_grep_results_true() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Grep {
+                pattern: "TODO".to_string(),
+                matches: vec![GrepMatch {
+                    path: "src/main.rs".to_string(),
+                    line: 10,
+                    text: "// TODO".to_string(),
+                }],
+            },
+            status: "ok".to_string(),
+            duration_ms: 50,
+            stopped_pipeline: None,
+        }];
+
+        assert!(has_grep_results(0, &results));
+    }
+
+    #[test]
+    fn test_has_grep_results_false() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Grep {
+                pattern: "TODO".to_string(),
+                matches: vec![],
+            },
+            status: "ok".to_string(),
+            duration_ms: 50,
+            stopped_pipeline: None,
+        }];
+
+        assert!(!has_grep_results(0, &results));
+    }
+
+    #[test]
+    fn test_step_ok_true() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Bash {
+                cmd: "echo hello".to_string(),
+                stdout: "hello\n".to_string(),
+                stderr: String::new(),
+                exit_code: 0,
+            },
+            status: "ok".to_string(),
+            duration_ms: 10,
+            stopped_pipeline: None,
+        }];
+
+        assert!(step_ok(0, &results));
+    }
+
+    #[test]
+    fn test_step_ok_false() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Bash {
+                cmd: "false".to_string(),
+                stdout: String::new(),
+                stderr: String::new(),
+                exit_code: 1,
+            },
+            status: "error".to_string(),
+            duration_ms: 10,
+            stopped_pipeline: None,
+        }];
+
+        assert!(!step_ok(0, &results));
+    }
+
+    #[test]
+    fn test_step_failed() {
+        let results = vec![StepResult {
+            index: 0,
+            step_type: StepTypeResult::Bash {
+                cmd: "false".to_string(),
+                stdout: String::new(),
+                stderr: String::new(),
+                exit_code: 1,
+            },
+            status: "error".to_string(),
+            duration_ms: 10,
+            stopped_pipeline: None,
+        }];
+
+        assert!(step_failed(0, &results));
+    }
+
+    #[test]
+    fn test_substitute_vars_simple() {
+        let result = substitute_vars("Hello {{name}}!", "name", "World");
+        assert_eq!(result, "Hello World!");
+    }
+
+    #[test]
+    fn test_substitute_vars_multiple() {
+        let mut result = "{{greeting}} {{name}}!".to_string();
+        result = substitute_vars(&result, "greeting", "Hello");
+        result = substitute_vars(&result, "name", "Alice");
+        assert_eq!(result, "Hello Alice!");
+    }
+
+    #[test]
+    fn test_substitute_env_vars() {
+        std::env::set_var("ROK_TEST_VAR", "test_value");
+        let result = substitute_env_vars("Value: {{env.ROK_TEST_VAR}}");
+        assert_eq!(result, "Value: test_value");
+    }
+
+    #[test]
+    fn test_substitute_env_vars_missing() {
+        let result = substitute_env_vars("Value: {{env.NONEXISTENT_VAR_12345}}");
+        assert_eq!(result, "Value: {{env.NONEXISTENT_VAR_12345}}");
+    }
+}

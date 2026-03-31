@@ -1,0 +1,76 @@
+{
+  "name": "full-stack-feature",
+  "description": "Complete example: Create a full-stack feature with backend and frontend",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": false,
+    "cache": true
+  },
+  "steps": [
+    {
+      "type": "snapshot",
+      "path": ".",
+      "snapshot_id": "before-feature",
+      "id": "snapshot"
+    },
+    {
+      "type": "mkdir",
+      "path": "src/features/users",
+      "id": "mkdir-feature"
+    },
+    {
+      "type": "write",
+      "path": "src/features/users/model.ts",
+      "content": "export interface User {\n  id: string;\n  name: string;\n  email: string;\n  createdAt: Date;\n}\n\nexport function createUser(data: Omit<User, 'id' | 'createdAt'>): User {\n  return {\n    ...data,\n    id: crypto.randomUUID(),\n    createdAt: new Date()\n  };\n}\n",
+      "id": "write-model"
+    },
+    {
+      "type": "write",
+      "path": "src/features/users/service.ts",
+      "content": "import { User, createUser } from './model';\n\nconst users: Map<string, User> = new Map();\n\nexport async function getUserById(id: string): Promise<User | null> {\n  return users.get(id) || null;\n}\n\nexport async function createUserService(data: Omit<User, 'id' | 'createdAt'>): Promise<User> {\n  const user = createUser(data);\n  users.set(user.id, user);\n  return user;\n}\n\nexport async function listUsers(): Promise<User[]> {\n  return Array.from(users.values());\n}\n",
+      "id": "write-service"
+    },
+    {
+      "type": "write",
+      "path": "src/features/users/routes.ts",
+      "content": "import { Router } from 'express';\nimport { getUserById, createUserService, listUsers } from './service';\n\nexport const usersRouter = Router();\n\nusersRouter.get('/users', async (req, res) => {\n  const users = await listUsers();\n  res.json(users);\n});\n\nusersRouter.get('/users/:id', async (req, res) => {\n  const user = await getUserById(req.params.id);\n  if (!user) return res.status(404).json({ error: 'User not found' });\n  res.json(user);\n});\n\nusersRouter.post('/users', async (req, res) => {\n  const user = await createUserService(req.body);\n  res.status(201).json(user);\n});\n",
+      "id": "write-routes"
+    },
+    {
+      "type": "write",
+      "path": "src/features/users/index.ts",
+      "content": "export * from './model';\nexport * from './service';\nexport { usersRouter } from './routes';\n",
+      "id": "write-index"
+    },
+    {
+      "type": "grep",
+      "pattern": "usersRouter",
+      "path": "./src",
+      "ext": ["ts"],
+      "id": "verify-export"
+    },
+    {
+      "type": "if",
+      "id": "check-export",
+      "condition": {
+        "type": "grep_has_results",
+        "ref": "verify-export"
+      },
+      "then": [
+        {
+          "type": "bash",
+          "cmd": "echo \"✓ Feature exports verified\"",
+          "id": "success-msg"
+        }
+      ],
+      "else": [
+        {
+          "type": "bash",
+          "cmd": "echo \"✗ Feature export not found\"",
+          "id": "error-msg"
+        }
+      ]
+    }
+  ]
+}

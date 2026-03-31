@@ -47,15 +47,14 @@ fn main() {
                                 "json" => "application/json",
                                 "html" => "text/html",
                                 "md" => "text/markdown",
-                                "1" => "text/plain",
                                 _ => "text/plain",
                             };
                             serve_file(&file_path, content_type)
                         } else {
-                            (404, "text/html", not_found())
+                            (404, "text/html".to_string(), not_found())
                         }
                     } else {
-                        (404, "text/html", not_found())
+                        (404, "text/html".to_string(), not_found())
                     };
 
                     let response = format!(
@@ -76,10 +75,10 @@ fn main() {
     }
 }
 
-fn serve_file(path: &Path, content_type: &str) -> (u16, &str, String) {
+fn serve_file(path: &Path, content_type: &str) -> (u16, String, String) {
     match fs::read_to_string(path) {
-        Ok(content) => (200, content_type, content),
-        Err(_) => (404, "text/html", not_found()),
+        Ok(content) => (200, content_type.to_string(), content),
+        Err(_) => (404, "text/html".to_string(), not_found()),
     }
 }
 

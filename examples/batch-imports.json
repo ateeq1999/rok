@@ -1,0 +1,41 @@
+{
+  "name": "batch-imports",
+  "description": "Add imports to multiple files in batch",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": false
+  },
+  "steps": [
+    {
+      "type": "read",
+      "path": "src/**/*.ts",
+      "filter_imports": "React",
+      "id": "find-react-files"
+    },
+    {
+      "type": "each",
+      "id": "add-imports",
+      "over": {
+        "ref": "find-react-files",
+        "pick": "files[*].path"
+      },
+      "as": "file",
+      "parallel": false,
+      "step": {
+        "type": "import",
+        "path": "{{file}}",
+        "add": [
+          "import { useState, useEffect } from 'react';",
+          "import { useCallback } from 'react';"
+        ],
+        "organize": true
+      }
+    },
+    {
+      "type": "bash",
+      "cmd": "echo \"✓ Added imports to {{ref:add-imports.items.length}} files\"",
+      "id": "summary"
+    }
+  ]
+}

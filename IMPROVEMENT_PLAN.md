@@ -1,0 +1,550 @@
+# rok Improvement Plan
+
+> Comprehensive review and enhancement roadmap for rok - Run One, Know All
+
+**Review Date**: March 31, 2026  
+**Current Version**: 0.8.0  
+**Reviewer**: AI Code Assistant
+
+---
+
+## Executive Summary
+
+rok is a well-architected Rust CLI tool for executing multi-step tasks from JSON. The codebase demonstrates solid Rust practices, clean modular design, and a comprehensive feature set. However, several areas need attention to improve reliability, maintainability, and user experience.
+
+### Key Findings
+
+| Category | Status | Priority |
+|----------|--------|----------|
+| Test Coverage | ❌ Critical Gap | P0 |
+| Documentation | ⚠️ Partial | P1 |
+| Error Handling | ⚠️ Needs Improvement | P1 |
+| Code Quality | ✅ Good | - |
+| Architecture | ✅ Solid | - |
+| CI/CD | ❌ Missing | P0 |
+| Examples | ⚠️ Limited | P2 |
+
+---
+
+## 1. Test Coverage (P0 - Critical)
+
+### Current State
+- **No unit tests** in the codebase
+- **No integration tests**
+- **No CI/CD pipeline** to run tests
+- Manual testing only
+
+### Impact
+- High risk of regressions
+- Difficult to refactor safely
+- No automated quality gate
+- Reduced contributor confidence
+
+### Recommendations
+
+#### 1.1 Unit Tests (Immediate)
+✅ **Completed**: Added comprehensive tests for:
+- `src/refs.rs` - Reference resolution, variable substitution, condition evaluation
+- `src/schema.rs` - JSON parsing for all step types
+
+**Additional modules needing tests:**
+```
+src/config.rs      - Configuration validation
+src/error.rs       - Error type behavior  
+src/output.rs      - Output formatting
+src/runner.rs      - Execution order, caching
+src/steps/*.rs     - Each step implementation
+```
+
+**Target Coverage**: 70%+ for core modules
+
+#### 1.2 Integration Tests (Short-term)
+```rust
+// tests/integration_test.rs
+#[test]
+fn test_full_workflow_execution() {
+    // Test complete task execution
+}
+
+#[test]
+fn test_step_dependencies() {
+    // Test depends_on functionality
+}
+
+#[test]
+fn test_control_flow() {
+    // Test if/each/parallel steps
+}
+
+#[test]
+fn test_reference_resolution() {
+    // Test cross-step references
+}
+```
+
+#### 1.3 CI/CD Pipeline (Short-term)
+Create `.github/workflows/ci.yml`:
+```yaml
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --all
+      - run: cargo clippy -- -D warnings
+      - run: cargo fmt -- --check
+      
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+```
+
+---
+
+## 2. Documentation (P1 - High)
+
+### Current State
+- ✅ README.md - Good overview
+- ✅ AGENT.md - Useful for AI agents
+- ✅ usage.md - Good examples
+- ❌ Missing CONTRIBUTING.md
+- ❌ Missing architecture documentation
+- ❌ Missing CHANGELOG.md
+- ⚠️ API docs incomplete
+
+### Enhancements Completed
+
+✅ **Created**:
+- `CONTRIBUTING.md` - Comprehensive contribution guide
+- `docs/ARCHITECTURE.md` - Technical architecture documentation
+- `CHANGELOG.md` - Version history
+- `examples/*.json` - 5 comprehensive examples
+
+### Additional Recommendations
+
+#### 2.1 Inline Documentation
+- Add doc comments to all public APIs
+- Document complex algorithms
+- Add usage examples in doc comments
+
+```rust
+/// Resolves a reference to a previous step's result.
+///
+/// # Arguments
+/// * `step_index` - Index of the step to reference
+/// * `pick` - JSONPath-like selector for nested data
+/// * `results` - Previous step results
+///
+/// # Examples
+/// ```
+/// let value = resolve_ref(0, "matches[*].path", &results);
+/// ```
+pub fn resolve_ref(...) { ... }
+```
+
+#### 2.2 User Guides
+Create `docs/guides/`:
+- `getting-started.md` - First-time user guide
+- `step-types.md` - Complete step reference
+- `control-flow.md` - if/each/parallel guide
+- `templates.md` - Template system guide
+- `best-practices.md` - Patterns and anti-patterns
+
+#### 2.3 Video Tutorials
+- 5-minute overview
+- Step-by-step tutorials
+- Advanced feature deep-dives
+
+---
+
+## 3. Error Handling (P1 - High)
+
+### Current State
+- Basic error types in `error.rs`
+- Limited error context
+- No error reporting best practices
+- Silent failures in some cases
+
+### Recommendations
+
+#### 3.1 Enhanced Error Types
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum RokError {
+    #[error("Failed to read file {path}: {source}")]
+    FileRead { 
+        path: String, 
+        source: std::io::Error 
+    },
+    
+    #[error("Invalid JSON at line {line}, column {column}: {message}")]
+    JsonParse {
+        line: usize,
+        column: usize,
+        message: String,
+    },
+    
+    #[error("Step {step_id} failed: {reason}")]
+    StepFailure {
+        step_id: String,
+        reason: String,
+    },
+    
+    #[error("Reference {ref_id} not found. Available steps: {available:?}")]
+    InvalidReference {
+        ref_id: String,
+        available: Vec<String>,
+    },
+}
+```
+
+#### 3.2 Error Context
+Use `anyhow::Context` for better error messages:
+```rust
+let content = std::fs::read_to_string(&path)
+    .with_context(|| format!("Failed to read task file: {}", path))?;
+```
+
+#### 3.3 Error Reporting
+- Add error codes for programmatic handling
+- Include suggestions for fixing errors
+- Link to documentation for common errors
+
+---
+
+## 4. Code Quality (P2 - Medium)
+
+### Current State
+- ✅ Clean code structure
+- ✅ Good use of Rust idioms
+- ✅ Proper module organization
+- ⚠️ Some code duplication
+- ⚠️ Hardcoded paths
+
+### Recommendations
+
+#### 4.1 Refactoring Opportunities
+
+**Extract Constants**:
+```rust
+// config.rs
+pub const DEFAULT_ROK_DIR: &str = ".rok";
+pub const DEFAULT_CACHE_DIR: &str = ".rok/cache";
+pub const DEFAULT_TASKS_DIR: &str = ".rok/tasks";
+pub const DEFAULT_SNAPSHOTS_DIR: &str = ".rok/snapshots";
+```
+
+**Reduce Duplication in Runner**:
+```rust
+// Current: Repetitive step execution code
+// Proposed: Generic execution helper
+fn execute_step_with_timing<F>(step_fn: F) -> StepResult 
+where
+    F: FnOnce() -> Result<StepTypeResult, Box<dyn Error>>
+{
+    let start = Instant::now();
+    match step_fn() {
+        Ok(step_type) => StepResult {
+            status: "ok".to_string(),
+            duration_ms: start.elapsed().as_millis() as u64,
+            ...
+        },
+        Err(e) => StepResult {
+            status: "error".to_string(),
+            ...
+        }
+    }
+}
+```
+
+#### 4.2 Clippy Lints
+Enable additional lints in `Cargo.toml`:
+```toml
+[package]
+# ... existing fields ...
+
+[lints.clippy]
+pedantic = "warn"
+missing_panics_doc = "warn"
+missing_errors_doc = "warn"
+module_name_repetitions = "allow"
+```
+
+#### 4.3 Performance Optimizations
+- Profile with `cargo flamegraph`
+- Optimize hot paths (file I/O, regex matching)
+- Consider async for I/O-bound operations
+
+---
+
+## 5. Feature Enhancements (P2 - Medium)
+
+### 5.1 Configuration File Support
+
+**Current**: All config via CLI options or JSON payload
+
+**Proposed**: `.rokrc` or `rok.toml` for defaults
+```toml
+# .rokrc
+[defaults]
+output = "pretty"
+verbose = true
+cache = true
+
+[env]
+NODE_ENV = "development"
+API_URL = "http://localhost:3000"
+
+[aliases]
+build = "cargo build --release"
+test = "cargo test --all"
+```
+
+### 5.2 Plugin System
+
+Allow custom step types:
+```rust
+// External crate can register custom steps
+#[rok_step]
+pub fn custom_step(args: CustomStepArgs) -> StepResult {
+    // Custom implementation
+}
+```
+
+### 5.3 Interactive Mode
+
+```bash
+rok interactive
+# Opens REPL for building tasks visually
+```
+
+### 5.4 Task Composer
+
+```bash
+rok compose "Create a React component with tests"
+# AI-assisted task generation
+```
+
+---
+
+## 6. User Experience (P2 - Medium)
+
+### 6.1 Progress Indicators
+
+**Current**: Basic output
+
+**Proposed**:
+- Real-time progress bar
+- ETA for long-running tasks
+- Step-by-step status updates
+
+```rust
+use indicatif::{ProgressBar, ProgressStyle};
+
+let pb = ProgressBar::new(total_steps as u64);
+pb.set_style(ProgressStyle::default_bar()
+    .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}")?);
+```
+
+### 6.2 Rich Output
+
+- Syntax highlighting for code
+- Colorized diffs
+- Interactive tables for listings
+
+### 6.3 Shell Completions
+
+**Current**: Script in `scripts/completions.sh`
+
+**Improvements**:
+- Auto-generate during build
+- Include in release packages
+- Add dynamic completions (task names, etc.)
+
+---
+
+## 7. Performance (P3 - Low)
+
+### 7.1 Benchmarking
+
+Add criterion benchmarks:
+```rust
+// benches/runner_bench.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn bench_execute_steps(c: &mut Criterion) {
+    c.bench_function("execute 100 bash steps", |b| {
+        b.iter(|| {
+            // Benchmark code
+        })
+    });
+}
+```
+
+### 7.2 Caching Improvements
+
+- Content-addressable caching
+- Incremental cache invalidation
+- Cache statistics command
+
+### 7.3 Parallel Execution
+
+- Improve thread pool management
+- Better work stealing
+- Configurable parallelism
+
+---
+
+## 8. Security (P1 - High)
+
+### 8.1 Security Audit
+
+**Actions**:
+- Run `cargo audit` regularly
+- Review dependencies for vulnerabilities
+- Sandboxed execution for untrusted tasks
+
+### 8.2 Input Validation
+
+- Validate all JSON input
+- Sanitize file paths (prevent directory traversal)
+- Limit resource usage (memory, CPU, disk)
+
+### 8.3 Safe Defaults
+
+- Disable network by default
+- Require explicit permission for dangerous operations
+- Audit logging for sensitive operations
+
+---
+
+## 9. Release Process (P2 - Medium)
+
+### 9.1 Release Checklist
+
+```markdown
+## Pre-release
+- [ ] All tests passing
+- [ ] Clippy clean
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+- [ ] Version bumped in Cargo.toml
+- [ ] Git tag created
+
+## Release
+- [ ] Publish to crates.io
+- [ ] Create GitHub release
+- [ ] Build binaries for all platforms
+- [ ] Update website/documentation
+
+## Post-release
+- [ ] Announce on social media
+- [ ] Update package managers (homebrew, scoop, etc.)
+- [ ] Monitor for issues
+```
+
+### 9.2 Automated Releases
+
+Use `cargo-release` crate:
+```bash
+cargo release minor --execute
+```
+
+---
+
+## 10. Community Building (P3 - Low)
+
+### 10.1 Contribution Guidelines
+
+✅ **Completed**: `CONTRIBUTING.md`
+
+**Additional**:
+- Issue templates
+- PR template
+- Code review guidelines
+
+### 10.2 Ecosystem
+
+- Template gallery
+- Step type plugins
+- Integration examples
+
+### 10.3 Support
+
+- Discord/Slack community
+- Stack Overflow tag
+- Regular office hours
+
+---
+
+## Implementation Roadmap
+
+### Phase 1: Foundation (Weeks 1-2)
+- [x] Add unit tests for core modules
+- [x] Create CONTRIBUTING.md
+- [x] Create ARCHITECTURE.md
+- [ ] Set up CI/CD pipeline
+- [ ] Add integration tests
+
+### Phase 2: Quality (Weeks 3-4)
+- [ ] Improve error handling
+- [ ] Add doc comments to public APIs
+- [ ] Run cargo-audit security audit
+- [ ] Enable additional clippy lints
+- [ ] Create user guides
+
+### Phase 3: Features (Weeks 5-6)
+- [ ] Configuration file support
+- [ ] Progress indicators
+- [ ] Enhanced output formatting
+- [ ] Performance profiling
+- [ ] Benchmark suite
+
+### Phase 4: Polish (Weeks 7-8)
+- [ ] Video tutorials
+- [ ] Template gallery
+- [ ] Community setup
+- [ ] Release automation
+- [ ] Documentation website
+
+---
+
+## Metrics for Success
+
+| Metric | Current | Target | Timeline |
+|--------|---------|--------|----------|
+| Test Coverage | 0% | 70%+ | 4 weeks |
+| CI Build Time | N/A | < 5 min | 2 weeks |
+| Issue Response | N/A | < 24h | Ongoing |
+| Release Frequency | Ad-hoc | Monthly | 3 months |
+| Contributors | 1 | 5+ | 6 months |
+| Downloads/month | N/A | 1000+ | 6 months |
+
+---
+
+## Conclusion
+
+rok is a solid tool with strong fundamentals. The primary gaps are in testing, CI/CD, and documentation - all addressable with focused effort. The recommended improvements will:
+
+1. **Reduce risk** through automated testing
+2. **Improve quality** through better error handling and linting
+3. **Increase adoption** through better documentation and examples
+4. **Enable community** through contribution guidelines and CI/CD
+
+**Estimated effort**: 8 weeks for full implementation  
+**Priority focus**: Test coverage and CI/CD (Weeks 1-2)
+
+---
+
+*This review was conducted on March 31, 2026. For questions or updates, see GitHub issues.*

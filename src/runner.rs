@@ -4,6 +4,7 @@ use crate::schema::{Condition, EachOver, Output, Payload, Step, StepResult, Step
 use chrono::Utc;
 use rayon::prelude::*;
 use std::collections::HashMap;
+use std::fs;
 use std::time::Instant;
 
 pub struct Runner {
@@ -16,8 +17,59 @@ impl Runner {
         Self { config, payload }
     }
 
+    fn get_cache_dir(&self) -> std::path::PathBuf {
+        if let Some(ref dir) = self.payload.options.cache_dir {
+            std::path::Path::new(dir).to_path_buf()
+        } else {
+            std::path::Path::new(".rok/cache").to_path_buf()
+        }
+    }
+
+    fn get_step_cache_key(&self, step: &Step, index: usize) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        serde_json::to_string(step)
+            .unwrap_or_default()
+            .hash(&mut hasher);
+        format!("{:x}_{}", hasher.finish(), index)
+    }
+
+    fn get_cached_result(&self, cache_key: &str) -> Option<StepResult> {
+        if !self.payload.options.cache {
+            return None;
+        }
+        let cache_dir = self.get_cache_dir();
+        let cache_file = cache_dir.join(format!("{}.json", cache_key));
+        if cache_file.exists() {
+            if let Ok(content) = fs::read_to_string(&cache_file) {
+                if let Ok(result) = serde_json::from_str::<StepResult>(&content) {
+                    return Some(result);
+                }
+            }
+        }
+        None
+    }
+
+    fn save_cached_result(&self, cache_key: &str, result: &StepResult) {
+        if !self.payload.options.cache {
+            return;
+        }
+        let cache_dir = self.get_cache_dir();
+        let _ = fs::create_dir_all(&cache_dir);
+        let cache_file = cache_dir.join(format!("{}.json", cache_key));
+        if let Ok(content) = serde_json::to_string(result) {
+            let _ = fs::write(cache_file, content);
+        }
+    }
+
     pub fn run(&self) -> Output {
         let start = Instant::now();
+
+        if self.payload.options.cache {
+            let cache_dir = self.get_cache_dir();
+            let _ = fs::create_dir_all(&cache_dir);
+        }
 
         let execution_order = self.build_execution_order();
 
@@ -46,8 +98,15 @@ impl Runner {
                 continue;
             }
 
+            let cache_key = self.get_step_cache_key(step, original_index);
+            if let Some(cached) = self.get_cached_result(&cache_key) {
+                results_map.insert(original_index, cached);
+                continue;
+            }
+
             let results_vec: Vec<StepResult> = results_map.values().cloned().collect();
             let result = self.execute_step(step, original_index, &results_vec);
+            self.save_cached_result(&cache_key, &result);
             if result.status == "ok" {
                 steps_ok += 1;
             } else {

@@ -4,7 +4,8 @@
 
 [![Crates.io](https://img.shields.io/crates/v/rok-cli)](https://crates.io/crates/rok-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ateeq1999/rok)
+[![CI](https://github.com/ateeq1999/rok/actions/workflows/ci.yml/badge.svg)](https://github.com/ateeq1999/rok/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/ateeq1999/rok)
 
 ## What is rok?
 
@@ -243,12 +244,56 @@ cargo build --release
 # Test
 cargo test
 
+# Run all tests with output
+cargo test -- --nocapture
+
+# Run integration tests
+cargo test --test integration_test
+
+# Run benchmarks
+cargo bench
+
 # Lint
 cargo clippy -- -D warnings
 
 # Format
 cargo fmt
+
+# Generate documentation
+cargo doc --open
 ```
+
+### Project Structure
+
+```
+rok/
+├── src/
+│   ├── main.rs              # CLI entry point
+│   ├── cli.rs               # Argument parsing
+│   ├── config.rs            # Configuration
+│   ├── error.rs             # Error types
+│   ├── output.rs            # Output formatting
+│   ├── refs.rs              # Reference resolution (with tests)
+│   ├── runner.rs            # Execution engine
+│   ├── schema.rs            # JSON schema (with tests)
+│   └── steps/               # Step implementations
+├── tests/
+│   └── integration_test.rs  # Integration tests
+├── benches/
+│   └── runner_bench.rs      # Benchmarks
+├── docs/
+│   ├── ARCHITECTURE.md      # Architecture documentation
+│   ├── api.md               # API reference
+│   └── ...
+├── examples/                # Example task files
+└── scripts/                 # Utility scripts
+```
+
+For more information, see:
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+- [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md) - Roadmap and improvements
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Technical architecture
 
 ## License
 
