@@ -57,7 +57,7 @@ pub fn run(path: &str, include: &[String], cwd: &Path) -> StepResult {
             for symbol in symbols {
                 defined_symbols
                     .entry(symbol.name.clone())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push(symbol);
             }
 
@@ -268,12 +268,7 @@ fn extract_imports(content: &str, ext: &str, _file: &str) -> Vec<ImportInfo> {
                 let line = content[..cap.get(0).unwrap().start()].lines().count() + 1;
                 if let Some(named) = cap.get(1) {
                     for symbol in named.as_str().split(',') {
-                        let symbol = symbol
-                            .trim()
-                            .split_whitespace()
-                            .next()
-                            .unwrap_or("")
-                            .to_string();
+                        let symbol = symbol.split_whitespace().next().unwrap_or("").to_string();
                         if !symbol.is_empty() {
                             imports.push(ImportInfo { symbol, line });
                         }
@@ -292,12 +287,7 @@ fn extract_imports(content: &str, ext: &str, _file: &str) -> Vec<ImportInfo> {
             for cap in import_re.captures_iter(content) {
                 let line = content[..cap.get(0).unwrap().start()].lines().count() + 1;
                 for symbol in cap[1].split(',') {
-                    let symbol = symbol
-                        .trim()
-                        .split_whitespace()
-                        .next()
-                        .unwrap_or("")
-                        .to_string();
+                    let symbol = symbol.split_whitespace().next().unwrap_or("").to_string();
                     if !symbol.is_empty() && symbol != "import" {
                         imports.push(ImportInfo { symbol, line });
                     }
@@ -310,12 +300,7 @@ fn extract_imports(content: &str, ext: &str, _file: &str) -> Vec<ImportInfo> {
                 let line = content[..cap.get(0).unwrap().start()].lines().count() + 1;
                 if let Some(named) = cap.get(1) {
                     for symbol in named.as_str().split(',') {
-                        let symbol = symbol
-                            .trim()
-                            .split_whitespace()
-                            .next()
-                            .unwrap_or("")
-                            .to_string();
+                        let symbol = symbol.split_whitespace().next().unwrap_or("").to_string();
                         if !symbol.is_empty() {
                             imports.push(ImportInfo { symbol, line });
                         }

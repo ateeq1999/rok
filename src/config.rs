@@ -135,5 +135,3 @@ mod tests {
         assert_eq!(options.cwd, ".");
     }
 }
-
-use std::fs;

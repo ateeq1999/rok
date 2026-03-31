@@ -152,17 +152,19 @@ fn add_standard_imports(content: &str, ext: &str) -> (String, Vec<String>) {
     match ext {
         "js" | "jsx" | "ts" | "tsx" => {
             // Check for common patterns and suggest imports
-            if content.contains("useState") && !content.contains("import") {
-                if !content.contains("import { useState") {
-                    lines.insert(0, "import { useState } from 'react';");
-                    added.push("useState".to_string());
-                }
+            if content.contains("useState")
+                && !content.contains("import")
+                && !content.contains("import { useState")
+            {
+                lines.insert(0, "import { useState } from 'react';");
+                added.push("useState".to_string());
             }
-            if content.contains("useEffect") && !content.contains("import { useEffect") {
-                if !content.contains("import { useEffect") {
-                    lines.insert(0, "import { useEffect } from 'react';");
-                    added.push("useEffect".to_string());
-                }
+            if content.contains("useEffect")
+                && !content.contains("import { useEffect")
+                && !content.contains("import { useEffect")
+            {
+                lines.insert(0, "import { useEffect } from 'react';");
+                added.push("useEffect".to_string());
             }
             if content.contains("useCallback") && !content.contains("import { useCallback") {
                 lines.insert(0, "import { useCallback } from 'react';");
