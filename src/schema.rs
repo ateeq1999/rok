@@ -16,6 +16,8 @@ pub struct Options {
     pub cache: bool,
     #[serde(default)]
     pub cache_dir: Option<String>,
+    #[serde(default)]
+    pub incremental: bool,
 }
 
 fn default_cwd() -> String {
@@ -39,6 +41,7 @@ impl Default for Options {
             env: HashMap::new(),
             cache: false,
             cache_dir: None,
+            incremental: false,
         }
     }
 }

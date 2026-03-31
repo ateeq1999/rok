@@ -140,6 +140,15 @@ pub enum Commands {
         run_id: Option<String>,
     },
 
+    #[command(about = "Show cache statistics")]
+    Cache {
+        #[arg(short = 's', long = "stats", help = "Show cache statistics")]
+        stats: bool,
+
+        #[arg(long = "clear", help = "Clear cache")]
+        clear: bool,
+    },
+
     #[command(about = "Serve documentation website")]
     Serve {
         #[arg(

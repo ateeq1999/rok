@@ -1113,6 +1113,7 @@ mod tests {
             env: HashMap::new(),
             cache: false,
             cache_dir: None,
+            incremental: false,
         };
         let config = Config::from_options(options.clone()).unwrap();
         let payload = Payload {
@@ -1232,6 +1233,7 @@ mod tests {
             env: HashMap::new(),
             cache: false,
             cache_dir: None,
+            incremental: false,
         };
         let config = Config::from_options(options.clone()).unwrap();
         let payload = Payload {

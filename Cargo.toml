@@ -50,7 +50,12 @@ assert_cmd = "2"
 predicates = "3"
 tempfile = "3"
 criterion = "0.5"
+clap_complete = "4"
 
 [[bench]]
 name = "runner_bench"
 harness = false
+
+[[example]]
+name = "completions"
+path = "examples/completions/main.rs"

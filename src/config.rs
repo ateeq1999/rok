@@ -55,6 +55,7 @@ mod tests {
             env: HashMap::new(),
             cache: false,
             cache_dir: None,
+            incremental: false,
         };
 
         let config = Config::from_options(options);
@@ -72,6 +73,7 @@ mod tests {
             env: HashMap::new(),
             cache: false,
             cache_dir: None,
+            incremental: false,
         };
 
         let config = Config::from_options(options);
@@ -93,6 +95,7 @@ mod tests {
             env: HashMap::new(),
             cache: false,
             cache_dir: None,
+            incremental: false,
         };
 
         let config = Config::from_options(options);
@@ -114,6 +117,7 @@ mod tests {
             env: custom_env,
             cache: false,
             cache_dir: None,
+            incremental: false,
         };
 
         let config = Config::from_options(options);

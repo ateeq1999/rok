@@ -1,4 +1,5 @@
 mod cli;
+mod cache;
 mod config;
 mod config_file;
 mod error;
@@ -431,6 +432,48 @@ fn main() {
         } else {
             eprintln!("Run {} not found in history.", target_id);
             std::process::exit(1);
+        }
+    }
+
+    if let Some(cli::Commands::Cache { stats, clear }) = &cli.command {
+        let cache_dir = std::path::Path::new(".rok/cache");
+
+        if *clear {
+            match cache::clear(cache_dir) {
+                Ok(count) => {
+                    println!("✓ Cleared {} cache entries", count);
+                    std::process::exit(0);
+                }
+                Err(e) => {
+                    eprintln!("Error clearing cache: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        // Default: show stats
+        if *stats || !*clear {
+            let cache_enabled = true; // Cache feature is always available
+            let cache_stats = cache::get_stats(cache_dir, cache_enabled);
+
+            println!("Cache Statistics:");
+            println!("  Enabled: {}", cache_stats.enabled);
+            println!("  Directory: {}", cache_stats.cache_dir);
+            println!("  Total Entries: {}", cache_stats.total_entries);
+            println!("  Total Size: {} ({})", cache_stats.total_size_human, cache_stats.total_size_bytes);
+
+            if let Some(oldest) = &cache_stats.oldest_entry {
+                println!("  Oldest Entry: {}", oldest);
+            }
+            if let Some(newest) = &cache_stats.newest_entry {
+                println!("  Newest Entry: {}", newest);
+            }
+
+            if cache_stats.total_entries == 0 {
+                println!("\nCache is empty. Run tasks with --cache to populate.");
+            }
+
+            std::process::exit(0);
         }
     }
 
