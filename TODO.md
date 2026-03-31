@@ -1,6 +1,6 @@
 # rok Implementation Todo
 
-> **Status**: v4 Complete | **Next**: v5 - Agent Efficiency Features
+> **Status**: v5 In Progress | **Next**: v5 completion + v6 Intelligence Layer
 
 ## v5: Agent Efficiency Features
 
@@ -19,10 +19,11 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
   - Organize imports (sort, group by type)
   - Support: JS/TS, Python, Rust, Go
 
-- [ ] **5.3** Symbol Refactoring
+- [x] **5.3** Symbol Refactoring (2026-03-31)
   - Rename functions/variables across entire codebase
   - Update all references automatically
-  - Preview changes before applying
+  - Preview changes before applying (dry_run mode)
+  - Parallel execution via rayon, whole-word regex matching
 
 - [ ] **5.4** Boilerplate Auto-fill
   - Detect file type, auto-add standard imports/headers
@@ -36,9 +37,10 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
   - Filter by file type, directory, patterns
   - Added filter_imports, filter_exports, since to read step
 
-- [ ] **5.6** Incremental Mode
+- [x] **5.6** Incremental Mode (2026-03-31)
   - Only process files changed since last run
-  - Track state between executions
+  - Track state in .rok/incremental_state.json (mtime-based)
+  - Supports: read, grep, replace, scan, refactor, deps steps
 
 - [x] **5.7** Context Compression (2026-03-31)
   - Summarize large files before passing to agent
@@ -50,23 +52,26 @@ Focus: Reduce token usage, accelerate repetitive coding tasks, enable agents to 
   - Pass output of one step as input to next
   - Share state between task runs
   
-- [ ] **5.9** Checkpoint/Resume
-  - Save progress mid-execution
-  - Resume from interruption
-  
-- [ ] **5.10** Result Caching
-  - Cache expensive operations (git analysis, searches)
-  - Skip re-runs if inputs unchanged
+- [x] **5.9** Checkpoint/Resume (2026-03-31)
+  - Save progress mid-execution via `checkpoint` step
+  - Stored in .rok/checkpoints/{id}.json
+  - CLI: `rok checkpoints --list`, `rok checkpoints --delete`
+
+- [x] **5.10** Result Caching (2026-03-31)
+  - Cache expensive operations via `"cache": true` in options
+  - Skip re-runs if step inputs unchanged (hash-based)
+  - CLI: `rok cache --stats`, `rok cache --clear`
 
 ### Phase 4: Code Intelligence
 
-- [ ] **5.11** Dependency Graph
-  - Map file relationships (imports/exports)
-  - Understand what depends on what
-  
-- [ ] **5.12** Export/Import Scanner
-  - Find what files export/import
-  - Search for symbol definitions
+- [x] **5.11** Dependency Graph (2026-03-31)
+  - Map file relationships (imports/exports) via `deps` step
+  - Supports JS/TS, Python, Rust, Go
+  - Cycle detection, focus mode for single-file analysis
+
+- [x] **5.12** Export/Import Scanner (2026-03-31)
+  - `deps` step maps all imports/exports across codebase
+  - `scan` step with output:"imports"|"exports" for targeted scan
   
 - [ ] **5.13** Dead Code Detection
   - Find unused functions/variables

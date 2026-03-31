@@ -149,6 +149,15 @@ pub enum Commands {
         clear: bool,
     },
 
+    #[command(about = "Manage checkpoints")]
+    Checkpoints {
+        #[arg(short = 'l', long = "list", help = "List all checkpoints")]
+        list: bool,
+
+        #[arg(long = "delete", help = "Delete a checkpoint by ID")]
+        delete: Option<String>,
+    },
+
     #[command(about = "Serve documentation website")]
     Serve {
         #[arg(

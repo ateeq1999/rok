@@ -35,6 +35,112 @@ impl Runner {
         format!("{:x}_{}", hasher.finish(), index)
     }
 
+    fn get_incremental_state_path(&self) -> std::path::PathBuf {
+        self.config.cwd.join(".rok/incremental_state.json")
+    }
+
+    fn load_incremental_state(&self) -> HashMap<String, u64> {
+        let path = self.get_incremental_state_path();
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(map) = serde_json::from_str::<HashMap<String, u64>>(&content) {
+                    return map;
+                }
+            }
+        }
+        HashMap::new()
+    }
+
+    fn save_incremental_state(&self, state: &HashMap<String, u64>) {
+        let path = self.get_incremental_state_path();
+        if let Some(parent) = path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+        if let Ok(content) = serde_json::to_string(state) {
+            let _ = fs::write(&path, content);
+        }
+    }
+
+    fn get_file_mtime(path: &std::path::Path) -> Option<u64> {
+        path.metadata()
+            .ok()
+            .and_then(|m| m.modified().ok())
+            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+            .map(|d| d.as_secs())
+    }
+
+    fn check_incremental_skip(&self, step: &Step, state: &HashMap<String, u64>) -> bool {
+        if !self.payload.options.incremental {
+            return false;
+        }
+        // For file-based steps, check if target path has any changed files
+        let target_path = match step {
+            Step::Read { path, .. } => Some(path.as_str()),
+            Step::Grep { path, .. } => Some(path.as_str()),
+            Step::Replace { path, .. } => Some(path.as_str()),
+            Step::Scan { path, .. } => Some(path.as_str()),
+            Step::Refactor { path, .. } => Some(path.as_str()),
+            Step::Deps { path, .. } => Some(path.as_str()),
+            _ => None,
+        };
+
+        if let Some(rel_path) = target_path {
+            let full_path = self.config.cwd.join(rel_path);
+            let has_changes = walkdir::WalkDir::new(&full_path)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().is_file())
+                .any(|e| {
+                    let key = e
+                        .path()
+                        .strip_prefix(&self.config.cwd)
+                        .unwrap_or(e.path())
+                        .to_string_lossy()
+                        .to_string();
+                    match (state.get(&key), Self::get_file_mtime(e.path())) {
+                        (Some(&saved), Some(current)) => current != saved,
+                        (None, Some(_)) => true, // new file
+                        _ => false,
+                    }
+                });
+            return !has_changes; // skip if no changes
+        }
+        false
+    }
+
+    fn update_incremental_state(&self, step: &Step, state: &mut HashMap<String, u64>) {
+        if !self.payload.options.incremental {
+            return;
+        }
+        let target_path = match step {
+            Step::Read { path, .. } => Some(path.as_str()),
+            Step::Grep { path, .. } => Some(path.as_str()),
+            Step::Replace { path, .. } => Some(path.as_str()),
+            Step::Scan { path, .. } => Some(path.as_str()),
+            Step::Refactor { path, .. } => Some(path.as_str()),
+            Step::Deps { path, .. } => Some(path.as_str()),
+            _ => None,
+        };
+        if let Some(rel_path) = target_path {
+            let full_path = self.config.cwd.join(rel_path);
+            for entry in walkdir::WalkDir::new(&full_path)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().is_file())
+            {
+                let key = entry
+                    .path()
+                    .strip_prefix(&self.config.cwd)
+                    .unwrap_or(entry.path())
+                    .to_string_lossy()
+                    .to_string();
+                if let Some(mtime) = Self::get_file_mtime(entry.path()) {
+                    state.insert(key, mtime);
+                }
+            }
+        }
+    }
+
     fn get_cached_result(&self, cache_key: &str) -> Option<StepResult> {
         if !self.payload.options.cache {
             return None;
@@ -73,6 +179,12 @@ impl Runner {
 
         let execution_order = self.build_execution_order();
 
+        let mut incremental_state = if self.payload.options.incremental {
+            self.load_incremental_state()
+        } else {
+            HashMap::new()
+        };
+
         let mut results_map: HashMap<usize, StepResult> = HashMap::new();
         let mut steps_ok = 0;
         let mut steps_failed = 0;
@@ -98,6 +210,27 @@ impl Runner {
                 continue;
             }
 
+            // Incremental mode: skip steps whose file inputs haven't changed
+            if self.check_incremental_skip(step, &incremental_state) {
+                results_map.insert(
+                    original_index,
+                    StepResult {
+                        index: original_index,
+                        step_type: StepTypeResult::Bash {
+                            cmd: "".to_string(),
+                            stdout: "".to_string(),
+                            stderr: "Skipped (incremental: no changes)".to_string(),
+                            exit_code: 0,
+                        },
+                        status: "skipped".to_string(),
+                        duration_ms: 0,
+                        stopped_pipeline: None,
+                    },
+                );
+                steps_ok += 1;
+                continue;
+            }
+
             let cache_key = self.get_step_cache_key(step, original_index);
             if let Some(cached) = self.get_cached_result(&cache_key) {
                 results_map.insert(original_index, cached);
@@ -107,6 +240,7 @@ impl Runner {
             let results_vec: Vec<StepResult> = results_map.values().cloned().collect();
             let result = self.execute_step(step, original_index, &results_vec);
             self.save_cached_result(&cache_key, &result);
+            self.update_incremental_state(step, &mut incremental_state);
             if result.status == "ok" {
                 steps_ok += 1;
             } else {
@@ -116,6 +250,10 @@ impl Runner {
                 }
             }
             results_map.insert(original_index, result);
+        }
+
+        if self.payload.options.incremental {
+            self.save_incremental_state(&incremental_state);
         }
 
         let results: Vec<StepResult> = (0..self.payload.steps.len())
@@ -480,6 +618,58 @@ impl Runner {
                     *organize,
                     &self.config.cwd,
                 );
+                result.index = index;
+                result
+            }
+            Step::Refactor {
+                symbol,
+                rename_to,
+                path,
+                ext,
+                dry_run,
+                whole_word,
+                ..
+            } => {
+                let path_with_env = refs::substitute_env_vars(path);
+                let symbol_with_env = refs::substitute_env_vars(symbol);
+                let rename_with_env = refs::substitute_env_vars(rename_to);
+                let mut result = crate::steps::refactor::run(
+                    &symbol_with_env,
+                    &rename_with_env,
+                    &path_with_env,
+                    ext,
+                    *dry_run,
+                    *whole_word,
+                    &self.config.cwd,
+                );
+                result.index = index;
+                result
+            }
+            Step::Deps {
+                path,
+                depth,
+                include,
+                focus,
+                ..
+            } => {
+                let path_with_env = refs::substitute_env_vars(path);
+                let mut result = crate::steps::deps::run(
+                    &path_with_env,
+                    *depth,
+                    include,
+                    focus.as_deref(),
+                    &self.config.cwd,
+                );
+                result.index = index;
+                result
+            }
+            Step::Checkpoint {
+                checkpoint_id,
+                restore,
+                ..
+            } => {
+                let mut result =
+                    crate::steps::checkpoint::run(checkpoint_id, *restore, &self.config.cwd);
                 result.index = index;
                 result
             }
@@ -1018,6 +1208,56 @@ impl Runner {
                     add: add.clone(),
                     remove: remove.clone(),
                     organize: *organize,
+                },
+                Step::Refactor {
+                    symbol,
+                    rename_to,
+                    path,
+                    ext,
+                    dry_run,
+                    whole_word,
+                    preview,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Refactor {
+                    id: id.clone(),
+                    depends_on: depends_on.clone(),
+                    symbol: refs::substitute_vars(symbol, var, val),
+                    rename_to: refs::substitute_vars(rename_to, var, val),
+                    path: refs::substitute_vars(path, var, val),
+                    ext: ext.clone(),
+                    dry_run: *dry_run,
+                    whole_word: *whole_word,
+                    preview: *preview,
+                },
+                Step::Deps {
+                    path,
+                    depth,
+                    include,
+                    focus,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Deps {
+                    id: id.clone(),
+                    depends_on: depends_on.clone(),
+                    path: refs::substitute_vars(path, var, val),
+                    depth: *depth,
+                    include: include.clone(),
+                    focus: focus.clone(),
+                },
+                Step::Checkpoint {
+                    checkpoint_id,
+                    restore,
+                    id,
+                    depends_on,
+                    ..
+                } => Step::Checkpoint {
+                    id: id.clone(),
+                    depends_on: depends_on.clone(),
+                    checkpoint_id: checkpoint_id.clone(),
+                    restore: *restore,
                 },
                 Step::If {
                     condition,

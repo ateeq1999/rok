@@ -230,6 +230,53 @@ fn format_step_type(result: &crate::schema::StepResult) -> String {
             }
             s
         }
+        Refactor {
+            symbol,
+            rename_to,
+            files_modified,
+            total_replacements,
+            dry_run,
+            ..
+        } => {
+            format!(
+                "refactor: '{}' -> '{}' → {} files, {} replacements{}",
+                symbol.bold(),
+                rename_to,
+                files_modified,
+                total_replacements,
+                if *dry_run { " [dry-run]" } else { "" }
+            )
+        }
+        Deps {
+            path,
+            file_count,
+            cycles,
+            ..
+        } => {
+            format!(
+                "deps: {} → {} files{}",
+                path.bold(),
+                file_count,
+                if cycles.is_empty() {
+                    String::new()
+                } else {
+                    format!(", {} cycle(s)", cycles.len())
+                }
+            )
+        }
+        Checkpoint {
+            checkpoint_id,
+            action,
+            steps_saved,
+            ..
+        } => {
+            format!(
+                "checkpoint: {} → {} ({} steps)",
+                checkpoint_id.bold(),
+                action,
+                steps_saved
+            )
+        }
         If {
             condition_met,
             branch,

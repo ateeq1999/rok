@@ -289,6 +289,45 @@ pub enum Step {
         #[serde(default)]
         organize: bool,
     },
+    Refactor {
+        #[serde(default)]
+        id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
+        symbol: String,
+        rename_to: String,
+        path: String,
+        #[serde(default)]
+        ext: Vec<String>,
+        #[serde(default)]
+        dry_run: bool,
+        #[serde(default = "default_true")]
+        whole_word: bool,
+        #[serde(default)]
+        preview: bool,
+    },
+    Deps {
+        #[serde(default)]
+        id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
+        path: String,
+        #[serde(default = "default_depth")]
+        depth: usize,
+        #[serde(default)]
+        include: Vec<String>,
+        #[serde(default)]
+        focus: Option<String>,
+    },
+    Checkpoint {
+        #[serde(default)]
+        id: String,
+        #[serde(default = "default_depends_on")]
+        depends_on: Vec<String>,
+        checkpoint_id: String,
+        #[serde(default)]
+        restore: bool,
+    },
     If {
         #[serde(default)]
         id: String,
@@ -344,6 +383,9 @@ impl Step {
             Step::Git { id, .. } => id,
             Step::Http { id, .. } => id,
             Step::Import { id, .. } => id,
+            Step::Refactor { id, .. } => id,
+            Step::Deps { id, .. } => id,
+            Step::Checkpoint { id, .. } => id,
             Step::If { id, .. } => id,
             Step::Each { id, .. } => id,
             Step::Parallel { id, .. } => id,
@@ -373,6 +415,9 @@ impl Step {
             Step::Git { depends_on, .. } => depends_on,
             Step::Http { depends_on, .. } => depends_on,
             Step::Import { depends_on, .. } => depends_on,
+            Step::Refactor { depends_on, .. } => depends_on,
+            Step::Deps { depends_on, .. } => depends_on,
+            Step::Checkpoint { depends_on, .. } => depends_on,
             Step::If { depends_on, .. } => depends_on,
             Step::Each { depends_on, .. } => depends_on,
             Step::Parallel { depends_on, .. } => depends_on,
@@ -685,6 +730,27 @@ pub enum StepTypeResult {
         removed: Vec<String>,
         organized: bool,
     },
+    Refactor {
+        symbol: String,
+        rename_to: String,
+        files_scanned: usize,
+        files_modified: usize,
+        total_replacements: usize,
+        dry_run: bool,
+        changes: Vec<RefactorChange>,
+    },
+    Deps {
+        path: String,
+        graph: HashMap<String, Vec<String>>,
+        dependents: HashMap<String, Vec<String>>,
+        file_count: usize,
+        cycles: Vec<Vec<String>>,
+    },
+    Checkpoint {
+        checkpoint_id: String,
+        action: String,
+        steps_saved: usize,
+    },
     If {
         condition_met: bool,
         branch: String,
@@ -720,6 +786,15 @@ pub struct LintError {
     pub severity: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RefactorChange {
+    pub path: String,
+    pub line: usize,
+    pub old_text: String,
+    pub new_text: String,
+}
+
 impl StepTypeResult {
     #[allow(dead_code)]
     pub fn step_type_name(&self) -> &'static str {
@@ -745,6 +820,9 @@ impl StepTypeResult {
             Self::Git { .. } => "git",
             Self::Http { .. } => "http",
             Self::Import { .. } => "import",
+            Self::Refactor { .. } => "refactor",
+            Self::Deps { .. } => "deps",
+            Self::Checkpoint { .. } => "checkpoint",
             Self::If { .. } => "if",
             Self::Each { .. } => "each",
             Self::Parallel { .. } => "parallel",

@@ -477,6 +477,56 @@ fn main() {
         }
     }
 
+    if let Some(cli::Commands::Checkpoints { list, delete }) = &cli.command {
+        let checkpoint_dir = std::path::Path::new(".rok/checkpoints");
+
+        if let Some(id) = delete {
+            let file = checkpoint_dir.join(format!("{}.json", id));
+            if file.exists() {
+                std::fs::remove_file(&file).expect("Failed to delete checkpoint");
+                println!("✓ Deleted checkpoint: {}", id);
+            } else {
+                eprintln!("Checkpoint not found: {}", id);
+                std::process::exit(1);
+            }
+            std::process::exit(0);
+        }
+
+        if *list || !delete.is_some() {
+            if !checkpoint_dir.exists() {
+                println!("No checkpoints found.");
+                std::process::exit(0);
+            }
+
+            let mut found = false;
+            if let Ok(entries) = std::fs::read_dir(checkpoint_dir) {
+                for entry in entries.flatten() {
+                    if entry.path().extension().map(|e| e == "json").unwrap_or(false) {
+                        if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                            if let Ok(data) = serde_json::from_str::<serde_json::Value>(&content) {
+                                if !found {
+                                    println!("Checkpoints:");
+                                    found = true;
+                                }
+                                println!(
+                                    "  {} - created: {}",
+                                    data["checkpoint_id"].as_str().unwrap_or("?"),
+                                    data["created_at"].as_str().unwrap_or("?")
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !found {
+                println!("No checkpoints found.");
+            }
+        }
+
+        std::process::exit(0);
+    }
+
     if let Some(cli::Commands::Serve { port }) = &cli.command {
         serve_docs(port);
         std::process::exit(0);
@@ -588,6 +638,37 @@ fn main() {
                         add.len(),
                         remove.len(),
                         organize
+                    )
+                }
+                schema::Step::Refactor {
+                    symbol,
+                    rename_to,
+                    path,
+                    dry_run,
+                    ..
+                } => {
+                    format!(
+                        "  {}: refactor '{}' -> '{}' in {}{}",
+                        i,
+                        symbol,
+                        rename_to,
+                        path,
+                        if *dry_run { " [dry-run]" } else { "" }
+                    )
+                }
+                schema::Step::Deps { path, depth, .. } => {
+                    format!("  {}: deps {} (depth: {})", i, path, depth)
+                }
+                schema::Step::Checkpoint {
+                    checkpoint_id,
+                    restore,
+                    ..
+                } => {
+                    format!(
+                        "  {}: checkpoint {} ({})",
+                        i,
+                        checkpoint_id,
+                        if *restore { "restore" } else { "save" }
                     )
                 }
                 schema::Step::If { condition, .. } => format!("  {}: if {:?}", i, condition),

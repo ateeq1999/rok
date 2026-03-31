@@ -1,4 +1,7 @@
 pub mod bash;
+pub mod checkpoint;
+pub mod deps;
+pub mod refactor;
 pub mod cp;
 pub mod diff;
 pub mod extract;
