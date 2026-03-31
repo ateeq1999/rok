@@ -1,6 +1,47 @@
+//! Reference resolution module for rok
+//!
+//! This module handles resolving references between steps, allowing data to be passed
+//! from one step to another using JSONPath-like syntax.
+//!
+//! # Examples
+//!
+//! ```rust,ignore
+//! // Resolve a reference to step 0's output
+//! let value = resolve_ref(0, "matches[*].path", &results);
+//!
+//! // Check if a grep step has results
+//! let has_results = has_grep_results(0, &results);
+//!
+//! // Substitute variables in a template
+//! let result = substitute_vars("Hello {{name}}!", "name", "World");
+//! ```
+
 use crate::schema::{StepResult, StepTypeResult};
 use serde_json::Value;
 
+/// Resolves a reference to a previous step's result.
+///
+/// # Arguments
+/// * `step_index` - Index of the step to reference (0-based)
+/// * `pick` - JSONPath-like selector for nested data extraction. Use "*" for all data.
+/// * `results` - Slice of previous step results to search
+///
+/// # Returns
+/// * `Some(Value)` - The extracted value if the reference is valid
+/// * `None` - If the step index is out of bounds or the path doesn't exist
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// // Get all matches from a grep step
+/// let matches = resolve_ref(0, "matches", &results);
+///
+/// // Extract just the paths from matches
+/// let paths = resolve_ref(0, "matches[*].path", &results);
+///
+/// // Get bash command output
+/// let stdout = resolve_ref(0, "stdout", &results);
+/// ```
 pub fn resolve_ref(step_index: usize, pick: &str, results: &[StepResult]) -> Option<Value> {
     let step = results.get(step_index)?;
 
@@ -158,6 +199,26 @@ fn resolve_jsonpath(value: &Value, path: &str) -> Option<Value> {
     Some(current)
 }
 
+/// Checks if a grep step at the given index has any matches.
+///
+/// # Arguments
+/// * `step_index` - Index of the grep step to check
+/// * `results` - Slice of step results to search
+///
+/// # Returns
+/// * `true` - If the step is a grep step with one or more matches
+/// * `false` - If the step doesn't exist, isn't a grep step, or has no matches
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// // Use in conditional execution
+/// if has_grep_results(0, &results) {
+///     // Proceed with fix
+/// } else {
+///     // No matches found, skip fix
+/// }
+/// ```
 pub fn has_grep_results(step_index: usize, results: &[StepResult]) -> bool {
     if let Some(step) = results.get(step_index) {
         if let StepTypeResult::Grep { matches, .. } = &step.step_type {
@@ -167,6 +228,24 @@ pub fn has_grep_results(step_index: usize, results: &[StepResult]) -> bool {
     false
 }
 
+/// Checks if a step at the given index completed successfully.
+///
+/// # Arguments
+/// * `step_index` - Index of the step to check
+/// * `results` - Slice of step results to search
+///
+/// # Returns
+/// * `true` - If the step exists and has status "ok"
+/// * `false` - If the step doesn't exist or has any other status
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// // Check if build step succeeded
+/// if step_ok(build_step_index, &results) {
+///     // Proceed to deploy
+/// }
+/// ```
 pub fn step_ok(step_index: usize, results: &[StepResult]) -> bool {
     results
         .get(step_index)
@@ -174,6 +253,24 @@ pub fn step_ok(step_index: usize, results: &[StepResult]) -> bool {
         .unwrap_or(false)
 }
 
+/// Checks if a step at the given index failed.
+///
+/// # Arguments
+/// * `step_index` - Index of the step to check
+/// * `results` - Slice of step results to search
+///
+/// # Returns
+/// * `true` - If the step exists and has status "error"
+/// * `false` - If the step doesn't exist or has any other status
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// // Check if test step failed for rollback
+/// if step_failed(test_step_index, &results) {
+///     // Restore snapshot
+/// }
+/// ```
 pub fn step_failed(step_index: usize, results: &[StepResult]) -> bool {
     results
         .get(step_index)
@@ -181,11 +278,48 @@ pub fn step_failed(step_index: usize, results: &[StepResult]) -> bool {
         .unwrap_or(false)
 }
 
+/// Substitutes a variable placeholder in a template string.
+///
+/// Replaces all occurrences of `{{var_name}}` with the provided value.
+///
+/// # Arguments
+/// * `template` - The template string containing placeholders
+/// * `var_name` - The name of the variable (without braces)
+/// * `value` - The value to substitute
+///
+/// # Returns
+/// The template string with all occurrences of `{{var_name}}` replaced
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// let result = substitute_vars("Hello {{name}}!", "name", "World");
+/// assert_eq!(result, "Hello World!");
+/// ```
 pub fn substitute_vars(template: &str, var_name: &str, value: &str) -> String {
     let pattern = format!("{{{{{}}}}}", var_name);
     template.replace(&pattern, value)
 }
 
+/// Substitutes environment variable placeholders in a template string.
+///
+/// Replaces all occurrences of `{{env.VAR_NAME}}` with the value of the
+/// corresponding environment variable. If the environment variable is not
+/// set, the placeholder is left unchanged.
+///
+/// # Arguments
+/// * `template` - The template string containing environment variable placeholders
+///
+/// # Returns
+/// The template string with all resolved environment variables substituted
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// std::env::set_var("USER", "Alice");
+/// let result = substitute_env_vars("Hello {{env.USER}}!");
+/// assert_eq!(result, "Hello Alice!");
+/// ```
 pub fn substitute_env_vars(template: &str) -> String {
     let re = regex::Regex::new(r"\{\{env\.(\w+)\}\}").unwrap();
     re.replace_all(template, |caps: &regex::Captures| {
