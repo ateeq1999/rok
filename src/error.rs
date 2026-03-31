@@ -103,7 +103,11 @@ impl StepError {
 impl fmt::Display for StepError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(ref id) = self.step_id {
-            write!(f, "Step '{}' (index {}): {}", id, self.step_index, self.message)
+            write!(
+                f,
+                "Step '{}' (index {}): {}",
+                id, self.step_index, self.message
+            )
         } else {
             write!(f, "Step {}: {}", self.step_index, self.message)
         }

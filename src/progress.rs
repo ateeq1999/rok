@@ -17,7 +17,9 @@ impl ProgressTracker {
         let pb = ProgressBar::new(total as u64);
         pb.set_style(
             ProgressStyle::default_bar()
-                .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}")
+                .template(
+                    "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} {msg}",
+                )
                 .unwrap()
                 .progress_chars("=>-"),
         );
@@ -73,19 +75,17 @@ impl ProgressTracker {
     pub fn finish(&self) {
         self.pb.finish_with_message("✓ Complete");
     }
-
-    /// Hide the progress bar (for non-TTY output)
-    pub fn is_hidden(&self) -> bool {
-        !atty::is(atty::Stream::Stdout)
-    }
 }
 
 /// Simple progress reporter for verbose mode
+#[allow(dead_code)]
 pub struct ProgressReporter {
     current: AtomicUsize,
+    #[allow(dead_code)]
     total: usize,
 }
 
+#[allow(dead_code)]
 impl ProgressReporter {
     pub fn new(total: usize) -> Self {
         Self {
