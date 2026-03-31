@@ -502,12 +502,15 @@ pub enum Condition {
         regex: bool,
     },
     GrepHasResults {
+        #[serde(rename = "ref")]
         ref_: usize,
     },
     StepOk {
+        #[serde(rename = "ref")]
         ref_: usize,
     },
     StepFailed {
+        #[serde(rename = "ref")]
         ref_: usize,
     },
     FileChanged {

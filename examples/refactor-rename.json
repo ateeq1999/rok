@@ -24,13 +24,13 @@
       "type": "if",
       "id": "check-usages",
       "condition": {
-        "type": "grep_has_results",
-        "ref": "find-usages"
+        "type": "grepHasResults",
+        "ref": 0
       },
       "then": [
         {
           "type": "bash",
-          "cmd": "echo \"Found {{ref:find-usages.matches.length}} usages of oldFunctionName\"",
+          "cmd": "echo Found usages of oldFunctionName",
           "id": "count-usages"
         },
         {
