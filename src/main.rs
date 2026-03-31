@@ -3,6 +3,7 @@ mod config;
 mod config_file;
 mod error;
 mod output;
+mod progress;
 mod refs;
 mod runner;
 mod schema;
@@ -14,6 +15,7 @@ use config::Config;
 use config_file::apply_config;
 use error::ExitCode;
 use output::format_output;
+use progress::ProgressReporter;
 use runner::Runner;
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -556,7 +558,17 @@ fn main() {
         std::process::exit(0);
     }
 
+    let steps_count = payload.steps.len();
     let runner = Runner::new(config, payload);
+
+    // Show progress in verbose mode or if explicitly enabled
+    let show_progress = cli.verbose && progress::should_show_progress();
+
+    if show_progress {
+        let _reporter = ProgressReporter::new(steps_count);
+        eprintln!("[progress] Starting execution of {} steps...", steps_count);
+    }
+
     let output = runner.run();
 
     let formatted = format_output(&output, &cli.output);

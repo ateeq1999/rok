@@ -8,21 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Comprehensive documentation (CONTRIBUTING.md, ARCHITECTURE.md)
-- Unit tests for core modules (refs, schema validation)
-- Integration test examples
-- Shell completions generation script
-- Enhanced error messages with context
+- Progress indicators for verbose mode execution
+- Enhanced error types with context support
+- StepError with optional step ID tracking
+- New exit codes: ConfigError, IoError
 
 ### Changed
-- Improved error handling throughout the codebase
-- Enhanced output formatting with better colors
-- Updated dependencies to latest versions
+- Improved error messages with additional context
+- Better error display with step identification
+
+## [0.9.0] - 2026-03-31
+
+### Added
+- **Configuration File Support**: `.rokrc`, `rok.toml`, `.rok/config.toml`
+  - Configurable defaults for output, cache, timeout, stopOnError
+  - Environment variables via [env] section
+  - Command aliases via [aliases] section
+- **Progress Indicators**: Visual progress bars for long tasks
+- **Comprehensive Test Suite**: 70 tests (48 unit + 22 integration)
+  - Unit tests for refs, schema, config, runner modules
+  - Integration tests for CLI functionality
+- **Enhanced Error Handling**: Error context and better messages
+
+### Changed
+- Updated dependencies: indicatif 0.17, atty 0.2
+- Improved README with configuration documentation
+- Added .rokrc.example template
 
 ### Fixed
-- Edge cases in reference resolution
-- Memory leaks in parallel execution
-- File path handling on Windows
+- Windows path escaping in integration tests
+- Serde rename for ref_ field in Condition enum
+- Multiple ownership/borrowing issues in tests
 
 ## [0.8.0] - 2026-03-31
 
