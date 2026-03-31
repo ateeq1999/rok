@@ -320,10 +320,14 @@ rok/
 ```
 
 For more information, see:
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [CHANGELOG.md](CHANGELOG.md) - Version history
-- [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md) - Roadmap and improvements
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Technical architecture
+- [rok.md](rok.md) — **AI Agent Guide** — How to use rok as an AI coding agent
+- [PLAN.md](PLAN.md) — Development roadmap and version history
+- [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guidelines
+- [CHANGELOG.md](CHANGELOG.md) — Version history
+- [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md) — Comprehensive improvement plan
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Technical architecture
+- [docs/guides/getting-started.md](docs/guides/getting-started.md) — User getting started guide
+- [docs/guides/step-types.md](docs/guides/step-types.md) — Complete step reference
 
 ## License
 
