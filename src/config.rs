@@ -43,6 +43,7 @@ impl Config {
 mod tests {
     use super::*;
     use std::collections::HashMap;
+    use std::fs;
     use tempfile::TempDir;
 
     #[test]
