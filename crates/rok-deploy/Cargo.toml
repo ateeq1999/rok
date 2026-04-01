@@ -1,0 +1,20 @@
+[package]
+name = "rok-deploy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Deployment automation for the rok ecosystem"
+keywords = ["deploy", "docker", "kubernetes", "rok"]
+categories = ["development-tools"]
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

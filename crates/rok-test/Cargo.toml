@@ -1,0 +1,20 @@
+[package]
+name = "rok-test"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Testing utilities for the rok ecosystem"
+keywords = ["testing", "fixtures", "rok"]
+categories = ["development-tools::testing"]
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

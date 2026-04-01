@@ -24,10 +24,10 @@ cargo install rok-cli
 # From source
 git clone https://github.com/ateeq1999/rok
 cd rok
-cargo install --path .
+cargo install --path crates/rok-cli
 
 # Local development
-cargo install --path . --force
+cargo install --path crates/rok-cli --force
 ```
 
 ## Quick Start
@@ -297,25 +297,19 @@ cargo doc --open
 
 ```
 rok/
-├── src/
-│   ├── main.rs              # CLI entry point
-│   ├── cli.rs               # Argument parsing
-│   ├── config.rs            # Configuration
-│   ├── error.rs             # Error types
-│   ├── output.rs            # Output formatting
-│   ├── refs.rs              # Reference resolution (with tests)
-│   ├── runner.rs            # Execution engine
-│   ├── schema.rs            # JSON schema (with tests)
-│   └── steps/               # Step implementations
-├── tests/
-│   └── integration_test.rs  # Integration tests
-├── benches/
-│   └── runner_bench.rs      # Benchmarks
-├── docs/
-│   ├── ARCHITECTURE.md      # Architecture documentation
-│   ├── api.md               # API reference
-│   └── ...
-├── examples/                # Example task files
+├── Cargo.toml               # Workspace root (resolver = "2")
+├── crates/
+│   ├── rok-cli/             # Binary: the `rok` command (v0.10.0)
+│   │   ├── src/
+│   │   │   ├── main.rs      # CLI entry point
+│   │   │   ├── runner.rs    # Execution engine
+│   │   │   └── steps/       # 27+ step implementations
+│   │   ├── tests/
+│   │   ├── benches/
+│   │   └── examples/
+│   ├── rok-utils/           # Shared utilities (fs, path, string)
+│   └── rok-config/          # Config management (JSON/TOML/YAML + env)
+├── docs/                    # Documentation site (TanStack Start)
 └── scripts/                 # Utility scripts
 ```
 
