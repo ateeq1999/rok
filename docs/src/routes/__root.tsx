@@ -19,13 +19,21 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'rok — Run One. Know All.',
+      },
+      {
+        name: 'description',
+        content: 'An AI-native execution engine that transforms multi-step coding tasks into a single JSON document.',
       },
     ],
     links: [
       {
         rel: 'stylesheet',
         href: appCss,
+      },
+      {
+        rel: 'icon',
+        href: '/favicon.ico',
       },
     ],
   }),
