@@ -54,28 +54,35 @@ rok-workspace/
 │       └── ci.yml             # Unified CI for all crates
 │
 ├── crates/
-│   ├── rok-cli/               # Main CLI (existing)
+│   ├── rok-cli/               # Main CLI (existing) ✅ v0.10.0
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │
-│   ├── rok-orm/               # ORM layer
+│   ├── rok-orm/               # ORM layer 📋 v0.1.0
 │   │   ├── Cargo.toml
 │   │   ├── rok-orm-macros/    # Proc-macros
 │   │   └── rok-orm-core/      # Core traits
 │   │
-│   ├── rok-lint/              # Linting rules
-│   ├── rok-test/              # Testing framework
-│   ├── rok-migrate/           # Database migrations
-│   ├── rok-generate/          # Code generation
-│   ├── rok-deploy/            # Deployment automation
-│   ├── rok-config/             # Configuration management
-│   ├── rok-utils/             # Shared utilities
-│   └── rok-http/              # HTTP client/server
+│   ├── rok-http/              # Axum 0.8+ web framework 📋 v0.1.0
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │
+│   ├── rok-auth/              # Better-auth compatible auth 📋 v0.1.0
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │
+│   ├── rok-lint/              # Linting rules 📋 v0.1.0
+│   ├── rok-test/              # Testing framework 📋 v0.1.0
+│   ├── rok-migrate/           # Database migrations 📋 v0.1.0
+│   ├── rok-generate/          # Code generation 📋 v0.1.0
+│   ├── rok-deploy/            # Deployment automation 📋 v0.1.0
+│   ├── rok-config/             # Configuration management 📋 v0.1.0
+│   └── rok-utils/             # Shared utilities 📋 v0.1.0
 │
 └── tools/
-    ├── rok-gen-model/         # Model generator CLI
-    ├── rok-gen-api/           # API generator CLI
-    └──rok-docs/               # Documentation generator
+    ├── rok-gen-model/         # Model generator CLI 📋 v0.1.0
+    ├── rok-gen-api/           # API generator CLI 📋 v0.1.0
+    └── rok-docs/               # Documentation generator 📋 v0.1.0
 ```
 
 ### Workspace Cargo.toml
@@ -88,6 +95,8 @@ members = [
     "crates/rok-orm/rok-orm-core",
     "crates/rok-orm/rok-orm-macros",
     "crates/rok-orm",
+    "crates/rok-http",
+    "crates/rok-auth",
     "crates/rok-lint",
     "crates/rok-test",
     "crates/rok-migrate",
@@ -95,7 +104,6 @@ members = [
     "crates/rok-deploy",
     "crates/rok-config",
     "crates/rok-utils",
-    "crates/rok-http",
 ]
 
 [workspace.package]
@@ -118,6 +126,35 @@ thiserror = "1"
 anyhow = "1"
 tracing = "0.1"
 clap = { version = "4", features = ["derive"] }
+
+# HTTP & Web (rok-http)
+axum = { version = "0.8", features = ["macros", "http2"] }
+tower = { version = "0.5", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors", "compression", "trace"] }
+hyper = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+jsonwebtoken = "9"
+
+# Auth (rok-auth)
+argon2 = "0.5"
+bcrypt = "0.15"
+totp-rs = "5"
+rand = "0.8"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Code generation
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+darling = "0.20"
+heck = "0.5"
+tera = "1"
+
+# Testing
+assert_cmd = "2"
+predicates = "3"
+tokio-test = "0.4"
 ```
 
 ---
@@ -357,22 +394,210 @@ description = "Deployment automation for rok ecosystem"
 
 #### `rok-http` 📋 Planned v0.1.0
 
-**Purpose**: HTTP client/server utilities  
+**Purpose**: Axum-based web framework with rok conventions  
 **Install**: `cargo add rok-http`  
-**Dependencies**: `reqwest`, `axum`, `tokio`
+**Dependencies**: `axum 0.8+`, `tokio`, `tower`, `hyper`
 
 ```toml
 [package]
 name = "rok-http"
 version = "0.1.0"
-description = "HTTP utilities for rok ecosystem"
+description = "Axum-based web framework with rok conventions"
 ```
 
 **Features**:
-- API client generation
-- Request/response helpers
-- Middleware stack
-- Error handling
+- **Axum 0.8+** — Latest version with Rustls, HTTP/2
+- **Starter Templates** — Production-ready project scaffolding
+- **Middleware Stack** — CORS, compression, request ID, timing
+- **Error Handling** — Unified error types with JSON responses
+- **Request Validation** — Type-safe request parsing
+- **Response Helpers** — Paginated responses, streaming
+
+**Starter Templates**:
+```bash
+rok-http new my-api --template minimal
+rok-http new my-api --template full --with-auth --with-db
+rok-http new my-api --template microservice
+```
+
+**Example**:
+```rust
+use rok_http::{App, Router, get, post};
+
+#[get("/users/:id")]
+async fn get_user(Path(id): Path<Uuid>) -> Result<Json<User>> {
+    let user = User::find(id, &pool).await?;
+    Ok(Json(user))
+}
+
+#[post("/users")]
+async fn create_user(Json(req): Json<CreateUserRequest>) -> Result<Json<User>> {
+    let user = User::create(req, &pool).await?;
+    Ok(Json(user))
+}
+
+#[tokio::main]
+async fn main() {
+    App::new()
+        .route("/users", get(get_users).post(create_user))
+        .route("/users/:id", get(get_user))
+        .serve("0.0.0.0:3000")
+        .await
+        .unwrap();
+}
+```
+
+**Project Structure** (full template):
+```
+my-api/
+├── src/
+│   ├── main.rs
+│   ├── lib.rs
+│   ├── config.rs
+│   ├── error.rs
+│   ├── routes/
+│   │   ├── mod.rs
+│   │   ├── health.rs
+│   │   └── users.rs
+│   ├── handlers/
+│   │   └── mod.rs
+│   ├── middleware/
+│   │   ├── mod.rs
+│   │   ├── auth.rs
+│   │   └── logging.rs
+│   └── extractors/
+│       └── mod.rs
+├── migrations/
+├── tests/
+└── Cargo.toml
+```
+
+---
+
+#### `rok-auth` 📋 Planned v0.1.0
+
+**Purpose**: Better-auth compatible authentication system  
+**Install**: `cargo add rok-auth`  
+**Dependencies**: `rok-http`, `jsonwebtoken`, `argon2`, `sqlx`
+
+```toml
+[package]
+name = "rok-auth"
+version = "0.1.0"
+description = "Better-auth compatible authentication for rok ecosystem"
+```
+
+**Features**:
+- **Better-Auth Compatible** — Drop-in replacement for better-auth
+- **Session Management** — Database + JWT sessions
+- **OAuth Providers** — Google, GitHub, Discord, Microsoft
+- **Multi-Factor Auth** — TOTP, SMS, Email codes
+- **Password Reset** — Secure token-based flows
+- **Account Linking** — Merge multiple auth providers
+- **Role-Based Access** — RBAC with permissions
+- **Rate Limiting** — Built-in brute force protection
+
+**Example**:
+```rust
+use rok_auth::{Auth, AuthConfig, Provider};
+
+#[tokio::main]
+async fn main() {
+    let auth = Auth::new(AuthConfig {
+        secret: std::env::var("AUTH_SECRET").unwrap(),
+        session: SessionConfig {
+            expires_in: Duration::days(7),
+            ..Default::default()
+        },
+        providers: vec![
+            Provider::google(client_id, client_secret),
+            Provider::github(client_id, client_secret),
+        ],
+        ..Default::default()
+    });
+
+    App::new()
+        .route("/auth/signin", post(signin))
+        .route("/auth/signup", post(signup))
+        .route("/auth/signout", post(signout))
+        .route("/auth/oauth/:provider", get(oauth_callback))
+        .route("/protected", get(protected_route))
+        .layer(auth.middleware())
+        .serve("0.0.0.0:3000")
+        .await
+        .unwrap();
+}
+
+// Protected route handler
+async fn protected_route(
+    user: AuthUser,  // Extractor automatically validates session
+) -> Result<Json<UserProfile>> {
+    Ok(Json(user.profile))
+}
+```
+
+**Database Schema** (auto-generated):
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    email_verified BOOLEAN DEFAULT FALSE,
+    password_hash VARCHAR(255),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(50) NOT NULL,
+    provider_account_id VARCHAR(255) NOT NULL,
+    access_token TEXT,
+    refresh_token TEXT,
+    UNIQUE(provider, provider_account_id)
+);
+
+CREATE TABLE verifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    identifier VARCHAR(255) NOT NULL,
+    value VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**rok Integration**:
+```json
+{
+  "name": "setup-auth",
+  "steps": [
+    {
+      "type": "template",
+      "builtin": "rok-auth-init",
+      "props": {
+        "providers": ["google", "github"],
+        "session_type": "database",
+        "mfa_enabled": true
+      }
+    },
+    {
+      "type": "bash",
+      "cmd": "cargo add rok-auth rok-http"
+    },
+    {
+      "type": "bash",
+      "cmd": "rok migrate run"
+    }
+  ]
+}
+```
 
 ---
 
@@ -451,6 +676,26 @@ rok-docs deploy
 │   sqlx          │
 │   tokio         │
 └─────────────────┘
+
+┌────────────────────────────────────────────────────────────┐
+│                  rok-http (v0.1.0)                         │
+│                  (Axum 0.8+ Base)                          │
+└────────────────────────────────────────────────────────────┘
+         │                    │
+         │ uses               │ uses
+         ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐
+│   rok-auth      │  │   rok-orm       │
+│   (v0.1.0)      │  │   (v0.1.0)      │
+└─────────────────┘  └─────────────────┘
+         │                    │
+         │ depends on         │ depends on
+         ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐
+│ jsonwebtoken    │  │ rok-orm-core    │
+│ argon2          │  │ sqlx            │
+│ totp-rs         │  │                 │
+└─────────────────┘  └─────────────────┘
 ```
 
 ---
@@ -464,6 +709,8 @@ Each crate has **independent versioning**:
 | Crate | Current | Next | Breaking Changes |
 |-------|---------|------|------------------|
 | `rok-cli` | v0.10.0 | v0.11.0 | Minor |
+| `rok-http` | — | v0.1.0 | N/A (new) |
+| `rok-auth` | — | v0.1.0 | N/A (new) |
 | `rok-orm` | — | v0.1.0 | N/A (new) |
 | `rok-utils` | — | v0.1.0 | N/A (new) |
 | `rok-config` | — | v0.1.0 | N/A (new) |
@@ -475,19 +722,24 @@ Each crate has **independent versioning**:
 cargo publish -p rok-utils
 cargo publish -p rok-config
 
-# 2. Core crates
+# 2. HTTP layer
+cargo publish -p rok-http
+
+# 3. Auth (depends on rok-http)
+cargo publish -p rok-auth
+
+# 4. ORM layer
 cargo publish -p rok-orm-core
 cargo publish -p rok-orm-macros
 cargo publish -p rok-orm
 
-# 3. Tool crates
+# 5. Tool crates
 cargo publish -p rok-lint
 cargo publish -p rok-test
 cargo publish -p rok-generate
 cargo publish -p rok-deploy
-cargo publish -p rok-http
 
-# 4. CLI tools
+# 6. CLI tools
 cargo publish -p rok-cli
 cargo publish -p rok-gen-model
 cargo publish -p rok-gen-api
