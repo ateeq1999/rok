@@ -1,198 +1,193 @@
-# rok Documentation
+Welcome to your new TanStack Start app! 
 
-> **docs.rok.dev** — The official documentation for the rok ecosystem
+# Getting Started
 
-Built with [TanStack Start](https://tanstack.com/start) — Fast, modern, SSR-ready documentation.
-
----
-
-## Quick Start
+To run this application:
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Start development server
 pnpm dev
-
-# Build for production
-pnpm build
-
-# Preview production build
-pnpm preview
 ```
 
----
+# Building For Production
 
-## Structure
-
-```
-docs/
-├── content/              ← Markdown/MDX source files
-│   ├── guides/           ← User guides
-│   ├── crates/           ← Per-crate documentation
-│   └── api/              ← API reference
-├── src/
-│   ├── routes/           ← TanStack Start routes
-│   │   ├── __root.tsx    ← Root layout
-│   │   ├── index.tsx     ← Home page
-│   │   ├── guide/        ← Guide routes
-│   │   ├── crates/       ← Crate routes
-│   │   └── api/          ← API routes
-│   └── components/       ← Reusable components
-├── public/               ← Static assets
-├── package.json
-└── tanstack-start.config.ts
-```
-
----
-
-## Adding New Documentation
-
-### 1. Add Content File
-
-Create a new `.mdx` file in `content/`:
+To build this application for production:
 
 ```bash
-# New guide
-echo "# My Guide" > content/guides/my-guide.mdx
-
-# New crate docs
-echo "# rok-orm" > content/crates/rok-orm.mdx
+pnpm build
 ```
 
-### 2. Add Route
+## Testing
 
-Create a corresponding route in `src/routes/`:
+This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+
+```bash
+pnpm test
+```
+
+## Styling
+
+This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+
+### Removing Tailwind CSS
+
+If you prefer not to use Tailwind CSS:
+
+1. Remove the demo pages in `src/routes/demo/`
+2. Replace the Tailwind import in `src/styles.css` with your own styles
+3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
+4. Uninstall the packages: `pnpm add @tailwindcss/vite tailwindcss --dev`
+
+
+
+## Routing
+
+This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+
+### Adding A Route
+
+To add a new route to your application just add a new file in the `./src/routes` directory.
+
+TanStack will automatically generate the content of the route file for you.
+
+Now that you have two routes you can use a `Link` component to navigate between them.
+
+### Adding Links
+
+To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
 
 ```tsx
-// src/routes/guide/my-guide.tsx
-import { createFileRoute } from '@tanstack/react-router'
-import content from '../../content/guides/my-guide.mdx'
+import { Link } from "@tanstack/react-router";
+```
 
-export const Route = createFileRoute('/guide/my-guide')({
-  component: () => <content />
+Then anywhere in your JSX you can use it like so:
+
+```tsx
+<Link to="/about">About</Link>
+```
+
+This will create a link that will navigate to the `/about` route.
+
+More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+
+### Using A Layout
+
+In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
+
+Here is an example layout that includes a header:
+
+```tsx
+import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'My App' },
+    ],
+  }),
+  shellComponent: ({ children }) => (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <header>
+          <nav>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+          </nav>
+        </header>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  ),
 })
 ```
 
-### 3. Add to Navigation
+More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
 
-Update the navigation component to include your new page.
+## Server Functions
 
----
+TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
 
-## Writing Documentation
+```tsx
+import { createServerFn } from '@tanstack/react-start'
 
-### MDX Syntax
+const getServerTime = createServerFn({
+  method: 'GET',
+}).handler(async () => {
+  return new Date().toISOString()
+})
 
-```mdx
-# Heading
-
-Regular text with **bold** and *italic*.
-
-## Code Blocks
-
-```rust
-use rok_orm::Model;
-
-#[derive(Model)]
-pub struct User {
-    pub id: Uuid,
-    pub name: String,
+// Use in a component
+function MyComponent() {
+  const [time, setTime] = useState('')
+  
+  useEffect(() => {
+    getServerTime().then(setTime)
+  }, [])
+  
+  return <div>Server time: {time}</div>
 }
 ```
 
-## Components
+## API Routes
 
-<ApiTable name="Model" methods={['find', 'all', 'save']} />
+You can create API routes by using the `server` property in your route definitions:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+import { json } from '@tanstack/react-start'
+
+export const Route = createFileRoute('/api/hello')({
+  server: {
+    handlers: {
+      GET: () => json({ message: 'Hello, World!' }),
+    },
+  },
+})
 ```
 
-### Frontmatter
+## Data Fetching
 
-```mdx
----
-title: Quick Start
-description: Get started with rok in 5 minutes
----
+There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
 
-# Quick Start
-```
+For example:
 
----
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
 
-## Deployment
+export const Route = createFileRoute('/people')({
+  loader: async () => {
+    const response = await fetch('https://swapi.dev/api/people')
+    return response.json()
+  },
+  component: PeopleComponent,
+})
 
-### Vercel
-
-1. Connect GitHub repository
-2. Set build command: `pnpm build`
-3. Set output directory: `dist`
-4. Deploy!
-
-### Netlify
-
-1. Connect GitHub repository
-2. Set build command: `pnpm build`
-3. Set publish directory: `dist`
-4. Deploy!
-
----
-
-## Development Guidelines
-
-### Writing Style
-
-- Use **active voice**
-- Keep sentences **short and clear**
-- Include **code examples** for all features
-- Add **type annotations** in Rust code
-- Use **bold** for important terms
-
-### Code Examples
-
-```rust
-// ✅ Good: Complete, runnable example
-use rok_orm::Model;
-
-#[derive(Model)]
-pub struct User {
-    pub id: Uuid,
-    pub name: String,
-    pub email: String,
+function PeopleComponent() {
+  const data = Route.useLoaderData()
+  return (
+    <ul>
+      {data.results.map((person) => (
+        <li key={person.name}>{person.name}</li>
+      ))}
+    </ul>
+  )
 }
-
-// Usage
-let users = User::all(&pool).await?;
 ```
 
-```rust
-// ❌ Bad: Incomplete, missing context
-let users = User::all().await?; // What is User? Where is pool?
-```
+Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
 
-### Screenshots
+# Demo files
 
-- Use PNG format
-- Include alt text
-- Keep file size under 500KB
-- Use consistent styling
+Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
 
----
+# Learn More
 
-## Contributing
+You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
 
-1. Fork the repository
-2. Create a branch: `git checkout -b docs/my-change`
-3. Make your changes
-4. Preview locally: `pnpm dev`
-5. Submit a PR
-
----
-
-## License
-
-MIT — See [LICENSE](../LICENSE)
-
----
-
-**rok** — Run One. Know All.
+For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).

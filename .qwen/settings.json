@@ -8,7 +8,13 @@
       "Bash(git push *)",
       "Bash(del *)",
       "Bash(cargo build)",
-      "Bash(cargo clippy *)"
+      "Bash(cargo clippy *)",
+      "Bash(cargo publish *)",
+      "Bash(git tag *)",
+      "Bash(cargo install *)",
+      "Bash(.\\target\\release\\rok.exe *)",
+      "Bash(.\\target\\debug\\rok.exe *)",
+      "Bash(powershell *)"
     ]
   },
   "$version": 3
