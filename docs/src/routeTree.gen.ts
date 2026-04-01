@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GuideInstallationRouteImport } from './routes/guide/installation'
+import { Route as CratesRokCliRouteImport } from './routes/crates/rok-cli'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -22,31 +24,49 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuideInstallationRoute = GuideInstallationRouteImport.update({
+  id: '/guide/installation',
+  path: '/guide/installation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CratesRokCliRoute = CratesRokCliRouteImport.update({
+  id: '/crates/rok-cli',
+  path: '/crates/rok-cli',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/crates/rok-cli': typeof CratesRokCliRoute
+  '/guide/installation': typeof GuideInstallationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/crates/rok-cli': typeof CratesRokCliRoute
+  '/guide/installation': typeof GuideInstallationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/crates/rok-cli': typeof CratesRokCliRoute
+  '/guide/installation': typeof GuideInstallationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/about' | '/crates/rok-cli' | '/guide/installation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '/about' | '/crates/rok-cli' | '/guide/installation'
+  id: '__root__' | '/' | '/about' | '/crates/rok-cli' | '/guide/installation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  CratesRokCliRoute: typeof CratesRokCliRoute
+  GuideInstallationRoute: typeof GuideInstallationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guide/installation': {
+      id: '/guide/installation'
+      path: '/guide/installation'
+      fullPath: '/guide/installation'
+      preLoaderRoute: typeof GuideInstallationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crates/rok-cli': {
+      id: '/crates/rok-cli'
+      path: '/crates/rok-cli'
+      fullPath: '/crates/rok-cli'
+      preLoaderRoute: typeof CratesRokCliRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  CratesRokCliRoute: CratesRokCliRoute,
+  GuideInstallationRoute: GuideInstallationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
