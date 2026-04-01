@@ -1,0 +1,17 @@
+[package]
+name = "rok-orm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Eloquent-inspired async ORM for the rok ecosystem"
+keywords = ["orm", "database", "async", "rok"]
+categories = ["database"]
+
+[dependencies]
+rok-orm-core = { path = "rok-orm-core", version = "0.1.0" }
+rok-orm-macros = { path = "rok-orm-macros", version = "0.1.0" }
+
+[dev-dependencies]

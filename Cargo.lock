@@ -2229,6 +2229,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "rok-migrate"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "tempfile",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "rok-orm"
+version = "0.1.0"
+dependencies = [
+ "rok-orm-core",
+ "rok-orm-macros",
+]
+
+[[package]]
+name = "rok-orm-core"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "rok-orm-macros"
+version = "0.1.0"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "rok-test"
 version = "0.1.0"
 dependencies = [
