@@ -2529,8 +2529,10 @@ name = "rok-migrate"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "sqlx",
  "tempfile",
  "thiserror 1.0.69",
+ "tokio",
 ]
 
 [[package]]

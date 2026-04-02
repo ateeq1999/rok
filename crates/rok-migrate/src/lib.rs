@@ -20,6 +20,10 @@ pub mod loader;
 pub mod migration;
 pub mod migrator;
 
+/// Async PostgreSQL runner. Enable with `features = ["postgres"]`.
+#[cfg(feature = "postgres")]
+pub mod runner;
+
 pub use error::MigrateError;
 pub use loader::load_from_dir;
 pub use migration::Migration;
