@@ -1,123 +1,75 @@
 //! Configuration file support for rok
 //!
-//! Loads configuration from .rokrc or rok.toml files
+//! Loads configuration from .rokrc or rok.toml files using rok-config.
 
 use crate::schema::Options;
-use serde::Deserialize;
-use std::collections::HashMap;
-use std::fs;
+use rok_config::{Config as RokCfg, ConfigFormat};
 use std::path::Path;
 
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct RokConfig {
-    #[serde(default)]
-    pub defaults: ConfigDefaults,
-    #[serde(default)]
-    pub env: HashMap<String, String>,
+/// Try to load a rok config file from one of the standard locations.
+///
+/// Probes `.rokrc`, `rok.toml`, and `.rok/config.toml` in order.
+fn try_load_config(dir: &Path) -> Option<RokCfg> {
+    let candidates: &[(&str, ConfigFormat)] = &[
+        (".rokrc", ConfigFormat::Toml),
+        ("rok.toml", ConfigFormat::Toml),
+        (".rok/config.toml", ConfigFormat::Toml),
+    ];
+
+    for (rel, fmt) in candidates {
+        let path = dir.join(rel);
+        if path.exists() {
+            match RokCfg::builder().file(&path, *fmt).build() {
+                Ok(cfg) => {
+                    eprintln!("[rok] Loaded config from {}", path.display());
+                    return Some(cfg);
+                }
+                Err(e) => {
+                    eprintln!("[rok] warning: failed to parse {}: {}", path.display(), e);
+                }
+            }
+        }
+    }
+    None
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct ConfigDefaults {
-    pub output: Option<String>,
-    pub verbose: Option<bool>,
-    pub quiet: Option<bool>,
-    pub cache: Option<bool>,
-    pub stop_on_error: Option<bool>,
-    pub timeout_ms: Option<u64>,
-}
-
-impl RokConfig {
-    /// Load configuration from .rokrc or rok.toml in the given directory
-    pub fn load(dir: &Path) -> Option<Self> {
-        // Try .rokrc first (TOML format)
-        let rokrc_path = dir.join(".rokrc");
-        if rokrc_path.exists() {
-            if let Ok(content) = fs::read_to_string(&rokrc_path) {
-                if let Ok(config) = toml::from_str(&content) {
-                    log_info(&format!("Loaded config from {}", rokrc_path.display()));
-                    return Some(config);
-                }
-            }
-        }
-
-        // Try rok.toml
-        let toml_path = dir.join("rok.toml");
-        if toml_path.exists() {
-            if let Ok(content) = fs::read_to_string(&toml_path) {
-                if let Ok(config) = toml::from_str(&content) {
-                    log_info(&format!("Loaded config from {}", toml_path.display()));
-                    return Some(config);
-                }
-            }
-        }
-
-        // Try .rok/config.toml
-        let config_path = dir.join(".rok").join("config.toml");
-        if config_path.exists() {
-            if let Ok(content) = fs::read_to_string(&config_path) {
-                if let Ok(config) = toml::from_str(&content) {
-                    log_info(&format!("Loaded config from {}", config_path.display()));
-                    return Some(config);
-                }
-            }
-        }
-
-        None
+/// Apply values from a `rok-config` [`RokCfg`] to [`Options`].
+fn apply_rok_config(cfg: &RokCfg, mut options: Options) -> Options {
+    // `[defaults]` section is flattened as "defaults.<key>"
+    if let Ok(v) = cfg.get::<bool>("defaults.cache") {
+        options.cache = v;
+    }
+    if let Ok(v) = cfg.get::<bool>("defaults.stopOnError") {
+        options.stop_on_error = v;
+    }
+    if let Ok(v) = cfg.get::<u64>("defaults.timeoutMs") {
+        options.timeout_ms = v;
     }
 
-    /// Merge configuration with command-line options
-    pub fn merge_with_options(&self, mut options: Options) -> Options {
-        // Apply defaults from config
-        if let Some(output) = &self.defaults.output {
-            // Output is handled at CLI level
-            let _ = output;
+    // `[env]` section is flattened as "env.<VAR_NAME>" → "<value>"
+    for (key, value) in cfg.iter() {
+        if let Some(var) = key.strip_prefix("env.") {
+            options.env.insert(var.to_string(), value.to_string());
         }
-        if let Some(verbose) = self.defaults.verbose {
-            // Verbose is handled at CLI level
-            let _ = verbose;
-        }
-        if let Some(quiet) = self.defaults.quiet {
-            // Quiet is handled at CLI level
-            let _ = quiet;
-        }
-        if let Some(cache) = self.defaults.cache {
-            options.cache = cache;
-        }
-        if let Some(stop_on_error) = self.defaults.stop_on_error {
-            options.stop_on_error = stop_on_error;
-        }
-        if let Some(timeout_ms) = self.defaults.timeout_ms {
-            options.timeout_ms = timeout_ms;
-        }
-
-        // Merge environment variables
-        for (key, value) in &self.env {
-            options.env.insert(key.clone(), value.clone());
-        }
-
-        options
     }
+
+    options
 }
 
-/// Apply configuration to options
+/// Apply configuration file settings to the given options.
 pub fn apply_config(options: Options) -> Options {
     if let Ok(cwd) = std::env::current_dir() {
-        if let Some(config) = RokConfig::load(&cwd) {
-            return config.merge_with_options(options);
+        if let Some(cfg) = try_load_config(&cwd) {
+            return apply_rok_config(&cfg, options);
         }
     }
     options
 }
 
-fn log_info(msg: &str) {
-    eprintln!("[rok] {}", msg);
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use tempfile::TempDir;
 
     #[test]
@@ -134,47 +86,37 @@ timeoutMs = 60000
 [env]
 NODE_ENV = "test"
 API_URL = "http://localhost:3000"
-
-[aliases]
-build = "cargo build --release"
-test = "cargo test --all"
 "#;
         fs::write(&rokrc_path, content).unwrap();
 
-        let config = RokConfig::load(temp_dir.path());
-        assert!(config.is_some());
-        let config = config.unwrap();
-
-        assert!(config.defaults.cache.unwrap());
-        assert!(!config.defaults.stop_on_error.unwrap());
-        assert_eq!(config.defaults.timeout_ms, Some(60000));
-        assert_eq!(config.env.get("NODE_ENV"), Some(&"test".to_string()));
+        let cfg = try_load_config(temp_dir.path()).expect("config loaded");
+        assert_eq!(cfg.get::<bool>("defaults.cache").unwrap(), true);
+        assert_eq!(cfg.get::<bool>("defaults.stopOnError").unwrap(), false);
+        assert_eq!(cfg.get::<u64>("defaults.timeoutMs").unwrap(), 60000);
+        assert_eq!(cfg.get_str("env.NODE_ENV"), Some("test"));
     }
 
     #[test]
-    fn test_merge_with_options() {
-        let config = RokConfig {
-            defaults: ConfigDefaults {
-                cache: Some(true),
-                stop_on_error: Some(false),
-                timeout_ms: Some(60000),
-                ..Default::default()
-            },
-            env: HashMap::new(),
-        };
+    fn test_apply_rok_config() {
+        let temp_dir = TempDir::new().unwrap();
+        fs::write(
+            temp_dir.path().join(".rokrc"),
+            "[defaults]\ncache = true\nstopOnError = false\ntimeoutMs = 60000\n",
+        )
+        .unwrap();
 
-        let options = Options::default();
-        let merged = config.merge_with_options(options);
+        let cfg = try_load_config(temp_dir.path()).unwrap();
+        let options = apply_rok_config(&cfg, Options::default());
 
-        assert!(merged.cache);
-        assert!(!merged.stop_on_error);
-        assert_eq!(merged.timeout_ms, 60000);
+        assert!(options.cache);
+        assert!(!options.stop_on_error);
+        assert_eq!(options.timeout_ms, 60000);
     }
 
     #[test]
     fn test_no_config_file() {
         let temp_dir = TempDir::new().unwrap();
-        let config = RokConfig::load(temp_dir.path());
-        assert!(config.is_none());
+        let cfg = try_load_config(temp_dir.path());
+        assert!(cfg.is_none());
     }
 }

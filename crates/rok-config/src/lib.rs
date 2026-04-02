@@ -73,6 +73,11 @@ impl Config {
         self.data.is_empty()
     }
 
+    /// Iterate over all key-value pairs.
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.data.iter().map(|(k, v)| (k.as_str(), v.as_str()))
+    }
+
     // ── internal ──────────────────────────────────────────────────────────
 
     pub(crate) fn from_map(data: HashMap<String, String>) -> Self {

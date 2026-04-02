@@ -13,6 +13,7 @@ categories = ["command-line-utilities", "development-tools"]
 exclude = [".qwen/**/*", ".claude/**/*", ".git/**/*"]
 
 [dependencies]
+rok-config = { path = "../rok-config", version = "0.1.0" }
 rok-generate = { path = "../rok-generate", version = "0.1.0" }
 rok-migrate = { path = "../rok-migrate", version = "0.1.0" }
 rok-utils = { path = "../rok-utils", version = "0.1.0" }
