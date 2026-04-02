@@ -35,16 +35,16 @@ jobs:
             ${{ runner.os }}-cargo-
 
       - name: Check formatting
-        run: cargo fmt -- --check
+        run: cargo fmt --all -- --check
 
       - name: Run clippy lints
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
 
       - name: Run tests
-        run: cargo test --verbose --all
+        run: cargo test --workspace --verbose
 
       - name: Build documentation
-        run: cargo doc --no-deps
+        run: cargo doc --workspace --no-deps
 
   # Build job - runs on all platforms
   build:
