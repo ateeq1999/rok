@@ -540,6 +540,157 @@ fn main() {
         std::process::exit(0);
     }
 
+    if let Some(cli::Commands::Generate { command }) = &cli.command {
+        use cli::GenerateCommands;
+        use rok_generate::Generator;
+        use std::collections::HashMap;
+
+        match command {
+            GenerateCommands::Model {
+                name,
+                output,
+                force,
+                fields,
+            } => {
+                const TYPED_MODEL: &str = r#"use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct {{ name }} {
+{% for field in fields %}    pub {{ field.name }}: {{ field.type }},
+{% endfor %}}
+"#;
+                let field_objects: Vec<serde_json::Value> = fields
+                    .as_deref()
+                    .unwrap_or("")
+                    .split(',')
+                    .filter(|s| !s.is_empty())
+                    .map(|pair| {
+                        let mut parts = pair.splitn(2, ':');
+                        let fname = parts.next().unwrap_or("field").trim();
+                        let ftype = parts.next().unwrap_or("String").trim();
+                        serde_json::json!({ "name": fname, "type": ftype })
+                    })
+                    .collect();
+
+                std::fs::create_dir_all(output).unwrap_or_default();
+                let dest = output.join(format!("{}.rs", rok_utils::string::to_snake_case(name)));
+
+                if dest.exists() && !force {
+                    println!(
+                        "skip  {} (already exists; use --force to overwrite)",
+                        dest.display()
+                    );
+                    std::process::exit(0);
+                }
+
+                let mut gen = Generator::new();
+                gen.add_template("model", TYPED_MODEL)
+                    .expect("registering model template");
+
+                let mut vars: HashMap<String, serde_json::Value> = HashMap::new();
+                vars.insert("name".into(), serde_json::json!(name));
+                vars.insert("fields".into(), serde_json::Value::Array(field_objects));
+
+                gen.render_to_file("model", &vars, &dest)
+                    .expect("rendering model");
+                println!("wrote {}", dest.display());
+            }
+
+            GenerateCommands::Api {
+                name,
+                output,
+                force,
+                crud,
+            } => {
+                let _ = crud; // CRUD variant uses same handler template for now
+                let template = rok_generate::templates::HANDLER;
+
+                std::fs::create_dir_all(output).unwrap_or_default();
+                let dest = output.join(format!("{}.rs", rok_utils::string::to_snake_case(name)));
+
+                if dest.exists() && !force {
+                    println!(
+                        "skip  {} (already exists; use --force to overwrite)",
+                        dest.display()
+                    );
+                    std::process::exit(0);
+                }
+
+                let mut gen = Generator::new();
+                gen.add_template("handler", template)
+                    .expect("registering handler template");
+
+                let mut vars: HashMap<String, serde_json::Value> = HashMap::new();
+                vars.insert("name".into(), serde_json::json!(name));
+
+                gen.render_to_file("handler", &vars, &dest)
+                    .expect("rendering handler");
+                println!("wrote {}", dest.display());
+            }
+        }
+        std::process::exit(0);
+    }
+
+    if let Some(cli::Commands::Migrate { command }) = &cli.command {
+        use cli::MigrateCommands;
+        use rok_migrate::{load_from_dir, Migrator};
+
+        match command {
+            MigrateCommands::Init => {
+                println!("{}", Migrator::history_table_sql());
+            }
+
+            MigrateCommands::Status { dir } => {
+                let migrations = load_from_dir(dir).unwrap_or_else(|e| {
+                    eprintln!("Error loading migrations: {e}");
+                    std::process::exit(1);
+                });
+
+                if migrations.is_empty() {
+                    println!("No migrations found in {}", dir.display());
+                } else {
+                    println!("Migrations in {}:", dir.display());
+                    for m in &migrations {
+                        let reversible = if m.down_sql.is_some() {
+                            "reversible"
+                        } else {
+                            "irreversible"
+                        };
+                        println!("  {:04}  {}  [{}]", m.version, m.name, reversible);
+                    }
+                }
+            }
+
+            MigrateCommands::Plan { dir } => {
+                let migrations = load_from_dir(dir).unwrap_or_else(|e| {
+                    eprintln!("Error loading migrations: {e}");
+                    std::process::exit(1);
+                });
+
+                let mut migrator = Migrator::new();
+                for m in migrations {
+                    migrator.add(m).unwrap_or_else(|e| {
+                        eprintln!("Error: {e}");
+                        std::process::exit(1);
+                    });
+                }
+
+                // Show plan assuming nothing is applied yet
+                let plan = migrator.plan_up(&[]);
+                if plan.is_empty() {
+                    println!("No pending migrations.");
+                } else {
+                    println!("Execution plan ({} migration(s)):\n", plan.len());
+                    for step in &plan {
+                        println!("-- {:04}: {}", step.migration.version, step.migration.name);
+                        println!("{}\n", step.sql);
+                    }
+                }
+            }
+        }
+        std::process::exit(0);
+    }
+
     fn read_input() -> String {
         use std::io::Write;
         let mut input = String::new();
