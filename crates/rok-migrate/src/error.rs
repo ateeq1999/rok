@@ -11,6 +11,9 @@ pub enum MigrateError {
     #[error("migration version {0} not found")]
     NotFound(u64),
 
+    #[error("migration version {0} is irreversible (no down SQL)")]
+    Irreversible(u64),
+
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 }

@@ -23,4 +23,4 @@ pub mod migrator;
 pub use error::MigrateError;
 pub use loader::load_from_dir;
 pub use migration::Migration;
-pub use migrator::Migrator;
+pub use migrator::{Direction, MigrationPlan, Migrator};
