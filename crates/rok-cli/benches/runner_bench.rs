@@ -4,7 +4,6 @@
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs;
-use std::path::PathBuf;
 use tempfile::TempDir;
 
 fn benchmark_json_parsing(c: &mut Criterion) {
@@ -168,6 +167,7 @@ fn benchmark_execution_order(c: &mut Criterion) {
                 author: None,
                 options: Options::default(),
                 props: std::collections::HashMap::new(),
+                compose: vec![],
                 steps,
             };
 
