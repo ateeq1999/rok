@@ -1,89 +1,52 @@
-#!/bin/bash
-# Install rok locally and make it accessible globally
-# Usage: ./scripts/install.sh
+#!/usr/bin/env bash
+# Build rok-cli from source and install it globally.
+#
+# Usage:
+#   ./scripts/install.sh
+#
+# Alternatively, install from crates.io:
+#   cargo install rok-cli
 
-set -e
+set -euo pipefail
 
-echo "📦 Installing rok..."
-
-# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$ROOT"
 
-# Build release version
-echo "🔨 Building release..."
-cd "$PROJECT_DIR"
-cargo build --release
+echo "Building rok-cli (release)..."
+cargo build -p rok-cli --release
 
-# Determine binary path
-BINARY_PATH="$PROJECT_DIR/target/release/rok.exe"
+BINARY="$ROOT/target/release/rok"
+[ -f "${BINARY}.exe" ] && BINARY="${BINARY}.exe"
 
-if [ ! -f "$BINARY_PATH" ]; then
-    # Try without .exe on Unix
-    BINARY_PATH="$PROJECT_DIR/target/release/rok"
-fi
-
-if [ ! -f "$BINARY_PATH" ]; then
-    echo "❌ Error: Binary not found at $BINARY_PATH"
+if [ ! -f "$BINARY" ]; then
+    echo "Error: binary not found at $BINARY" >&2
     exit 1
 fi
 
-# Detect OS and set up global access
-case "$(uname -s)" in
-    Linux*)
-        # Try to install to ~/.local/bin or /usr/local/bin
+OS="$(uname -s)"
+case "$OS" in
+    Linux*|Darwin*)
         if [ -w /usr/local/bin ]; then
-            INSTALL_DIR="/usr/local/bin"
-        elif [ -w "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin" 2>/dev/null; then
-            INSTALL_DIR="$HOME/.local/bin"
+            DEST="/usr/local/bin/rok"
         else
-            echo "❌ Error: Cannot write to /usr/local/bin or ~/.local/bin"
-            echo "   Please add ~/.local/bin to your PATH manually"
-            exit 1
+            DEST="$HOME/.local/bin/rok"
+            mkdir -p "$(dirname "$DEST")"
         fi
-        
-        cp "$BINARY_PATH" "$INSTALL_DIR/rok"
-        chmod +x "$INSTALL_DIR/rok"
-        echo "✅ Installed to $INSTALL_DIR/rok"
-        ;;
-    Darwin*)
-        # macOS
-        if [ -w /usr/local/bin ]; then
-            INSTALL_DIR="/usr/local/bin"
-        else
-            INSTALL_DIR="$HOME/.local/bin"
-            mkdir -p "$INSTALL_DIR"
-        fi
-        
-        cp "$BINARY_PATH" "$INSTALL_DIR/rok"
-        chmod +x "$INSTALL_DIR/rok"
-        echo "✅ Installed to $INSTALL_DIR/rok"
+        cp "$BINARY" "$DEST"
+        chmod +x "$DEST"
         ;;
     MINGW*|MSYS*|CYGWIN*)
-        # Windows - copy to a persistent location
-        WIN_INSTALL_DIR="$LOCALAPPDATA/rok/bin"
-        mkdir -p "$WIN_INSTALL_DIR"
-        cp "$BINARY_PATH" "$WIN_INSTALL_DIR/rok.exe"
-        
-        # Add to PATH if not already present
-        if [[ ":$PATH:" != *":$WIN_INSTALL_DIR:"* ]]; then
-            echo "Adding $WIN_INSTALL_DIR to PATH..."
-            [ -f ~/.bashrc ] && echo "export PATH=\"\$PATH:$WIN_INSTALL_DIR\"" >> ~/.bashrc
-            [ -f ~/.zshrc ] && echo "export PATH=\"\$PATH:$WIN_INSTALL_DIR\"" >> ~/.zshrc
-            [ -f ~/.profile ] && echo "export PATH=\"\$PATH:$WIN_INSTALL_DIR\"" >> ~/.profile
-        fi
-        echo "✅ Installed to $WIN_INSTALL_DIR/rok.exe"
-        echo "   (Make sure $WIN_INSTALL_DIR is in your PATH)"
+        DEST="$LOCALAPPDATA/rok/bin/rok.exe"
+        mkdir -p "$(dirname "$DEST")"
+        cp "$BINARY" "$DEST"
         ;;
     *)
-        echo "❌ Error: Unsupported OS: $(uname -s)"
+        echo "Unsupported OS: $OS" >&2
         exit 1
         ;;
 esac
 
+echo "Installed: $DEST"
 echo ""
-echo "✅ Installation complete!"
-echo ""
-echo "💡 Verify with:"
-echo "   rok --version"
-echo "   rok --help"
+echo "Verify: rok --version"

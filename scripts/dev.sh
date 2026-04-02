@@ -1,93 +1,113 @@
-#!/bin/bash
-# Development helper - build, test, lint, and check
-# Usage: ./scripts/dev.sh [command]
+#!/usr/bin/env bash
+# Development checks for the rok workspace.
+#
+# Usage:
+#   ./scripts/dev.sh [command]
+#
+# Commands:
+#   gates    Run all acceptance gates (same checks as publish requires)
+#   fmt      Check formatting across the whole workspace
+#   fix      Auto-fix formatting
+#   clippy   Run clippy with -D warnings
+#   test     Run all workspace tests
+#   doc      Build all docs
+#   build    Release build of the full workspace
+#   clean    Remove build artefacts
+#   watch    Re-run tests on every file change (requires cargo-watch)
+#
+# Default (no command): runs `gates`.
 
-set -e
+set -euo pipefail
 
-COMMAND=${1:-"all"}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$ROOT"
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$PROJECT_DIR"
+COMMAND="${1:-gates}"
 
-echo "🔧 Running development checks for rok..."
-echo ""
+step() { echo ""; echo ">> $*"; }
+ok()   { echo "   [ok] $*"; }
+fail() { echo ""; echo "[FAIL] $*" >&2; exit 1; }
 
 case "$COMMAND" in
-    all)
-        echo "📝 Running all checks..."
+
+    gates)
+        echo "Running workspace acceptance gates..."
+
+        step "Formatting"
+        cargo fmt --all -- --check || fail "Run: ./scripts/dev.sh fix"
+        ok "cargo fmt clean"
+
+        step "Lints"
+        cargo clippy --workspace -- -D warnings
+        ok "cargo clippy clean"
+
+        step "Tests"
+        cargo test --workspace
+        ok "All tests pass"
+
+        step "Documentation"
+        cargo doc --workspace --no-deps
+        ok "cargo doc clean"
+
         echo ""
-        echo "1️⃣  Checking formatting..."
-        cargo fmt -- --check
-        echo "   ✅ Formatting OK"
-        echo ""
-        
-        echo "2️⃣  Building..."
-        cargo build --release
-        echo "   ✅ Build OK"
-        echo ""
-        
-        echo "3️⃣  Running tests..."
-        cargo test
-        echo "   ✅ Tests OK"
-        echo ""
-        
-        echo "4️⃣  Running clippy..."
-        cargo clippy -- -D warnings
-        echo "   ✅ Clippy OK"
-        echo ""
-        
-        echo "✅ All checks passed!"
+        echo "All gates passed."
         ;;
-        
+
     fmt|format)
-        echo "📝 Checking formatting..."
-        cargo fmt -- --check
-        echo "✅ Formatting OK"
+        step "Checking formatting"
+        cargo fmt --all -- --check
+        ok "cargo fmt clean"
         ;;
-        
-    build)
-        echo "🔨 Building..."
-        cargo build --release
-        echo "✅ Build OK"
+
+    fix)
+        step "Auto-fixing formatting"
+        cargo fmt --all
+        ok "Done"
         ;;
-        
-    test)
-        echo "🧪 Running tests..."
-        cargo test
-        echo "✅ Tests OK"
-        ;;
-        
+
     clippy)
-        echo "🔍 Running clippy..."
-        cargo clippy -- -D warnings
-        echo "✅ Clippy OK"
+        step "Running clippy"
+        cargo clippy --workspace -- -D warnings
+        ok "cargo clippy clean"
         ;;
-        
+
+    test)
+        step "Running workspace tests"
+        cargo test --workspace
+        ok "All tests pass"
+        ;;
+
+    doc)
+        step "Building documentation"
+        cargo doc --workspace --no-deps
+        ok "cargo doc clean"
+        ;;
+
+    build)
+        step "Release build"
+        cargo build --workspace --release
+        ok "Build complete"
+        ;;
+
     clean)
-        echo "🧹 Cleaning..."
+        step "Cleaning build artefacts"
         cargo clean
-        echo "✅ Clean OK"
+        ok "Done"
         ;;
-        
-    run)
-        echo "🏃 Running..."
-        shift
-        cargo run --release -- "$@"
+
+    watch)
+        if ! command -v cargo-watch &>/dev/null; then
+            fail "cargo-watch not found. Install with: cargo install cargo-watch"
+        fi
+        step "Watching for changes (cargo test --workspace)"
+        cargo watch -x "test --workspace"
         ;;
-        
+
     *)
-        echo "❌ Unknown command: $COMMAND"
+        echo "Unknown command: $COMMAND" >&2
         echo ""
-        echo "Usage: $0 [command]"
-        echo ""
-        echo "Commands:"
-        echo "  all      - Run all checks (default)"
-        echo "  fmt      - Check formatting"
-        echo "  build    - Build release"
-        echo "  test     - Run tests"
-        echo "  clippy   - Run clippy lints"
-        echo "  clean    - Clean build artifacts"
-        echo "  run      - Run the application"
+        echo "Usage: $0 [gates|fmt|fix|clippy|test|doc|build|clean|watch]"
         exit 1
         ;;
 esac
