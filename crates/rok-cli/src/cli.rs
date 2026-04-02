@@ -168,6 +168,82 @@ pub enum Commands {
         )]
         port: String,
     },
+
+    #[command(about = "Generate code scaffolding")]
+    Generate {
+        #[command(subcommand)]
+        command: GenerateCommands,
+    },
+
+    #[command(about = "Manage database migrations")]
+    Migrate {
+        #[command(subcommand)]
+        command: MigrateCommands,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum GenerateCommands {
+    #[command(about = "Generate a Rust model struct")]
+    Model {
+        #[arg(long, short, help = "Model name (PascalCase)")]
+        name: String,
+
+        #[arg(long, short, default_value = "src/models", help = "Output directory")]
+        output: std::path::PathBuf,
+
+        #[arg(long, help = "Overwrite existing files")]
+        force: bool,
+
+        #[arg(
+            long,
+            help = "Comma-separated list of fields in `name:type` format (e.g. id:i64,email:String)"
+        )]
+        fields: Option<String>,
+    },
+
+    #[command(about = "Generate an Axum HTTP handler")]
+    Api {
+        #[arg(long, short, help = "Handler name (snake_case)")]
+        name: String,
+
+        #[arg(long, short, default_value = "src/handlers", help = "Output directory")]
+        output: std::path::PathBuf,
+
+        #[arg(long, help = "Overwrite existing files")]
+        force: bool,
+
+        #[arg(long, help = "Generate CRUD handlers")]
+        crud: bool,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum MigrateCommands {
+    #[command(about = "Show pending and applied migrations")]
+    Status {
+        #[arg(
+            long,
+            short,
+            default_value = "migrations",
+            help = "Migrations directory"
+        )]
+        dir: std::path::PathBuf,
+    },
+
+    #[command(about = "Print the SQL execution plan for pending migrations")]
+    Plan {
+        #[arg(
+            long,
+            short,
+            default_value = "migrations",
+            help = "Migrations directory"
+        )]
+        dir: std::path::PathBuf,
+    },
+
+    #[command(about = "Print the history table DDL")]
+    Init,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
