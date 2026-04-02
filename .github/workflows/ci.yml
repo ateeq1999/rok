@@ -95,6 +95,53 @@ jobs:
           name: ${{ matrix.asset_name }}
           path: target/release/${{ matrix.artifact_name }}
 
+  # Integration tests against a live Postgres container
+  integration-test:
+    name: Integration Tests (Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: rok_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-pg-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-pg-
+
+      - name: Run ORM integration tests
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost/rok_test
+        run: cargo test -p rok-orm --features postgres --test pg_integration -- --test-threads=1
+
+      - name: Run migrate integration tests
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost/rok_test
+        run: cargo test -p rok-migrate --features postgres -- --test-threads=1
+
   # Security audit job
   audit:
     name: Security Audit
