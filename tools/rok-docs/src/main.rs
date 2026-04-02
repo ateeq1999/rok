@@ -178,16 +178,63 @@ async fn serve_file(dir: &Path, uri_path: &str) -> Response<Body> {
     let path = dir.join(rel);
 
     match std::fs::read_to_string(&path) {
-        Ok(content) => Response::builder()
-            .status(200)
-            .header("content-type", "text/plain; charset=utf-8")
-            .body(Body::from(content))
-            .unwrap(),
+        Ok(markdown) => {
+            let html = render_markdown(&markdown, rel);
+            Response::builder()
+                .status(200)
+                .header("content-type", "text/html; charset=utf-8")
+                .body(Body::from(html))
+                .unwrap()
+        }
         Err(_) => Response::builder()
             .status(404)
             .body(Body::from(format!("Not found: {rel}")))
             .unwrap(),
     }
+}
+
+/// Render a markdown string to a full HTML page.
+fn render_markdown(markdown: &str, title: &str) -> String {
+    use pulldown_cmark::{html, Options, Parser};
+
+    let mut opts = Options::empty();
+    opts.insert(Options::ENABLE_TABLES);
+    opts.insert(Options::ENABLE_STRIKETHROUGH);
+    opts.insert(Options::ENABLE_HEADING_ATTRIBUTES);
+
+    let parser = Parser::new_ext(markdown, opts);
+    let mut body = String::new();
+    html::push_html(&mut body, parser);
+
+    // Infer a page title from the filename stem (e.g. "rok-http.md" → "rok-http").
+    let page_title = std::path::Path::new(title)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(title);
+
+    format!(
+        r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{page_title}</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #222; line-height: 1.6; }}
+  pre {{ background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }}
+  code {{ background: #f0f0f0; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; }}
+  pre code {{ background: none; padding: 0; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  th, td {{ border: 1px solid #ccc; padding: 0.4rem 0.8rem; text-align: left; }}
+  th {{ background: #f0f0f0; }}
+  a {{ color: #0066cc; }}
+</style>
+</head>
+<body>
+{body}
+</body>
+</html>"#
+    )
 }
 
 // ── Workspace / package loading ───────────────────────────────────────────────
