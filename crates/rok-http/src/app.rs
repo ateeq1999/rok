@@ -1,10 +1,11 @@
 //! [`App`] — the main application builder.
 
 use axum::Router;
+use rok_auth::AuthConfig;
 use std::net::SocketAddr;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
-use crate::middleware::{cors_layer, request_id_layer};
+use crate::middleware::{cors_layer, request_id_layer, AuthLayer};
 
 /// Application builder.
 ///
@@ -28,6 +29,7 @@ use crate::middleware::{cors_layer, request_id_layer};
 /// ```
 pub struct App {
     router: Router,
+    auth: Option<AuthConfig>,
 }
 
 impl App {
@@ -35,7 +37,17 @@ impl App {
     pub fn new() -> Self {
         Self {
             router: Router::new(),
+            auth: None,
         }
+    }
+
+    /// Enable JWT bearer-token authentication for all routes added after this call.
+    ///
+    /// Requests missing or carrying an invalid `Authorization: Bearer <token>` header
+    /// will receive `401 Unauthorized` before reaching any handler.
+    pub fn with_auth(mut self, config: AuthConfig) -> Self {
+        self.auth = Some(config);
+        self
     }
 
     /// Add a route (forwarded to the inner [`Router`]).
@@ -52,7 +64,11 @@ impl App {
 
     /// Build the final [`Router`] with the default middleware applied.
     pub fn build(self) -> Router {
-        self.router
+        let mut router = self.router;
+        if let Some(config) = self.auth {
+            router = router.layer(AuthLayer::new(config));
+        }
+        router
             .layer(CompressionLayer::new())
             .layer(cors_layer())
             .layer(TraceLayer::new_for_http())

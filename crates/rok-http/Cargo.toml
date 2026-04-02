@@ -12,6 +12,7 @@ categories = ["web-programming", "web-programming::http-server"]
 
 [dependencies]
 # Core
+rok-auth = { path = "../rok-auth", version = "0.1.0" }
 tokio = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
