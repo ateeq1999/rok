@@ -40,3 +40,10 @@ pub use rok_orm_macros::Model;
 /// Async PostgreSQL executor. Enable with `features = ["postgres"]`.
 #[cfg(feature = "postgres")]
 pub mod executor;
+
+/// Ergonomic async CRUD trait. Enable with `features = ["postgres"]`.
+#[cfg(feature = "postgres")]
+pub mod pg_model;
+
+#[cfg(feature = "postgres")]
+pub use pg_model::PgModel;
