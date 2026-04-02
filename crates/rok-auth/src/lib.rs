@@ -24,7 +24,7 @@ pub mod jwt;
 pub mod password;
 pub mod session;
 
-pub use claims::Claims;
+pub use claims::{Claims, RefreshClaims};
 pub use config::AuthConfig;
 pub use error::AuthError;
 pub use jwt::Auth;

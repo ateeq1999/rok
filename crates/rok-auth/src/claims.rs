@@ -3,6 +3,41 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
+/// Claims carried in a refresh token.
+///
+/// Refresh tokens use a dedicated `typ` field (`"refresh"`) so they cannot be
+/// accepted where an access token is expected (and vice-versa).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RefreshClaims {
+    /// Subject — same value as in the corresponding access token.
+    pub sub: String,
+
+    /// Discriminator — always `"refresh"`.
+    pub typ: String,
+
+    /// Expiry (Unix timestamp).
+    pub exp: i64,
+
+    /// Issued-at (Unix timestamp).
+    pub iat: i64,
+
+    /// Issuer (optional).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub iss: Option<String>,
+}
+
+impl RefreshClaims {
+    pub(crate) fn new(sub: impl Into<String>, exp: i64, iss: Option<String>) -> Self {
+        Self {
+            sub: sub.into(),
+            typ: "refresh".to_string(),
+            exp,
+            iat: Utc::now().timestamp(),
+            iss,
+        }
+    }
+}
+
 /// Standard + custom JWT claims carried in every token.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
