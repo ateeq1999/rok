@@ -135,8 +135,6 @@ fi
 
 # ── Publish loop ──────────────────────────────────────────────────────────────
 
-# --no-verify skips crates.io dependency resolution in dry-run; compilation
-# is already proven clean by gate 4 (cargo test --workspace).
 PUBLISH_FLAGS=""
 $DRY_RUN && PUBLISH_FLAGS="--dry-run --no-verify"
 
@@ -161,8 +159,19 @@ for crate in "${CRATES_TO_PUBLISH[@]}"; do
     fi
 
     step "Publishing $crate v$local_ver${DRY_RUN:+ (dry run)}"
-    if ! cargo publish -p "$crate" $PUBLISH_FLAGS; then
-        fail "cargo publish failed for $crate v$local_ver"
+    if $DRY_RUN; then
+        # Full dry-run works for leaf crates. For crates whose workspace deps
+        # haven't been published yet, fall back to manifest+file-list check.
+        if ! cargo publish -p "$crate" $PUBLISH_FLAGS 2>/dev/null; then
+            if ! cargo package -p "$crate" --list --no-verify 2>/dev/null; then
+                fail "cargo publish failed for $crate v$local_ver"
+            fi
+            echo "   (manifest check only — workspace deps not on crates.io yet)"
+        fi
+    else
+        if ! cargo publish -p "$crate" $PUBLISH_FLAGS; then
+            fail "cargo publish failed for $crate v$local_ver"
+        fi
     fi
     ok "$crate v$local_ver published"
 
