@@ -25,6 +25,7 @@ use thiserror::Error;
 /// }
 /// ```
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum AppError {
     /// 400 Bad Request
     #[error("{0}")]

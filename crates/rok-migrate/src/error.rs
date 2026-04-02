@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum MigrateError {
     #[error("duplicate migration version {0}")]
     DuplicateVersion(u64),

@@ -6,6 +6,7 @@ use std::fmt;
 
 /// A typed SQL parameter value.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub enum SqlValue {
     Text(String),
     Integer(i64),
@@ -73,6 +74,7 @@ impl From<bool> for SqlValue {
 
 /// A single WHERE clause condition.
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum Condition {
     Eq(String, SqlValue),
     Ne(String, SqlValue),
