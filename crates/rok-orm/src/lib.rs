@@ -36,3 +36,7 @@ pub use rok_orm_macros::Model as Model_derive;
 // Convenience re-export of the derive macro under the canonical name so users
 // only need `use rok_orm::Model;` in combination with `#[derive(Model)]`.
 pub use rok_orm_macros::Model;
+
+/// Async PostgreSQL executor. Enable with `features = ["postgres"]`.
+#[cfg(feature = "postgres")]
+pub mod executor;

@@ -61,6 +61,8 @@ rand = "0.8"
 heck = "0.5"
 tera = "1"
 regex = "1"
+# Database
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "macros"] }
 # Proc-macro utilities
 syn = { version = "2", features = ["full"] }
 quote = "1"

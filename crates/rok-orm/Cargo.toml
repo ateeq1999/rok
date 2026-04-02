@@ -10,8 +10,14 @@ description = "Eloquent-inspired async ORM for the rok ecosystem"
 keywords = ["orm", "database", "async", "rok"]
 categories = ["database"]
 
+[features]
+## Enable the async PostgreSQL executor (requires a running Postgres instance to use).
+postgres = ["dep:sqlx", "dep:tokio"]
+
 [dependencies]
 rok-orm-core = { path = "../rok-orm-core", version = "0.1.0" }
 rok-orm-macros = { path = "../rok-orm-macros", version = "0.1.0" }
+sqlx = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
