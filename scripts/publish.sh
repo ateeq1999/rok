@@ -135,8 +135,10 @@ fi
 
 # ── Publish loop ──────────────────────────────────────────────────────────────
 
+# --no-verify skips crates.io dependency resolution in dry-run; compilation
+# is already proven clean by gate 4 (cargo test --workspace).
 PUBLISH_FLAGS=""
-$DRY_RUN && PUBLISH_FLAGS="--dry-run"
+$DRY_RUN && PUBLISH_FLAGS="--dry-run --no-verify"
 
 published_count=0
 skipped_count=0
