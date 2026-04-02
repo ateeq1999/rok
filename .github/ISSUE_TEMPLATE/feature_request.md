@@ -1,34 +1,27 @@
 ---
-name: Feature request
-description: Suggest an idea for this project
-title: "[FEATURE] "
-labels: ["enhancement"]
-assignees: []
+name: Feature Request
+description: Propose a feature before writing a full spec
+title: "feat(<crate>): <short description>"
+labels: ["enhancement", "needs-spec"]
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## What problem does this solve?
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+<!-- Describe the pain point. One paragraph. -->
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed solution
 
-**Example Usage**
-How would this feature be used?
-```json
-{
-  "steps": [
-    // Example task showing the new feature
-  ]
-}
-```
+<!-- High-level description of what you want. Not a full spec yet. -->
 
-**Additional context**
-Add any other context, mockups, or screenshots about the feature request here.
+## Affected crates (best guess)
 
-**Priority**
-- [ ] Low - Nice to have
-- [ ] Medium - Would be very useful
-- [ ] High - Blocks workflow
+- `rok-`
+
+## Alternatives considered
+
+<!-- Other approaches you thought about. -->
+
+---
+
+*Once this is agreed on, convert it to a **Feature Spec** issue with full API
+signatures and acceptance criteria before any implementation begins.*

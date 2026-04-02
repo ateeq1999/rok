@@ -1,47 +1,33 @@
-<!-- Thank you for contributing to rok! Please fill out the following: -->
+## Closes
 
-## Description
+Closes #
 
-<!-- Describe your changes in detail -->
+## What changed
 
-## Related Issue
+<!-- One paragraph. What was added, changed, or removed and why. -->
 
-<!-- Please link to any related issues here, e.g. "Fixes #123" -->
+## Affected crates
 
-Fixes #
+<!-- List every crate whose public API or behaviour changed. -->
 
-## Type of Change
+- [ ] `rok-`
 
-<!-- Mark the appropriate option with an "x" -->
+## Acceptance gates
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Documentation update
-- [ ] Code refactoring
-- [ ] Performance improvement
-- [ ] Tests (adding or updating tests)
+Paste the output of `./scripts/dev.sh gates` or link to the CI run.
 
-## Testing
-
-<!-- Please describe the tests you ran to verify your changes -->
-
-- [ ] Unit tests pass: `cargo test --bin rok`
-- [ ] Integration tests pass: `cargo test --test integration_test`
-- [ ] Clippy passes: `cargo clippy -- -A clippy::too_many_arguments`
-- [ ] Format check passes: `cargo fmt -- --check`
+```
+>> Formatting     [ok]
+>> Lints          [ok]
+>> Tests          [ok]
+>> Documentation  [ok]
+```
 
 ## Checklist
 
-<!-- Mark items with "x" as you complete them -->
-
-- [ ] I have read the [CONTRIBUTING.md](../CONTRIBUTING.md) guide
-- [ ] My code follows the project's code style
-- [ ] I have added/updated tests for my changes
-- [ ] I have updated the documentation accordingly
-- [ ] I have added my changes to the CHANGELOG.md
-- [ ] All new and existing tests pass
-
-## Additional Notes
-
-<!-- Add any additional notes for reviewers here -->
+- [ ] Gates are green (`./scripts/dev.sh gates`)
+- [ ] Every new/changed `pub` item has a `///` doc comment
+- [ ] New behaviour is covered by at least one test
+- [ ] No `unwrap()` in library code outside of tests
+- [ ] `CHANGELOG.md` updated if this is a user-visible change
+- [ ] Spec in the linked issue is fully satisfied (nothing extra added)
