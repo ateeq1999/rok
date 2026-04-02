@@ -1,0 +1,20 @@
+[package]
+name = "rok-lint"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Custom linting rules for rok projects"
+keywords = ["lint", "quality", "rok"]
+categories = ["development-tools"]
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+regex = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

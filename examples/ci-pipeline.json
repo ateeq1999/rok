@@ -1,0 +1,57 @@
+{
+  "name": "ci-pipeline",
+  "description": "Complete CI/CD pipeline example with build, test, and deploy",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": true,
+    "timeout_ms": 300000
+  },
+  "steps": [
+    {
+      "type": "bash",
+      "cmd": "git status --porcelain",
+      "id": "check-dirty",
+      "timeout_ms": 5000
+    },
+    {
+      "type": "bash",
+      "cmd": "cargo fmt -- --check",
+      "id": "format-check",
+      "retry": {
+        "count": 2,
+        "delay_ms": 1000
+      }
+    },
+    {
+      "type": "bash",
+      "cmd": "cargo clippy -- -D warnings",
+      "id": "lint",
+      "timeout_ms": 120000
+    },
+    {
+      "type": "bash",
+      "cmd": "cargo test --all",
+      "id": "test",
+      "timeout_ms": 180000
+    },
+    {
+      "type": "bash",
+      "cmd": "cargo build --release",
+      "id": "build",
+      "timeout_ms": 120000
+    },
+    {
+      "type": "scan",
+      "path": "./target/release",
+      "depth": 1,
+      "include": ["rok*"],
+      "id": "find-binary"
+    },
+    {
+      "type": "bash",
+      "cmd": "echo \"✓ Build successful: {{ref:5.tree.0}}\"",
+      "id": "success-msg"
+    }
+  ]
+}

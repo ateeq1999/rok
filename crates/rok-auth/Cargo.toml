@@ -1,0 +1,34 @@
+[package]
+name = "rok-auth"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "JWT authentication and RBAC for the rok ecosystem"
+keywords = ["auth", "jwt", "rbac", "rok"]
+categories = ["authentication", "web-programming"]
+
+[dependencies]
+# Core
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+# Auth primitives
+jsonwebtoken = { workspace = true }
+argon2 = { workspace = true }
+rand = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+# Axum integration (optional)
+axum = { workspace = true, optional = true }
+tower = { workspace = true, optional = true }
+
+[features]
+default = []
+axum = ["dep:axum", "dep:tower"]
+
+[dev-dependencies]
+tokio = { workspace = true }

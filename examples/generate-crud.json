@@ -1,0 +1,49 @@
+{
+  "name": "generate-crud",
+  "description": "Generate CRUD operations for a resource using templates",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": false
+  },
+  "props": {
+    "resource": "Product",
+    "path": "products"
+  },
+  "steps": [
+    {
+      "type": "mkdir",
+      "path": "src/api/{{props.path}}",
+      "id": "create-dir"
+    },
+    {
+      "type": "write",
+      "path": "src/api/{{props.path}}/model.ts",
+      "content": "export interface {{props.resource}} {\n  id: string;\n  name: string;\n  description: string;\n  price: number;\n  createdAt: Date;\n  updatedAt: Date;\n}\n",
+      "id": "write-model"
+    },
+    {
+      "type": "write",
+      "path": "src/api/{{props.path}}/service.ts",
+      "content": "import { {{props.resource}} } from './model';\n\nconst items: Map<string, {{props.resource}}> = new Map();\n\nexport async function find{{props.resource}}ById(id: string): Promise<{{props.resource}} | null> {\n  return items.get(id) || null;\n}\n\nexport async function list{{props.resource}}s(): Promise<{{props.resource}}[]> {\n  return Array.from(items.values());\n}\n\nexport async function create{{props.resource}}(data: Omit<{{props.resource}}, 'id' | 'createdAt' | 'updatedAt'>): Promise<{{props.resource}}> {\n  const item: {{props.resource}} = {\n    ...data,\n    id: crypto.randomUUID(),\n    createdAt: new Date(),\n    updatedAt: new Date()\n  };\n  items.set(item.id, item);\n  return item;\n}\n\nexport async function update{{props.resource}}(id: string, data: Partial<{{props.resource}}>): Promise<{{props.resource}} | null> {\n  const existing = items.get(id);\n  if (!existing) return null;\n  const updated = { ...existing, ...data, updatedAt: new Date() };\n  items.set(id, updated);\n  return updated;\n}\n\nexport async function delete{{props.resource}}(id: string): Promise<boolean> {\n  return items.delete(id);\n}\n",
+      "id": "write-service"
+    },
+    {
+      "type": "write",
+      "path": "src/api/{{props.path}}/routes.ts",
+      "content": "import { Router } from 'express';\nimport * as service from './service';\n\nexport const router = Router();\n\nrouter.get('/{{props.path}}', async (req, res) => {\n  const items = await service.list{{props.resource}}s();\n  res.json(items);\n});\n\nrouter.get('/{{props.path}}/:id', async (req, res) => {\n  const item = await service.find{{props.resource}}ById(req.params.id);\n  if (!item) return res.status(404).json({ error: 'Not found' });\n  res.json(item);\n});\n\nrouter.post('/{{props.path}}', async (req, res) => {\n  const item = await service.create{{props.resource}}(req.body);\n  res.status(201).json(item);\n});\n\nrouter.put('/{{props.path}}/:id', async (req, res) => {\n  const item = await service.update{{props.resource}}(req.params.id, req.body);\n  if (!item) return res.status(404).json({ error: 'Not found' });\n  res.json(item);\n});\n\nrouter.delete('/{{props.path}}/:id', async (req, res) => {\n  const deleted = await service.delete{{props.resource}}(req.params.id);\n  res.status(deleted ? 204 : 404).send();\n});\n",
+      "id": "write-routes"
+    },
+    {
+      "type": "write",
+      "path": "src/api/{{props.path}}/index.ts",
+      "content": "export * from './model';\nexport * from './service';\nexport { router } from './routes';\n",
+      "id": "write-index"
+    },
+    {
+      "type": "bash",
+      "cmd": "echo \"✓ Generated CRUD for {{props.resource}} at src/api/{{props.path}}/\"",
+      "id": "success"
+    }
+  ]
+}

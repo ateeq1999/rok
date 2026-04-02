@@ -1,0 +1,25 @@
+[package]
+name = "rok-gen-model"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Generate Rust models from a JSON schema or database"
+keywords = ["codegen", "model", "rok", "scaffold"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "rok-gen-model"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+heck = { workspace = true }
+rok-generate = { path = "../../crates/rok-generate" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }

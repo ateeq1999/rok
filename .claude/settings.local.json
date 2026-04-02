@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /d/Ateeg/Tools/rok/src/*.rs /d/Ateeg/Tools/rok/src/steps/*.rs)",
+      "Bash(find /d/Ateeg/Tools/rok/benches -type f -name *)",
+      "Bash(find /d/Ateeg/Tools/rok/examples -type f -name *)",
+      "Bash(mkdir -p crates/rok-cli)",
+      "Bash(cp -r src crates/rok-cli/src)",
+      "Bash(cp -r tests crates/rok-cli/tests)",
+      "Bash(cp -r benches crates/rok-cli/benches)",
+      "Bash(cp -r examples crates/rok-cli/examples)"
+    ]
+  }
+}

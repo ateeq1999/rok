@@ -1,0 +1,68 @@
+{
+  "name": "refactor-rename",
+  "description": "Rename a function across entire codebase with verification",
+  "version": "1.0.0",
+  "options": {
+    "cwd": ".",
+    "stop_on_error": false
+  },
+  "steps": [
+    {
+      "type": "snapshot",
+      "path": "src",
+      "snapshot_id": "before-rename",
+      "id": "snapshot"
+    },
+    {
+      "type": "grep",
+      "pattern": "function oldFunctionName",
+      "path": "./src",
+      "ext": ["ts", "js", "rs"],
+      "id": "find-usages"
+    },
+    {
+      "type": "if",
+      "id": "check-usages",
+      "condition": {
+        "type": "grepHasResults",
+        "ref": 0
+      },
+      "then": [
+        {
+          "type": "bash",
+          "cmd": "echo Found usages of oldFunctionName",
+          "id": "count-usages"
+        },
+        {
+          "type": "replace",
+          "pattern": "oldFunctionName",
+          "replacement": "newFunctionName",
+          "path": "./src",
+          "ext": ["ts", "js", "rs"],
+          "glob": "**/*.{ts,js,rs}",
+          "whole_word": true,
+          "id": "rename-function"
+        },
+        {
+          "type": "grep",
+          "pattern": "function newFunctionName",
+          "path": "./src",
+          "ext": ["ts", "js", "rs"],
+          "id": "verify-rename"
+        },
+        {
+          "type": "bash",
+          "cmd": "echo \"✓ Renamed to newFunctionName\"",
+          "id": "success"
+        }
+      ],
+      "else": [
+        {
+          "type": "bash",
+          "cmd": "echo \"✗ oldFunctionName not found in codebase\"",
+          "id": "not-found"
+        }
+      ]
+    }
+  ]
+}

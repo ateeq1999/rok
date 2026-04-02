@@ -1,0 +1,31 @@
+[package]
+name = "rok-http"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Axum-based HTTP layer for the rok ecosystem"
+keywords = ["http", "axum", "web", "rok"]
+categories = ["web-programming", "web-programming::http-server"]
+
+[dependencies]
+# Core
+rok-auth = { path = "../rok-auth", version = "0.1.0" }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+# HTTP stack
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+hyper = { workspace = true }
+# Utilities
+tracing = "0.1"
+
+[dev-dependencies]
+tokio = { workspace = true }
+axum = { workspace = true }
