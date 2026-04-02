@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    # ── library crates ────────────────────────────────────────────────────────
     "crates/rok-cli",
     "crates/rok-utils",
     "crates/rok-config",
@@ -14,6 +15,10 @@ members = [
     "crates/rok-orm/rok-orm-macros",
     "crates/rok-orm",
     "crates/rok-migrate",
+    # ── standalone CLI tools ──────────────────────────────────────────────────
+    "tools/rok-gen-model",
+    "tools/rok-gen-api",
+    "tools/rok-docs",
 ]
 
 [workspace.package]

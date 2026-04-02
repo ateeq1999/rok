@@ -2189,6 +2189,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "rok-docs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "clap",
+ "serde",
+ "serde_json",
+ "tokio",
+ "toml",
+]
+
+[[package]]
+name = "rok-gen-api"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "heck",
+ "rok-generate",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rok-gen-model"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "heck",
+ "rok-generate",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "rok-generate"
 version = "0.1.0"
 dependencies = [

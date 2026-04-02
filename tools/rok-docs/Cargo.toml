@@ -1,0 +1,24 @@
+[package]
+name = "rok-docs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Generate and serve documentation for the rok ecosystem"
+keywords = ["docs", "documentation", "rok"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "rok-docs"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+toml = { workspace = true }
