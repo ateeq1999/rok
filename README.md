@@ -314,14 +314,11 @@ rok/
 ```
 
 For more information, see:
-- [rok.md](rok.md) — **AI Agent Guide** — How to use rok as an AI coding agent
-- [PLAN.md](PLAN.md) — Development roadmap and version history
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Contribution guidelines
 - [CHANGELOG.md](CHANGELOG.md) — Version history
-- [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md) — Comprehensive improvement plan
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Technical architecture
-- [docs/guides/getting-started.md](docs/guides/getting-started.md) — User getting started guide
-- [docs/guides/step-types.md](docs/guides/step-types.md) — Complete step reference
+- [ROADMAP.md](ROADMAP.md) — Planned features and milestones
+- [meta/rok.md](meta/rok.md) — AI Agent Guide — How to use rok as an AI coding agent
+- [meta/ECOSYSTEM.md](meta/ECOSYSTEM.md) — Full ecosystem design and crate catalog
 
 ## License
 

@@ -11,8 +11,8 @@ members = [
     "crates/rok-test",
     "crates/rok-generate",
     "crates/rok-deploy",
-    "crates/rok-orm/rok-orm-core",
-    "crates/rok-orm/rok-orm-macros",
+    "crates/rok-orm-core",
+    "crates/rok-orm-macros",
     "crates/rok-orm",
     "crates/rok-migrate",
     # ── standalone CLI tools ──────────────────────────────────────────────────

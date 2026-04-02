@@ -11,7 +11,7 @@ keywords = ["orm", "database", "async", "rok"]
 categories = ["database"]
 
 [dependencies]
-rok-orm-core = { path = "rok-orm-core", version = "0.1.0" }
-rok-orm-macros = { path = "rok-orm-macros", version = "0.1.0" }
+rok-orm-core = { path = "../rok-orm-core", version = "0.1.0" }
+rok-orm-macros = { path = "../rok-orm-macros", version = "0.1.0" }
 
 [dev-dependencies]
