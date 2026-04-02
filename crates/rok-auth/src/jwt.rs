@@ -2,8 +2,8 @@
 
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, Validation};
 
-use crate::{AuthConfig, AuthError, Claims};
 use crate::claims::RefreshClaims;
+use crate::{AuthConfig, AuthError, Claims};
 
 /// The main auth handle — holds keys derived from [`AuthConfig`].
 #[derive(Clone)]
