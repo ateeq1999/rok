@@ -41,12 +41,12 @@ impl Value {
                 }
             }
             other => {
-                out.insert(prefix.to_string(), other.to_string_value());
+                out.insert(prefix.to_string(), other.into_string_value());
             }
         }
     }
 
-    fn to_string_value(self) -> String {
+    fn into_string_value(self) -> String {
         match self {
             Value::Null => String::new(),
             Value::Bool(b) => b.to_string(),

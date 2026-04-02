@@ -19,7 +19,10 @@ impl Auth {
     ///
     /// Panics if `config.secret` is empty.
     pub fn new(config: AuthConfig) -> Self {
-        assert!(!config.secret.is_empty(), "AuthConfig.secret must not be empty");
+        assert!(
+            !config.secret.is_empty(),
+            "AuthConfig.secret must not be empty"
+        );
         let encoding_key = EncodingKey::from_secret(config.secret.as_bytes());
         let decoding_key = DecodingKey::from_secret(config.secret.as_bytes());
         Self {
@@ -108,7 +111,12 @@ mod tests {
             secret: "different-secret".to_string(),
             ..Default::default()
         });
-        let token = signer.sign(&Claims::new("bob", vec![] as Vec<&str>)).unwrap();
-        assert!(matches!(verifier.verify(&token), Err(AuthError::InvalidToken)));
+        let token = signer
+            .sign(&Claims::new("bob", vec![] as Vec<&str>))
+            .unwrap();
+        assert!(matches!(
+            verifier.verify(&token),
+            Err(AuthError::InvalidToken)
+        ));
     }
 }

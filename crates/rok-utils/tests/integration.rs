@@ -10,7 +10,10 @@ fn write_and_read() {
 
 #[test]
 fn path_normalize() {
-    assert_eq!(path::normalize("a/b/../c/./d"), std::path::PathBuf::from("a/c/d"));
+    assert_eq!(
+        path::normalize("a/b/../c/./d"),
+        std::path::PathBuf::from("a/c/d")
+    );
 }
 
 #[test]

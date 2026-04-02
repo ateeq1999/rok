@@ -2,9 +2,9 @@
 //!
 //! Provides cache statistics and management operations
 
-use std::fs;
-use std::path::{Path, PathBuf};
 use serde::Serialize;
+use std::fs;
+use std::path::Path;
 
 /// Cache statistics
 #[derive(Debug, Serialize)]
@@ -28,7 +28,7 @@ pub fn get_stats(cache_dir: &Path, enabled: bool) -> CacheStats {
     if enabled && cache_dir.exists() {
         if let Ok(entries) = fs::read_dir(cache_dir) {
             for entry in entries.flatten() {
-                if entry.path().extension().map_or(false, |ext| ext == "json") {
+                if entry.path().extension().is_some_and(|ext| ext == "json") {
                     total_entries += 1;
 
                     if let Ok(metadata) = entry.metadata() {
@@ -77,10 +77,10 @@ pub fn clear(cache_dir: &Path) -> Result<usize, String> {
     let mut cleared = 0;
     if let Ok(entries) = fs::read_dir(cache_dir) {
         for entry in entries.flatten() {
-            if entry.path().extension().map_or(false, |ext| ext == "json") {
-                if fs::remove_file(entry.path()).is_ok() {
-                    cleared += 1;
-                }
+            if entry.path().extension().is_some_and(|ext| ext == "json")
+                && fs::remove_file(entry.path()).is_ok()
+            {
+                cleared += 1;
             }
         }
     }
@@ -103,11 +103,6 @@ fn format_bytes(bytes: u64) -> String {
     } else {
         format!("{} B", bytes)
     }
-}
-
-/// Get default cache directory
-pub fn get_default_cache_dir() -> PathBuf {
-    PathBuf::from(".rok/cache")
 }
 
 #[cfg(test)]

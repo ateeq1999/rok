@@ -51,11 +51,7 @@ pub fn load_file<P: AsRef<Path>>(
     Ok(value.flatten(""))
 }
 
-fn parse_str(
-    raw: &str,
-    format: ConfigFormat,
-    path: &Path,
-) -> Result<Value, ConfigError> {
+fn parse_str(raw: &str, format: ConfigFormat, path: &Path) -> Result<Value, ConfigError> {
     match format {
         ConfigFormat::Json => {
             let v: serde_json::Value =
@@ -67,12 +63,11 @@ fn parse_str(
             Ok(from_json(v))
         }
         ConfigFormat::Toml => {
-            let v: toml::Value =
-                toml::from_str(raw).map_err(|e| ConfigError::FormatError {
-                    path: path.display().to_string(),
-                    format: "TOML".into(),
-                    reason: e.to_string(),
-                })?;
+            let v: toml::Value = toml::from_str(raw).map_err(|e| ConfigError::FormatError {
+                path: path.display().to_string(),
+                format: "TOML".into(),
+                reason: e.to_string(),
+            })?;
             Ok(from_toml(v))
         }
         ConfigFormat::Yaml => {

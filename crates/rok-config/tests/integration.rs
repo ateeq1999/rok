@@ -22,11 +22,7 @@ fn defaults_are_accessible() {
 fn loads_json_file() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("config.json");
-    std::fs::write(
-        &path,
-        r#"{"server": {"port": 8080, "host": "localhost"}}"#,
-    )
-    .unwrap();
+    std::fs::write(&path, r#"{"server": {"port": 8080, "host": "localhost"}}"#).unwrap();
 
     let cfg = Config::builder()
         .file(&path, ConfigFormat::Json)

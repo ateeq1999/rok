@@ -55,7 +55,10 @@ mod tests {
 
     #[test]
     fn contains_expose() {
-        let cfg = DeployConfig { port: 8080, ..Default::default() };
+        let cfg = DeployConfig {
+            port: 8080,
+            ..Default::default()
+        };
         let df = generate(&cfg);
         assert!(df.contains("EXPOSE 8080"));
     }

@@ -15,7 +15,7 @@ impl SessionToken {
     }
 
     /// Wrap an existing token string.
-    pub fn from_str(s: impl Into<String>) -> Self {
+    pub fn wrap(s: impl Into<String>) -> Self {
         Self(s.into())
     }
 

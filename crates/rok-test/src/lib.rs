@@ -62,7 +62,8 @@ macro_rules! assert_json_eq {
         let l: serde_json::Value = $left;
         let r: serde_json::Value = $right;
         assert_eq!(
-            l, r,
+            l,
+            r,
             "\nleft:  {}\nright: {}",
             serde_json::to_string_pretty(&l).unwrap_or_default(),
             serde_json::to_string_pretty(&r).unwrap_or_default(),

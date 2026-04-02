@@ -94,9 +94,7 @@ fn cmd_generate(workspace_toml: &Path, output: &Path) -> Result<()> {
 
     for member in &workspace.workspace.members {
         // Resolve the member's Cargo.toml relative to the workspace root.
-        let workspace_root = workspace_toml
-            .parent()
-            .unwrap_or_else(|| Path::new("."));
+        let workspace_root = workspace_toml.parent().unwrap_or_else(|| Path::new("."));
 
         let member_toml = workspace_root.join(member).join("Cargo.toml");
         if !member_toml.exists() {
@@ -113,8 +111,7 @@ fn cmd_generate(workspace_toml: &Path, output: &Path) -> Result<()> {
 
         let md = render_crate_doc(&pkg.package, &doc);
         let dest = output.join(format!("{}.md", pkg.package.name));
-        std::fs::write(&dest, md)
-            .with_context(|| format!("writing {}", dest.display()))?;
+        std::fs::write(&dest, md).with_context(|| format!("writing {}", dest.display()))?;
 
         println!("  wrote {}", dest.display());
         generated += 1;
@@ -127,7 +124,10 @@ fn cmd_generate(workspace_toml: &Path, output: &Path) -> Result<()> {
         .with_context(|| format!("writing {}", index_dest.display()))?;
     println!("  wrote {}", index_dest.display());
 
-    println!("\nGenerated docs for {generated} crate(s) into {}", output.display());
+    println!(
+        "\nGenerated docs for {generated} crate(s) into {}",
+        output.display()
+    );
     Ok(())
 }
 
@@ -163,7 +163,6 @@ async fn cmd_serve(dir: &Path, port: u16) -> Result<()> {
 }
 
 async fn serve_file(dir: &Path, uri_path: &str) -> Response<Body> {
-
     // Normalise path — strip leading slash and append index.md for root.
     let rel = uri_path.trim_start_matches('/');
     let rel = if rel.is_empty() { "index.md" } else { rel };
@@ -223,11 +222,17 @@ struct PackageMeta {
 
 impl PackageMeta {
     fn version_str(&self) -> &str {
-        self.version.as_ref().and_then(|v| v.as_str()).unwrap_or("workspace")
+        self.version
+            .as_ref()
+            .and_then(|v| v.as_str())
+            .unwrap_or("workspace")
     }
 
     fn description_str(&self) -> &str {
-        self.description.as_ref().and_then(|v| v.as_str()).unwrap_or("")
+        self.description
+            .as_ref()
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
     }
 }
 
@@ -277,7 +282,12 @@ fn render_crate_doc(pkg: &PackageMeta, doc: &str) -> String {
     out.push_str(&format!("**Version**: `{}`\n\n", pkg.version_str()));
 
     if !pkg.keywords.is_empty() {
-        let kw = pkg.keywords.iter().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
+        let kw = pkg
+            .keywords
+            .iter()
+            .map(|k| format!("`{k}`"))
+            .collect::<Vec<_>>()
+            .join(", ");
         out.push_str(&format!("**Keywords**: {kw}\n\n"));
     }
 

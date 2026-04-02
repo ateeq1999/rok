@@ -2,5 +2,5 @@
 
 pub mod fs;
 pub mod path;
-pub mod string;
 pub mod result;
+pub mod string;

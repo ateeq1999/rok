@@ -12,7 +12,7 @@ pub fn normalize<P: AsRef<Path>>(path: P) -> PathBuf {
             Component::CurDir => {}
             Component::ParentDir => {
                 // Only pop if there's something to pop (and it isn't a root/prefix).
-                match out.components().last() {
+                match out.components().next_back() {
                     Some(Component::RootDir | Component::Prefix(_)) | None => {}
                     _ => {
                         out.pop();

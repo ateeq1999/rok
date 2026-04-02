@@ -22,9 +22,12 @@ impl Generator {
     pub fn new() -> Self {
         let mut tera = Tera::default();
         tera.add_raw_template("model", templates::MODEL).unwrap();
-        tera.add_raw_template("handler", templates::HANDLER).unwrap();
-        tera.add_raw_template("migration", templates::MIGRATION).unwrap();
-        tera.add_raw_template("repository", templates::REPOSITORY).unwrap();
+        tera.add_raw_template("handler", templates::HANDLER)
+            .unwrap();
+        tera.add_raw_template("migration", templates::MIGRATION)
+            .unwrap();
+        tera.add_raw_template("repository", templates::REPOSITORY)
+            .unwrap();
         Self { tera }
     }
 

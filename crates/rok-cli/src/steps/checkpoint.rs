@@ -67,7 +67,10 @@ pub fn run(checkpoint_id: &str, restore: bool, cwd: &Path) -> StepResult {
             "cwd": cwd.to_string_lossy(),
         });
 
-        match fs::write(&checkpoint_file, serde_json::to_string_pretty(&checkpoint_data).unwrap_or_default()) {
+        match fs::write(
+            &checkpoint_file,
+            serde_json::to_string_pretty(&checkpoint_data).unwrap_or_default(),
+        ) {
             Ok(_) => {
                 let duration_ms = start.elapsed().as_millis() as u64;
                 StepResult {

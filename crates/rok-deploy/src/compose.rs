@@ -41,14 +41,20 @@ mod tests {
 
     #[test]
     fn contains_service_name() {
-        let cfg = DeployConfig { name: "my-api".to_string(), ..Default::default() };
+        let cfg = DeployConfig {
+            name: "my-api".to_string(),
+            ..Default::default()
+        };
         let dc = generate(&cfg);
         assert!(dc.contains("my-api"));
     }
 
     #[test]
     fn contains_port_mapping() {
-        let cfg = DeployConfig { port: 4000, ..Default::default() };
+        let cfg = DeployConfig {
+            port: 4000,
+            ..Default::default()
+        };
         let dc = generate(&cfg);
         assert!(dc.contains("4000:4000"));
     }

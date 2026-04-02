@@ -39,10 +39,7 @@ impl Rule for LongLineRule {
                         file: file.to_string(),
                         line: i + 1,
                         severity: self.severity,
-                        message: format!(
-                            "line too long ({len} > {} columns)",
-                            self.max_columns
-                        ),
+                        message: format!("line too long ({len} > {} columns)", self.max_columns),
                     })
                 } else {
                     None

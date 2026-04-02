@@ -34,8 +34,7 @@ impl TempFixture {
 
     /// Read a file inside the temp dir.
     pub fn read(&self, filename: &str) -> String {
-        std::fs::read_to_string(self.inner.path().join(filename))
-            .expect("read failed")
+        std::fs::read_to_string(self.inner.path().join(filename)).expect("read failed")
     }
 
     /// Return `true` if `filename` exists inside the temp dir.

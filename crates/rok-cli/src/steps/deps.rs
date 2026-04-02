@@ -192,9 +192,11 @@ fn dfs_cycle<'a>(
     if let Some(deps) = graph.get(node) {
         for dep in deps {
             if let Some(dep_deps) = graph.get(dep.as_str()) {
-                if dep_deps.contains(&node.to_string()) && !cycles.iter().any(|c: &Vec<String>| {
-                    c.contains(&node.to_string()) && c.contains(dep)
-                }) {
+                if dep_deps.contains(&node.to_string())
+                    && !cycles
+                        .iter()
+                        .any(|c: &Vec<String>| c.contains(&node.to_string()) && c.contains(dep))
+                {
                     cycles.push(vec![node.to_string(), dep.clone()]);
                 }
             }

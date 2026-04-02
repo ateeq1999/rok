@@ -16,11 +16,9 @@ pub fn diff(left: &Value, right: &Value) -> String {
 /// key/value in `subset` is present and equal in `superset`.
 pub fn is_subset(subset: &Value, superset: &Value) -> bool {
     match (subset, superset) {
-        (Value::Object(sub), Value::Object(sup)) => {
-            sub.iter().all(|(k, v)| {
-                sup.get(k).map(|sv| is_subset(v, sv)).unwrap_or(false)
-            })
-        }
+        (Value::Object(sub), Value::Object(sup)) => sub
+            .iter()
+            .all(|(k, v)| sup.get(k).map(|sv| is_subset(v, sv)).unwrap_or(false)),
         (a, b) => a == b,
     }
 }

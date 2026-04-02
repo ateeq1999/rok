@@ -15,8 +15,6 @@ pub struct RokConfig {
     pub defaults: ConfigDefaults,
     #[serde(default)]
     pub env: HashMap<String, String>,
-    #[serde(default)]
-    pub aliases: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -101,11 +99,6 @@ impl RokConfig {
 
         options
     }
-
-    /// Get an alias for a command or task name
-    pub fn get_alias(&self, name: &str) -> Option<&String> {
-        self.aliases.get(name)
-    }
 }
 
 /// Apply configuration to options
@@ -156,10 +149,6 @@ test = "cargo test --all"
         assert!(!config.defaults.stop_on_error.unwrap());
         assert_eq!(config.defaults.timeout_ms, Some(60000));
         assert_eq!(config.env.get("NODE_ENV"), Some(&"test".to_string()));
-        assert_eq!(
-            config.aliases.get("build"),
-            Some(&"cargo build --release".to_string())
-        );
     }
 
     #[test]
@@ -172,7 +161,6 @@ test = "cargo test --all"
                 ..Default::default()
             },
             env: HashMap::new(),
-            aliases: HashMap::new(),
         };
 
         let options = Options::default();
@@ -181,24 +169,6 @@ test = "cargo test --all"
         assert!(merged.cache);
         assert!(!merged.stop_on_error);
         assert_eq!(merged.timeout_ms, 60000);
-    }
-
-    #[test]
-    fn test_get_alias() {
-        let mut aliases = HashMap::new();
-        aliases.insert("build".to_string(), "cargo build --release".to_string());
-
-        let config = RokConfig {
-            defaults: ConfigDefaults::default(),
-            env: HashMap::new(),
-            aliases,
-        };
-
-        assert_eq!(
-            config.get_alias("build"),
-            Some(&"cargo build --release".to_string())
-        );
-        assert_eq!(config.get_alias("nonexistent"), None);
     }
 
     #[test]

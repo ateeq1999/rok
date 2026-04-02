@@ -1,6 +1,7 @@
 use rok_deploy::{
-    compose, dockerfile, kubernetes,
+    compose,
     config::{DeployConfig, EnvVar, Resources},
+    dockerfile, kubernetes,
 };
 
 fn cfg() -> DeployConfig {

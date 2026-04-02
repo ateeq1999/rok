@@ -33,25 +33,12 @@ impl RokError {
         }
     }
 
-    pub fn with_context(mut self, context: impl Into<String>) -> Self {
-        self.context = Some(context.into());
-        self
-    }
-
     pub fn schema(message: impl Into<String>) -> Self {
         Self::new(ExitCode::SchemaError, message)
     }
 
     pub fn startup(message: impl Into<String>) -> Self {
         Self::new(ExitCode::StartupError, message)
-    }
-
-    pub fn config(message: impl Into<String>) -> Self {
-        Self::new(ExitCode::ConfigError, message)
-    }
-
-    pub fn io(message: impl Into<String>) -> Self {
-        Self::new(ExitCode::IoError, message)
     }
 
     #[allow(dead_code)]

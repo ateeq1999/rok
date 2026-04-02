@@ -2,7 +2,10 @@ use rok_generate::Generator;
 use std::collections::HashMap;
 
 fn vars(pairs: &[(&str, serde_json::Value)]) -> HashMap<String, serde_json::Value> {
-    pairs.iter().map(|(k, v)| (k.to_string(), v.clone())).collect()
+    pairs
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.clone()))
+        .collect()
 }
 
 #[test]

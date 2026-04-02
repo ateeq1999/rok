@@ -21,7 +21,11 @@ impl Migrator {
     /// Returns [`MigrateError::DuplicateVersion`] if a migration with the same
     /// version is already registered.
     pub fn add(&mut self, migration: Migration) -> Result<(), MigrateError> {
-        if self.migrations.iter().any(|m| m.version == migration.version) {
+        if self
+            .migrations
+            .iter()
+            .any(|m| m.version == migration.version)
+        {
             return Err(MigrateError::DuplicateVersion(migration.version));
         }
         self.migrations.push(migration);
@@ -82,12 +86,27 @@ mod tests {
 
     fn make() -> Migrator {
         let mut m = Migrator::new();
-        m.add(Migration::new(1, "create_users", "CREATE TABLE users (id INT);", None))
-            .unwrap();
-        m.add(Migration::new(2, "add_email", "ALTER TABLE users ADD email TEXT;", None))
-            .unwrap();
-        m.add(Migration::new(3, "add_index", "CREATE INDEX ON users(email);", None))
-            .unwrap();
+        m.add(Migration::new(
+            1,
+            "create_users",
+            "CREATE TABLE users (id INT);",
+            None,
+        ))
+        .unwrap();
+        m.add(Migration::new(
+            2,
+            "add_email",
+            "ALTER TABLE users ADD email TEXT;",
+            None,
+        ))
+        .unwrap();
+        m.add(Migration::new(
+            3,
+            "add_index",
+            "CREATE INDEX ON users(email);",
+            None,
+        ))
+        .unwrap();
         m
     }
 

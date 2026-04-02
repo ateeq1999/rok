@@ -27,10 +27,7 @@ impl Rule for TodoCommentRule {
                         file: file.to_string(),
                         line: i + 1,
                         severity,
-                        message: format!(
-                            "unresolved comment marker: `{}`",
-                            line.trim()
-                        ),
+                        message: format!("unresolved comment marker: `{}`", line.trim()),
                     })
                 } else {
                     None

@@ -78,5 +78,4 @@ impl Config {
     pub(crate) fn from_map(data: HashMap<String, String>) -> Self {
         Self { data }
     }
-
 }

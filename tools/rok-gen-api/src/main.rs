@@ -107,15 +107,12 @@ fn main() -> Result<()> {
 
 // ── Commands ─────────────────────────────────────────────────────────────────
 
-fn cmd_scaffold(name: &str, crud: bool, output: &PathBuf, force: bool) -> Result<()> {
+fn cmd_scaffold(name: &str, crud: bool, output: &Path, force: bool) -> Result<()> {
     let pascal = name.to_upper_camel_case();
     let snake = pascal.to_snake_case();
     let gen = Generator::new();
 
-    let base_fields = vec![
-        serde_json::json!("name"),
-        serde_json::json!("created_at"),
-    ];
+    let base_fields = vec![serde_json::json!("name"), serde_json::json!("created_at")];
 
     // 1. Model
     write_file(
@@ -124,7 +121,10 @@ fn cmd_scaffold(name: &str, crud: bool, output: &PathBuf, force: bool) -> Result
         || {
             let mut vars = HashMap::new();
             vars.insert("name".into(), serde_json::json!(&pascal));
-            vars.insert("fields".into(), serde_json::Value::Array(base_fields.clone()));
+            vars.insert(
+                "fields".into(),
+                serde_json::Value::Array(base_fields.clone()),
+            );
             gen.render("model", &vars)
         },
     )?;
@@ -143,7 +143,9 @@ fn cmd_scaffold(name: &str, crud: bool, output: &PathBuf, force: bool) -> Result
     // 3. Repository
     write_file(
         force,
-        &output.join("repositories").join(format!("{snake}_repository.rs")),
+        &output
+            .join("repositories")
+            .join(format!("{snake}_repository.rs")),
         || {
             let mut vars = HashMap::new();
             vars.insert("name".into(), serde_json::json!(&pascal));
@@ -156,11 +158,11 @@ fn cmd_scaffold(name: &str, crud: bool, output: &PathBuf, force: bool) -> Result
     write_file(force, &migration_path, || {
         let mut vars = HashMap::new();
         vars.insert("name".into(), serde_json::json!(&pascal));
+        vars.insert("created_at".into(), serde_json::json!(chrono_now()));
         vars.insert(
-            "created_at".into(),
-            serde_json::json!(chrono_now()),
+            "fields".into(),
+            serde_json::Value::Array(base_fields.clone()),
         );
-        vars.insert("fields".into(), serde_json::Value::Array(base_fields.clone()));
         gen.render("migration", &vars)
     })?;
 
@@ -181,7 +183,7 @@ fn cmd_scaffold(name: &str, crud: bool, output: &PathBuf, force: bool) -> Result
     Ok(())
 }
 
-fn cmd_handler(name: &str, output: &PathBuf, force: bool) -> Result<()> {
+fn cmd_handler(name: &str, output: &Path, force: bool) -> Result<()> {
     let pascal = name.to_upper_camel_case();
     let snake = pascal.to_snake_case();
     let gen = Generator::new();
@@ -197,7 +199,7 @@ fn cmd_handler(name: &str, output: &PathBuf, force: bool) -> Result<()> {
     Ok(())
 }
 
-fn cmd_dto(name: &str, output: &PathBuf, force: bool) -> Result<()> {
+fn cmd_dto(name: &str, output: &Path, force: bool) -> Result<()> {
     let pascal = name.to_upper_camel_case();
     let snake = pascal.to_snake_case();
 
@@ -226,8 +228,7 @@ where
             .with_context(|| format!("creating dir {}", parent.display()))?;
     }
 
-    std::fs::write(dest, content)
-        .with_context(|| format!("writing {}", dest.display()))?;
+    std::fs::write(dest, content).with_context(|| format!("writing {}", dest.display()))?;
 
     println!("  wrote {}", dest.display());
     Ok(())

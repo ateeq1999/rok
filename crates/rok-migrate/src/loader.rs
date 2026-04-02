@@ -125,7 +125,11 @@ mod tests {
     #[test]
     fn loads_up_only() {
         let dir = tempfile::tempdir().unwrap();
-        write(dir.path(), "0002_add_index.sql", "CREATE INDEX ON users(email);");
+        write(
+            dir.path(),
+            "0002_add_index.sql",
+            "CREATE INDEX ON users(email);",
+        );
         let ms = load_from_dir(dir.path()).unwrap();
         assert_eq!(ms[0].version, 2);
         assert!(ms[0].down_sql.is_none());

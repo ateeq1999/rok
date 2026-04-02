@@ -21,9 +21,7 @@ pub fn cors_layer() -> CorsLayer {
 
 /// A stricter CORS layer that only allows the given origin.
 pub fn cors_layer_for(origin: &str) -> CorsLayer {
-    let origin: HeaderValue = origin
-        .parse()
-        .expect("invalid origin header value");
+    let origin: HeaderValue = origin.parse().expect("invalid origin header value");
     CorsLayer::new()
         .allow_origin(origin)
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])

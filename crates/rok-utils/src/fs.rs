@@ -1,8 +1,8 @@
 //! File system utilities.
 
+use anyhow::Result;
 use std::fs;
 use std::path::Path;
-use anyhow::Result;
 
 /// Read a file to a `String`.
 pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {

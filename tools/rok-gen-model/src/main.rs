@@ -20,7 +20,7 @@
 //! Each model produces a `<snake_name>.rs` file in the output directory.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
@@ -131,7 +131,7 @@ pub struct {{ name }} {
 {% endfor %}}
 "#;
 
-fn cmd_from_json(file: &PathBuf, output: &PathBuf, force: bool) -> Result<()> {
+fn cmd_from_json(file: &Path, output: &Path, force: bool) -> Result<()> {
     let content =
         std::fs::read_to_string(file).with_context(|| format!("reading {}", file.display()))?;
 
@@ -156,7 +156,10 @@ fn cmd_from_json(file: &PathBuf, output: &PathBuf, force: bool) -> Result<()> {
         let dest = output.join(format!("{}.rs", model.name.to_snake_case()));
 
         if dest.exists() && !force {
-            println!("  skip  {} (already exists; use --force to overwrite)", dest.display());
+            println!(
+                "  skip  {} (already exists; use --force to overwrite)",
+                dest.display()
+            );
             continue;
         }
 
@@ -182,7 +185,7 @@ fn cmd_from_json(file: &PathBuf, output: &PathBuf, force: bool) -> Result<()> {
     Ok(())
 }
 
-fn cmd_from_db(url: &str, output: &PathBuf) -> Result<()> {
+fn cmd_from_db(url: &str, output: &Path) -> Result<()> {
     // Introspection requires a live sqlx connection — that would pull in the
     // sqlx runtime.  Print a clear message rather than silently doing nothing.
     println!("DATABASE_URL: {url}");

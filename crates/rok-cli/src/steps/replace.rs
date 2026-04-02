@@ -7,6 +7,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 use walkdir::WalkDir;
 
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     pattern: &str,
     replacement: &str,

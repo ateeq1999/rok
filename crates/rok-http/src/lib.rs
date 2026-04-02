@@ -24,8 +24,7 @@ pub mod middleware;
 
 pub use app::App;
 pub use axum::{
-    Router,
     extract::{Json, Path, Query, State},
-    routing,
+    routing, Router,
 };
 pub use error::AppError;

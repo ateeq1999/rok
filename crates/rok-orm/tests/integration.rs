@@ -104,8 +104,11 @@ fn insert_sql() {
         ],
     );
     assert!(sql.contains("INSERT INTO users (name, email) VALUES ($1, $2)"));
-    assert_eq!(params, vec![
-        SqlValue::Text("Alice".into()),
-        SqlValue::Text("alice@example.com".into()),
-    ]);
+    assert_eq!(
+        params,
+        vec![
+            SqlValue::Text("Alice".into()),
+            SqlValue::Text("alice@example.com".into()),
+        ]
+    );
 }

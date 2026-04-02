@@ -10,7 +10,12 @@ pub fn deployment(config: &DeployConfig) -> String {
         let vars: String = config
             .env
             .iter()
-            .map(|e| format!("        - name: {}\n          value: \"{}\"\n", e.name, e.value))
+            .map(|e| {
+                format!(
+                    "        - name: {}\n          value: \"{}\"\n",
+                    e.name, e.value
+                )
+            })
             .collect();
         format!("        env:\n{vars}")
     };
@@ -111,7 +116,10 @@ mod tests {
 
     #[test]
     fn service_contains_port() {
-        let cfg = DeployConfig { port: 9000, ..Default::default() };
+        let cfg = DeployConfig {
+            port: 9000,
+            ..Default::default()
+        };
         let s = service(&cfg);
         assert!(s.contains("9000"));
     }

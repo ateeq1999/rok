@@ -73,7 +73,10 @@ fn split_words(s: &str) -> Vec<String> {
             // Start a new word on uppercase unless it follows another uppercase
             // (acronym) or is the first character.
             let prev_lower = i > 0 && chars[i - 1].is_lowercase();
-            let next_lower = chars.get(i + 1).map(|ch| ch.is_lowercase()).unwrap_or(false);
+            let next_lower = chars
+                .get(i + 1)
+                .map(|ch| ch.is_lowercase())
+                .unwrap_or(false);
             let acronym_end = i > 0 && chars[i - 1].is_uppercase() && next_lower;
             if !current.is_empty() && (prev_lower || acronym_end) {
                 words.push(current.clone());
@@ -94,9 +97,7 @@ fn capitalize(s: &str) -> String {
     let mut chars = s.chars();
     match chars.next() {
         None => String::new(),
-        Some(first) => {
-            first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase()
-        }
+        Some(first) => first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase(),
     }
 }
 
