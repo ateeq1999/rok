@@ -12,12 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuideInstallationRouteImport } from './routes/guide/installation'
-import { Route as CratesRokAuthRouteImport } from './routes/crates/rok-auth'
-import { Route as CratesRokCliRouteImport } from './routes/crates/rok-cli'
-import { Route as CratesRokHttpRouteImport } from './routes/crates/rok-http'
-import { Route as CratesRokMigrateRouteImport } from './routes/crates/rok-migrate'
-import { Route as CratesRokOrmRouteImport } from './routes/crates/rok-orm'
 import { Route as CratesRokUtilsRouteImport } from './routes/crates/rok-utils'
+import { Route as CratesRokOrmRouteImport } from './routes/crates/rok-orm'
+import { Route as CratesRokMigrateRouteImport } from './routes/crates/rok-migrate'
+import { Route as CratesRokHttpRouteImport } from './routes/crates/rok-http'
+import { Route as CratesRokCliRouteImport } from './routes/crates/rok-cli'
+import { Route as CratesRokAuthRouteImport } from './routes/crates/rok-auth'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -34,24 +34,9 @@ const GuideInstallationRoute = GuideInstallationRouteImport.update({
   path: '/guide/installation',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CratesRokAuthRoute = CratesRokAuthRouteImport.update({
-  id: '/crates/rok-auth',
-  path: '/crates/rok-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CratesRokCliRoute = CratesRokCliRouteImport.update({
-  id: '/crates/rok-cli',
-  path: '/crates/rok-cli',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CratesRokHttpRoute = CratesRokHttpRouteImport.update({
-  id: '/crates/rok-http',
-  path: '/crates/rok-http',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CratesRokMigrateRoute = CratesRokMigrateRouteImport.update({
-  id: '/crates/rok-migrate',
-  path: '/crates/rok-migrate',
+const CratesRokUtilsRoute = CratesRokUtilsRouteImport.update({
+  id: '/crates/rok-utils',
+  path: '/crates/rok-utils',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CratesRokOrmRoute = CratesRokOrmRouteImport.update({
@@ -59,9 +44,24 @@ const CratesRokOrmRoute = CratesRokOrmRouteImport.update({
   path: '/crates/rok-orm',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CratesRokUtilsRoute = CratesRokUtilsRouteImport.update({
-  id: '/crates/rok-utils',
-  path: '/crates/rok-utils',
+const CratesRokMigrateRoute = CratesRokMigrateRouteImport.update({
+  id: '/crates/rok-migrate',
+  path: '/crates/rok-migrate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CratesRokHttpRoute = CratesRokHttpRouteImport.update({
+  id: '/crates/rok-http',
+  path: '/crates/rok-http',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CratesRokCliRoute = CratesRokCliRouteImport.update({
+  id: '/crates/rok-cli',
+  path: '/crates/rok-cli',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CratesRokAuthRoute = CratesRokAuthRouteImport.update({
+  id: '/crates/rok-auth',
+  path: '/crates/rok-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -101,10 +101,38 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/crates/rok-auth' | '/crates/rok-cli' | '/crates/rok-http' | '/crates/rok-migrate' | '/crates/rok-orm' | '/crates/rok-utils' | '/guide/installation'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/crates/rok-auth'
+    | '/crates/rok-cli'
+    | '/crates/rok-http'
+    | '/crates/rok-migrate'
+    | '/crates/rok-orm'
+    | '/crates/rok-utils'
+    | '/guide/installation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/crates/rok-auth' | '/crates/rok-cli' | '/crates/rok-http' | '/crates/rok-migrate' | '/crates/rok-orm' | '/crates/rok-utils' | '/guide/installation'
-  id: '__root__' | '/' | '/about' | '/crates/rok-auth' | '/crates/rok-cli' | '/crates/rok-http' | '/crates/rok-migrate' | '/crates/rok-orm' | '/crates/rok-utils' | '/guide/installation'
+  to:
+    | '/'
+    | '/about'
+    | '/crates/rok-auth'
+    | '/crates/rok-cli'
+    | '/crates/rok-http'
+    | '/crates/rok-migrate'
+    | '/crates/rok-orm'
+    | '/crates/rok-utils'
+    | '/guide/installation'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/crates/rok-auth'
+    | '/crates/rok-cli'
+    | '/crates/rok-http'
+    | '/crates/rok-migrate'
+    | '/crates/rok-orm'
+    | '/crates/rok-utils'
+    | '/guide/installation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -142,32 +170,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideInstallationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/crates/rok-auth': {
-      id: '/crates/rok-auth'
-      path: '/crates/rok-auth'
-      fullPath: '/crates/rok-auth'
-      preLoaderRoute: typeof CratesRokAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/crates/rok-cli': {
-      id: '/crates/rok-cli'
-      path: '/crates/rok-cli'
-      fullPath: '/crates/rok-cli'
-      preLoaderRoute: typeof CratesRokCliRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/crates/rok-http': {
-      id: '/crates/rok-http'
-      path: '/crates/rok-http'
-      fullPath: '/crates/rok-http'
-      preLoaderRoute: typeof CratesRokHttpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/crates/rok-migrate': {
-      id: '/crates/rok-migrate'
-      path: '/crates/rok-migrate'
-      fullPath: '/crates/rok-migrate'
-      preLoaderRoute: typeof CratesRokMigrateRouteImport
+    '/crates/rok-utils': {
+      id: '/crates/rok-utils'
+      path: '/crates/rok-utils'
+      fullPath: '/crates/rok-utils'
+      preLoaderRoute: typeof CratesRokUtilsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/crates/rok-orm': {
@@ -177,11 +184,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CratesRokOrmRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/crates/rok-utils': {
-      id: '/crates/rok-utils'
-      path: '/crates/rok-utils'
-      fullPath: '/crates/rok-utils'
-      preLoaderRoute: typeof CratesRokUtilsRouteImport
+    '/crates/rok-migrate': {
+      id: '/crates/rok-migrate'
+      path: '/crates/rok-migrate'
+      fullPath: '/crates/rok-migrate'
+      preLoaderRoute: typeof CratesRokMigrateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crates/rok-http': {
+      id: '/crates/rok-http'
+      path: '/crates/rok-http'
+      fullPath: '/crates/rok-http'
+      preLoaderRoute: typeof CratesRokHttpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crates/rok-cli': {
+      id: '/crates/rok-cli'
+      path: '/crates/rok-cli'
+      fullPath: '/crates/rok-cli'
+      preLoaderRoute: typeof CratesRokCliRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crates/rok-auth': {
+      id: '/crates/rok-auth'
+      path: '/crates/rok-auth'
+      fullPath: '/crates/rok-auth'
+      preLoaderRoute: typeof CratesRokAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

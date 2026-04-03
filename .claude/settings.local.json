@@ -8,7 +8,12 @@
       "Bash(cp -r src crates/rok-cli/src)",
       "Bash(cp -r tests crates/rok-cli/tests)",
       "Bash(cp -r benches crates/rok-cli/benches)",
-      "Bash(cp -r examples crates/rok-cli/examples)"
+      "Bash(cp -r examples crates/rok-cli/examples)",
+      "Bash(bash ./scripts/publish.sh --dry-run)",
+      "Bash(where.exe gh:*)",
+      "Read(//c/Program Files/GitHub CLI/**)",
+      "Bash(alias gh='\"\"/c/Program Files/GitHub CLI/gh.exe\"\"')",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" pr merge 1 --squash --delete-branch)"
     ]
   }
 }
