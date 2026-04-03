@@ -6,7 +6,7 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
-/// Derive the [`rok_orm_core::Model`] trait for a struct.
+/// Derive the `Model` trait (from `rok_orm_core`) for a struct.
 ///
 /// Generates:
 /// - `table_name()` — struct name in `snake_case` with an `"s"` suffix
