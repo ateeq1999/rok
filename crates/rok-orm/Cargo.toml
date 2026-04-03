@@ -12,7 +12,7 @@ categories = ["database"]
 
 [features]
 ## Enable the async PostgreSQL executor (requires a running Postgres instance to use).
-postgres = ["dep:sqlx", "dep:tokio"]
+postgres = ["dep:sqlx", "dep:tokio", "rok-orm-core/sqlx-postgres"]
 
 [dependencies]
 rok-orm-core = { path = "../rok-orm-core", version = "0.1.0" }

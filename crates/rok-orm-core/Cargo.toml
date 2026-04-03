@@ -13,3 +13,8 @@ categories = ["database"]
 [dependencies]
 thiserror = { workspace = true }
 serde = { workspace = true }
+sqlx = { version = "0.8", optional = true, default-features = false, features = ["macros"] }
+
+[features]
+sqlx-postgres = ["sqlx/postgres", "sqlx/runtime-tokio-native-tls"]
+sqlx-sqlite  = ["sqlx/sqlite",   "sqlx/runtime-tokio-native-tls"]
