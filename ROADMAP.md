@@ -79,34 +79,34 @@ Run:
 
 ---
 
-## Milestone 2 — v0.11.0 rok-cli
+## Milestone 2 — v0.11.0 rok-cli ✅
 
 Align rok-cli with the new ecosystem crates.
 
-- [ ] Replace internal string utilities with `rok-utils`
-- [ ] Replace internal config loading with `rok-config`
-- [ ] Add `rok generate model` / `rok generate api` subcommands (wrapping `rok-generate`)
-- [ ] Add `rok migrate` subcommand (wrapping `rok-migrate`)
-- [ ] Resolve existing dead-code warnings
+- [x] Replace internal string utilities with `rok-utils`
+- [x] Replace internal config loading with `rok-config`
+- [x] Add `rok generate model` / `rok generate api` subcommands (wrapping `rok-generate`)
+- [x] Add `rok migrate` subcommand (wrapping `rok-migrate`)
+- [x] Resolve existing dead-code warnings
 
 ---
 
-## Milestone 3 — sqlx Integration
+## Milestone 3 — sqlx Integration ✅
 
 Give `rok-orm` a real database backend.
 
-- [ ] Add `sqlx` to `rok-orm-core` behind a feature flag (`sqlx-postgres`, `sqlx-sqlite`)
-- [ ] Implement `Model::find`, `Model::all`, `Model::create`, `Model::delete` against a live pool
-- [ ] Implement `rok-migrate` execution (apply / rollback against a database)
-- [ ] Integration tests against a Postgres container (GitHub Actions `services:`)
+- [x] Add `sqlx` to `rok-orm-core` behind a feature flag (`sqlx-postgres`, `sqlx-sqlite`)
+- [x] Implement `Model::find`, `Model::all`, `Model::create`, `Model::delete` against a live pool
+- [x] Implement `rok-migrate` execution (apply / rollback against a database)
+- [x] Integration tests against a Postgres container (GitHub Actions `services:`)
 
 ---
 
-## Milestone 4 — Docs Site
+## Milestone 4 — Docs Site ✅
 
-- [ ] Fill `docs/content/` via `rok-docs generate`
-- [ ] Deploy docs site to Vercel / Netlify on `main` push
-- [ ] Add per-crate API reference pages
+- [x] Fill `docs/content/` via `rok-docs generate`
+- [x] Deploy docs site to Vercel / Netlify on `main` push
+- [x] Add per-crate API reference pages
 
 ---
 
@@ -114,9 +114,9 @@ Give `rok-orm` a real database backend.
 
 Stable public APIs across all crates.
 
-- [ ] Audit all `pub` APIs — remove anything unstable or incomplete
-- [ ] Add `#[non_exhaustive]` where appropriate
-- [ ] Publish `v1.0.0` across the workspace
+- [x] Audit all `pub` APIs — remove anything unstable or incomplete
+- [x] Add `#[non_exhaustive]` where appropriate
+- [ ] Publish `v1.0.0` across the workspace (requires crates.io token — run `./scripts/publish.sh`)
 - [ ] Announce on crates.io, Reddit (`/r/rust`), Discord
 
 ---
