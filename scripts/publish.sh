@@ -34,14 +34,14 @@ PUBLISH_ORDER=(
     "rok-orm-macros"
     "rok-orm"
     "rok-migrate"
-    "rok-http"
     "rok-auth"
+    "rok-http"        # depends on rok-auth
     "rok-lint"
     "rok-test"
     "rok-generate"
     "rok-deploy"
-    "rok-gen-model"
-    "rok-gen-api"
+    "rok-gen-model"   # depends on rok-generate
+    "rok-gen-api"     # depends on rok-generate
     "rok-docs"
 )
 
