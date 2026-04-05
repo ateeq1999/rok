@@ -180,6 +180,28 @@ pub enum Commands {
         #[command(subcommand)]
         command: MigrateCommands,
     },
+
+    #[command(about = "Lint source files for common issues")]
+    Lint {
+        #[arg(
+            default_value = ".",
+            help = "File or directory to lint (default: current directory)"
+        )]
+        path: std::path::PathBuf,
+
+        #[arg(
+            long,
+            default_value = "120",
+            help = "Maximum allowed line length"
+        )]
+        max_line_length: usize,
+    },
+
+    #[command(about = "Generate deployment configuration files")]
+    Deploy {
+        #[command(subcommand)]
+        command: DeployCommands,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -213,8 +235,45 @@ pub enum GenerateCommands {
         #[arg(long, help = "Overwrite existing files")]
         force: bool,
 
-        #[arg(long, help = "Generate CRUD handlers")]
+        #[arg(long, help = "Generate full CRUD handlers (list/get/create/update/delete)")]
         crud: bool,
+    },
+
+    #[command(about = "Generate a SQL migration file")]
+    Migration {
+        #[arg(long, short, help = "Migration name in snake_case (e.g. create_users)")]
+        name: String,
+
+        #[arg(
+            long,
+            short,
+            default_value = "migrations",
+            help = "Migrations directory"
+        )]
+        output: std::path::PathBuf,
+
+        #[arg(
+            long,
+            help = "Comma-separated field names to include in the CREATE TABLE stub"
+        )]
+        fields: Option<String>,
+    },
+
+    #[command(about = "Generate a repository struct")]
+    Repository {
+        #[arg(long, short, help = "Model name (PascalCase)")]
+        name: String,
+
+        #[arg(
+            long,
+            short,
+            default_value = "src/repositories",
+            help = "Output directory"
+        )]
+        output: std::path::PathBuf,
+
+        #[arg(long, help = "Overwrite existing files")]
+        force: bool,
     },
 }
 
@@ -244,6 +303,59 @@ pub enum MigrateCommands {
 
     #[command(about = "Print the history table DDL")]
     Init,
+
+    #[command(about = "Create a new migration file")]
+    New {
+        #[arg(help = "Migration name in snake_case (e.g. create_users)")]
+        name: String,
+
+        #[arg(
+            long,
+            short,
+            default_value = "migrations",
+            help = "Migrations directory"
+        )]
+        dir: std::path::PathBuf,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DeployCommands {
+    #[command(about = "Print a Dockerfile for the project")]
+    Dockerfile {
+        #[arg(long, default_value = "app", help = "Application name")]
+        name: String,
+        #[arg(long, default_value = "3000", help = "Port the app listens on")]
+        port: u16,
+    },
+
+    #[command(about = "Print a docker-compose.yml for the project")]
+    Compose {
+        #[arg(long, default_value = "app", help = "Application name")]
+        name: String,
+        #[arg(long, default_value = "3000", help = "Port the app listens on")]
+        port: u16,
+    },
+
+    #[command(about = "Print Kubernetes manifests for the project")]
+    K8s {
+        #[arg(long, default_value = "app", help = "Application name")]
+        name: String,
+        #[arg(long, default_value = "3000", help = "Port the app listens on")]
+        port: u16,
+        #[arg(long, default_value = "1", help = "Number of replicas")]
+        replicas: u32,
+    },
+
+    #[command(about = "Print all deployment configs (Dockerfile + compose + k8s)")]
+    All {
+        #[arg(long, default_value = "app", help = "Application name")]
+        name: String,
+        #[arg(long, default_value = "3000", help = "Port the app listens on")]
+        port: u16,
+        #[arg(long, default_value = "1", help = "Number of replicas")]
+        replicas: u32,
+    },
 }
 
 #[derive(Debug, Clone, ValueEnum)]

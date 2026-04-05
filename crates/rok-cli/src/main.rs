@@ -602,8 +602,11 @@ pub struct {{ name }} {
                 force,
                 crud,
             } => {
-                let _ = crud; // CRUD variant uses same handler template for now
-                let template = rok_generate::templates::HANDLER;
+                let (tpl_key, template) = if *crud {
+                    ("crud_handler", rok_generate::templates::CRUD_HANDLER)
+                } else {
+                    ("handler", rok_generate::templates::HANDLER)
+                };
 
                 std::fs::create_dir_all(output).unwrap_or_default();
                 let dest = output.join(format!("{}.rs", rok_utils::string::to_snake_case(name)));
@@ -617,14 +620,85 @@ pub struct {{ name }} {
                 }
 
                 let mut gen = Generator::new();
-                gen.add_template("handler", template)
+                gen.add_template(tpl_key, template)
                     .expect("registering handler template");
 
                 let mut vars: HashMap<String, serde_json::Value> = HashMap::new();
                 vars.insert("name".into(), serde_json::json!(name));
 
-                gen.render_to_file("handler", &vars, &dest)
+                gen.render_to_file(tpl_key, &vars, &dest)
                     .expect("rendering handler");
+                println!("wrote {}", dest.display());
+            }
+
+            GenerateCommands::Migration { name, output, fields } => {
+                let snake_name = rok_utils::string::to_snake_case(name);
+
+                // Determine next version from existing migrations in output dir.
+                let next_version = rok_migrate::loader::load_from_dir(output)
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|m| m.version)
+                    .max()
+                    .unwrap_or(0)
+                    + 1;
+
+                std::fs::create_dir_all(output).unwrap_or_default();
+                let filename = format!("{:04}_{}.sql", next_version, snake_name);
+                let dest = output.join(&filename);
+
+                let field_list: Vec<&str> = fields
+                    .as_deref()
+                    .unwrap_or("")
+                    .split(',')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+
+                let mut gen = Generator::new();
+                gen.add_template("migration", rok_generate::templates::MIGRATION)
+                    .expect("registering migration template");
+
+                let mut vars: HashMap<String, serde_json::Value> = HashMap::new();
+                vars.insert("name".into(), serde_json::json!(name));
+                vars.insert(
+                    "fields".into(),
+                    serde_json::Value::Array(
+                        field_list.iter().map(|f| serde_json::json!(f)).collect(),
+                    ),
+                );
+                vars.insert(
+                    "created_at".into(),
+                    serde_json::json!(chrono::Local::now().format("%Y-%m-%d").to_string()),
+                );
+
+                gen.render_to_file("migration", &vars, &dest)
+                    .expect("rendering migration");
+                println!("wrote {}", dest.display());
+            }
+
+            GenerateCommands::Repository { name, output, force } => {
+                std::fs::create_dir_all(output).unwrap_or_default();
+                let dest =
+                    output.join(format!("{}_repository.rs", rok_utils::string::to_snake_case(name)));
+
+                if dest.exists() && !force {
+                    println!(
+                        "skip  {} (already exists; use --force to overwrite)",
+                        dest.display()
+                    );
+                    std::process::exit(0);
+                }
+
+                let mut gen = Generator::new();
+                gen.add_template("repository", rok_generate::templates::REPOSITORY)
+                    .expect("registering repository template");
+
+                let mut vars: HashMap<String, serde_json::Value> = HashMap::new();
+                vars.insert("name".into(), serde_json::json!(name));
+
+                gen.render_to_file("repository", &vars, &dest)
+                    .expect("rendering repository");
                 println!("wrote {}", dest.display());
             }
         }
@@ -686,6 +760,149 @@ pub struct {{ name }} {
                         println!("{}\n", step.sql);
                     }
                 }
+            }
+
+            MigrateCommands::New { name, dir } => {
+                // Determine next version number from existing migrations.
+                let next_version = load_from_dir(dir)
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|m| m.version)
+                    .max()
+                    .unwrap_or(0)
+                    + 1;
+
+                std::fs::create_dir_all(dir).unwrap_or_else(|e| {
+                    eprintln!("Error creating migrations directory: {e}");
+                    std::process::exit(1);
+                });
+
+                let snake_name = rok_utils::string::to_snake_case(name);
+                let filename = format!("{:04}_{}.sql", next_version, snake_name);
+                let path = dir.join(&filename);
+
+                let content = "-- UP\n\n\n-- DOWN\n\n";
+                std::fs::write(&path, content).unwrap_or_else(|e| {
+                    eprintln!("Error writing migration file: {e}");
+                    std::process::exit(1);
+                });
+
+                println!("created  {}", path.display());
+            }
+        }
+        std::process::exit(0);
+    }
+
+    if let Some(cli::Commands::Lint {
+        path,
+        max_line_length,
+    }) = &cli.command
+    {
+        use rok_lint::{
+            rules::{LongLineRule, TodoCommentRule, TrailingWhitespaceRule},
+            Linter, Severity,
+        };
+
+        let mut linter = Linter::new();
+        linter.add_rule(TodoCommentRule::default());
+        linter.add_rule(LongLineRule::new(*max_line_length));
+        linter.add_rule(TrailingWhitespaceRule);
+
+        let files: Vec<std::path::PathBuf> = if path.is_file() {
+            vec![path.clone()]
+        } else {
+            walkdir::WalkDir::new(path)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| e.file_type().is_file())
+                .filter(|e| {
+                    e.path()
+                        .extension()
+                        .and_then(|x| x.to_str())
+                        .map(|x| matches!(x, "rs" | "ts" | "js" | "py" | "go"))
+                        .unwrap_or(false)
+                })
+                .filter(|e| {
+                    !e.path()
+                        .components()
+                        .any(|c| c.as_os_str() == "target" || c.as_os_str() == "node_modules")
+                })
+                .map(|e| e.path().to_path_buf())
+                .collect()
+        };
+
+        if files.is_empty() {
+            println!("No source files found in {}", path.display());
+            std::process::exit(0);
+        }
+
+        let mut total = 0usize;
+        let mut errors = 0usize;
+        for file in &files {
+            let content = match std::fs::read_to_string(file) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+            let diags = linter.check_str(file.to_str().unwrap_or("?"), &content);
+            for d in &diags {
+                if d.severity == Severity::Error {
+                    errors += 1;
+                }
+                println!(
+                    "{}:{}  [{}]  {}  {}",
+                    d.file,
+                    d.line,
+                    d.severity,
+                    d.rule,
+                    d.message
+                );
+            }
+            total += diags.len();
+        }
+
+        if total == 0 {
+            println!("No issues found in {} file(s).", files.len());
+        } else {
+            println!("\n{} issue(s) in {} file(s).", total, files.len());
+        }
+        std::process::exit(if errors > 0 { 1 } else { 0 });
+    }
+
+    if let Some(cli::Commands::Deploy { command }) = &cli.command {
+        use cli::DeployCommands;
+        use rok_deploy::{compose, dockerfile, kubernetes, DeployConfig};
+
+        fn make_config(name: &str, port: u16, replicas: u32) -> DeployConfig {
+            DeployConfig {
+                name: name.to_string(),
+                image: name.to_string(),
+                port,
+                replicas,
+                ..Default::default()
+            }
+        }
+
+        match command {
+            DeployCommands::Dockerfile { name, port } => {
+                let cfg = make_config(name, *port, 1);
+                println!("{}", dockerfile::generate(&cfg));
+            }
+            DeployCommands::Compose { name, port } => {
+                let cfg = make_config(name, *port, 1);
+                println!("{}", compose::generate(&cfg));
+            }
+            DeployCommands::K8s { name, port, replicas } => {
+                let cfg = make_config(name, *port, *replicas);
+                println!("{}", kubernetes::manifests(&cfg));
+            }
+            DeployCommands::All { name, port, replicas } => {
+                let cfg = make_config(name, *port, *replicas);
+                println!("# ── Dockerfile ──────────────────────────────────────────────────────────────");
+                println!("{}", dockerfile::generate(&cfg));
+                println!("# ── docker-compose.yml ──────────────────────────────────────────────────────");
+                println!("{}", compose::generate(&cfg));
+                println!("# ── kubernetes manifests ────────────────────────────────────────────────────");
+                println!("{}", kubernetes::manifests(&cfg));
             }
         }
         std::process::exit(0);

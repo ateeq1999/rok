@@ -37,6 +37,43 @@ CREATE TABLE IF NOT EXISTS {{ name | lower }}s (
 );
 "#;
 
+/// Full CRUD Axum handlers for a named resource.
+pub const CRUD_HANDLER: &str = r#"
+use axum::{extract::Path, Json};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct {{ name }}Body {
+    // TODO: add fields
+}
+
+pub async fn list_{{ name | lower }}() -> Json<Vec<Value>> {
+    Json(vec![])
+}
+
+pub async fn get_{{ name | lower }}(Path(id): Path<String>) -> Json<Value> {
+    Json(serde_json::json!({ "id": id }))
+}
+
+pub async fn create_{{ name | lower }}(Json(body): Json<{{ name }}Body>) -> Json<Value> {
+    let _ = body;
+    Json(serde_json::json!({ "created": true }))
+}
+
+pub async fn update_{{ name | lower }}(
+    Path(id): Path<String>,
+    Json(body): Json<{{ name }}Body>,
+) -> Json<Value> {
+    let _ = body;
+    Json(serde_json::json!({ "id": id, "updated": true }))
+}
+
+pub async fn delete_{{ name | lower }}(Path(id): Path<String>) -> Json<Value> {
+    Json(serde_json::json!({ "id": id, "deleted": true }))
+}
+"#;
+
 /// A repository struct with basic CRUD stubs.
 pub const REPOSITORY: &str = r#"
 use anyhow::Result;
