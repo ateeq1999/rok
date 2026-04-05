@@ -1,2 +1,3 @@
 target/
 .rok/
+.claude/settings.local.json
