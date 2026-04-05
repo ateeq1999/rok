@@ -44,6 +44,75 @@ pub fn is_dir<P: AsRef<Path>>(path: P) -> bool {
     path.as_ref().is_dir()
 }
 
+/// Recursively copy a directory tree from `src` to `dst`.
+///
+/// `dst` is created if it does not exist.  Existing files at `dst` are
+/// overwritten without warning.
+///
+/// ```rust
+/// use rok_utils::fs::copy_dir_all;
+/// use std::fs;
+///
+/// let src = tempfile::tempdir().unwrap();
+/// let dst = tempfile::tempdir().unwrap();
+/// fs::write(src.path().join("hello.txt"), b"hi").unwrap();
+/// copy_dir_all(src.path(), dst.path()).unwrap();
+/// assert!(dst.path().join("hello.txt").exists());
+/// ```
+pub fn copy_dir_all<P: AsRef<Path>, Q: AsRef<Path>>(src: P, dst: Q) -> Result<()> {
+    let src = src.as_ref();
+    let dst = dst.as_ref();
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(entry.path(), dst.join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+/// Recursively find all files under `dir` with the given extension (without
+/// the leading dot).
+///
+/// Returns paths in the order they are discovered (directory-order, not
+/// sorted).  Returns an empty `Vec` if `dir` does not exist.
+///
+/// ```rust
+/// use rok_utils::fs::find_files;
+/// use std::fs;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// fs::write(dir.path().join("a.txt"), b"").unwrap();
+/// fs::write(dir.path().join("b.rs"), b"").unwrap();
+/// let txt = find_files(dir.path(), "txt").unwrap();
+/// assert_eq!(txt.len(), 1);
+/// assert!(txt[0].ends_with("a.txt"));
+/// ```
+pub fn find_files<P: AsRef<Path>>(dir: P, ext: &str) -> Result<Vec<std::path::PathBuf>> {
+    let mut result = Vec::new();
+    if dir.as_ref().is_dir() {
+        find_files_inner(dir.as_ref(), ext, &mut result)?;
+    }
+    Ok(result)
+}
+
+fn find_files_inner(dir: &Path, ext: &str, acc: &mut Vec<std::path::PathBuf>) -> Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            find_files_inner(&path, ext, acc)?;
+        } else if path.extension().and_then(|e| e.to_str()) == Some(ext) {
+            acc.push(path);
+        }
+    }
+    Ok(())
+}
+
 // ── internal helper ──────────────────────────────────────────────────────────
 
 fn tempfile(dir: &Path) -> Result<std::path::PathBuf> {
@@ -87,5 +156,39 @@ mod tests {
         assert!(!is_dir(&f));
         assert!(is_dir(dir.path()));
         assert!(!is_file(dir.path()));
+    }
+
+    #[test]
+    fn copy_dir_all_copies_nested() {
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let sub = src.path().join("sub");
+        fs::create_dir_all(&sub).unwrap();
+        fs::write(src.path().join("root.txt"), b"root").unwrap();
+        fs::write(sub.join("nested.txt"), b"nested").unwrap();
+
+        copy_dir_all(src.path(), dst.path()).unwrap();
+
+        assert_eq!(read_to_string(dst.path().join("root.txt")).unwrap(), "root");
+        assert_eq!(read_to_string(dst.path().join("sub/nested.txt")).unwrap(), "nested");
+    }
+
+    #[test]
+    fn find_files_by_extension() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("a.txt"), b"").unwrap();
+        fs::write(dir.path().join("b.rs"), b"").unwrap();
+        fs::write(dir.path().join("c.txt"), b"").unwrap();
+
+        let txt = find_files(dir.path(), "txt").unwrap();
+        assert_eq!(txt.len(), 2);
+        let rs = find_files(dir.path(), "rs").unwrap();
+        assert_eq!(rs.len(), 1);
+    }
+
+    #[test]
+    fn find_files_nonexistent_dir_returns_empty() {
+        let result = find_files("/nonexistent/path/xyz", "rs").unwrap();
+        assert!(result.is_empty());
     }
 }

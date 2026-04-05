@@ -89,3 +89,63 @@ pub async fn delete<T>(pool: &PgPool, builder: QueryBuilder<T>) -> Result<u64, s
     let (sql, params) = builder.to_delete_sql();
     execute_raw(pool, &sql, params).await
 }
+
+/// Insert multiple rows in a single `INSERT INTO … VALUES …, …` statement.
+///
+/// All rows must have the same columns in the same order as the first row.
+/// Returns the total number of rows inserted.
+///
+/// ```rust,ignore
+/// use rok_orm::executor;
+///
+/// executor::bulk_insert::<User>(
+///     &pool,
+///     "users",
+///     &[
+///         vec![("name", "Alice".into()), ("email", "a@a.com".into())],
+///         vec![("name", "Bob".into()),   ("email", "b@b.com".into())],
+///     ],
+/// ).await?;
+/// ```
+pub async fn bulk_insert<T>(
+    pool: &PgPool,
+    table: &str,
+    rows: &[Vec<(&str, SqlValue)>],
+) -> Result<u64, sqlx::Error> {
+    if rows.is_empty() {
+        return Ok(0);
+    }
+    let (sql, params) = QueryBuilder::<T>::bulk_insert_sql(table, rows);
+    execute_raw(pool, &sql, params).await
+}
+
+/// Insert a single row and return it using `RETURNING *`.
+///
+/// Useful when you need the generated primary key or server-side defaults.
+///
+/// ```rust,ignore
+/// use rok_orm::executor;
+///
+/// let user: User = executor::insert_returning::<User>(
+///     &pool,
+///     "users",
+///     &[("name", "Alice".into()), ("email", "a@a.com".into())],
+/// ).await?;
+/// println!("new id = {}", user.id);
+/// ```
+pub async fn insert_returning<T>(
+    pool: &PgPool,
+    table: &str,
+    data: &[(&str, SqlValue)],
+) -> Result<T, sqlx::Error>
+where
+    T: Model + for<'r> sqlx::FromRow<'r, PgRow> + Send + Unpin,
+{
+    let (base_sql, params) = QueryBuilder::<T>::insert_sql(table, data);
+    let sql = format!("{base_sql} RETURNING *");
+    sqlx_pg::fetch_all_as::<T>(pool, &sql, params)
+        .await?
+        .into_iter()
+        .next()
+        .ok_or(sqlx::Error::RowNotFound)
+}

@@ -51,6 +51,10 @@ pub enum AppError {
     #[error("{0}")]
     UnprocessableEntity(String),
 
+    /// 429 Too Many Requests
+    #[error("{0}")]
+    TooManyRequests(String),
+
     /// 500 Internal Server Error
     #[error("{0}")]
     Internal(String),
@@ -75,6 +79,9 @@ impl AppError {
     pub fn unprocessable(msg: impl Into<String>) -> Self {
         Self::UnprocessableEntity(msg.into())
     }
+    pub fn too_many_requests(msg: impl Into<String>) -> Self {
+        Self::TooManyRequests(msg.into())
+    }
     pub fn internal(msg: impl Into<String>) -> Self {
         Self::Internal(msg.into())
     }
@@ -89,6 +96,7 @@ impl IntoResponse for AppError {
             Self::NotFound(_) => StatusCode::NOT_FOUND,
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::TooManyRequests(_) => StatusCode::TOO_MANY_REQUESTS,
             Self::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 

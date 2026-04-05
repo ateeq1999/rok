@@ -14,4 +14,4 @@ pub mod sqlx_sqlite;
 
 pub use condition::{Condition, JoinOp, OrderDir, SqlValue};
 pub use model::Model;
-pub use query::QueryBuilder;
+pub use query::{Join, QueryBuilder};

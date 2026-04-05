@@ -77,6 +77,30 @@ impl Claims {
         self.roles.iter().any(|r| r == role)
     }
 
+    /// Return `true` if the claims contain **at least one** of the given roles.
+    ///
+    /// ```rust
+    /// use rok_auth::Claims;
+    /// let c = Claims::new("alice", vec!["editor", "viewer"]);
+    /// assert!(c.has_any_role(&["admin", "editor"]));
+    /// assert!(!c.has_any_role(&["admin", "superuser"]));
+    /// ```
+    pub fn has_any_role(&self, roles: &[&str]) -> bool {
+        roles.iter().any(|r| self.has_role(r))
+    }
+
+    /// Return `true` if the claims contain **all** of the given roles.
+    ///
+    /// ```rust
+    /// use rok_auth::Claims;
+    /// let c = Claims::new("alice", vec!["editor", "viewer"]);
+    /// assert!(c.has_all_roles(&["editor", "viewer"]));
+    /// assert!(!c.has_all_roles(&["editor", "admin"]));
+    /// ```
+    pub fn has_all_roles(&self, roles: &[&str]) -> bool {
+        roles.iter().all(|r| self.has_role(r))
+    }
+
     /// Return `true` if the token has not yet expired.
     pub fn is_valid(&self) -> bool {
         Utc::now().timestamp() < self.exp

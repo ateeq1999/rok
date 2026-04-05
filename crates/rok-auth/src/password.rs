@@ -27,6 +27,32 @@ pub fn verify(password: &str, hash: &str) -> Result<bool, AuthError> {
         .is_ok())
 }
 
+/// Async version of [`hash`] — offloads the CPU-intensive work to a blocking
+/// thread so the async runtime is not stalled.
+///
+/// ```rust,no_run
+/// use rok_auth::password;
+///
+/// #[tokio::main]
+/// async fn main() {
+///     let h = password::hash_async("my-password".to_string()).await.unwrap();
+///     assert!(password::verify_async("my-password".to_string(), h).await.unwrap());
+/// }
+/// ```
+pub async fn hash_async(password: String) -> Result<String, AuthError> {
+    tokio::task::spawn_blocking(move || hash(&password))
+        .await
+        .map_err(|e| AuthError::HashError(e.to_string()))?
+}
+
+/// Async version of [`verify`] — offloads the CPU-intensive work to a blocking
+/// thread so the async runtime is not stalled.
+pub async fn verify_async(password: String, hash: String) -> Result<bool, AuthError> {
+    tokio::task::spawn_blocking(move || verify(&password, &hash))
+        .await
+        .map_err(|e| AuthError::HashError(e.to_string()))?
+}
+
 // ── tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]

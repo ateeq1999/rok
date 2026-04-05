@@ -4,6 +4,19 @@ use std::marker::PhantomData;
 
 use crate::condition::{Condition, JoinOp, OrderDir, SqlValue};
 
+// ── Join ─────────────────────────────────────────────────────────────────────
+
+/// A SQL JOIN clause.
+#[derive(Debug, Clone)]
+pub enum Join {
+    /// `INNER JOIN table ON condition`
+    Inner(String, String),
+    /// `LEFT JOIN table ON condition`
+    Left(String, String),
+    /// `RIGHT JOIN table ON condition`
+    Right(String, String),
+}
+
 /// A fluent builder that produces parameterized SQL statements.
 ///
 /// Conditions added with `where_*` methods are joined with `AND`.
@@ -33,7 +46,10 @@ pub struct QueryBuilder<T> {
     table: String,
     select_cols: Option<Vec<String>>,
     distinct: bool,
+    joins: Vec<Join>,
     conditions: Vec<(JoinOp, Condition)>,
+    group_by: Vec<String>,
+    having: Option<String>,
     order: Vec<(String, OrderDir)>,
     limit_val: Option<usize>,
     offset_val: Option<usize>,
@@ -46,7 +62,10 @@ impl<T> QueryBuilder<T> {
             table: table.into(),
             select_cols: None,
             distinct: false,
+            joins: Vec::new(),
             conditions: Vec::new(),
+            group_by: Vec::new(),
+            having: None,
             order: Vec::new(),
             limit_val: None,
             offset_val: None,
@@ -64,6 +83,64 @@ impl<T> QueryBuilder<T> {
     /// Emit `SELECT DISTINCT …`.
     pub fn distinct(mut self) -> Self {
         self.distinct = true;
+        self
+    }
+
+    // ── joins ─────────────────────────────────────────────────────────────
+
+    /// Add an `INNER JOIN table ON condition`.
+    ///
+    /// ```rust
+    /// use rok_orm_core::QueryBuilder;
+    ///
+    /// let (sql, _) = QueryBuilder::<()>::new("orders")
+    ///     .inner_join("users", "users.id = orders.user_id")
+    ///     .select(&["orders.id", "users.name"])
+    ///     .to_sql();
+    ///
+    /// assert!(sql.contains("INNER JOIN users ON users.id = orders.user_id"));
+    /// ```
+    pub fn inner_join(mut self, table: &str, on: &str) -> Self {
+        self.joins.push(Join::Inner(table.to_string(), on.to_string()));
+        self
+    }
+
+    /// Add a `LEFT JOIN table ON condition`.
+    pub fn left_join(mut self, table: &str, on: &str) -> Self {
+        self.joins.push(Join::Left(table.to_string(), on.to_string()));
+        self
+    }
+
+    /// Add a `RIGHT JOIN table ON condition`.
+    pub fn right_join(mut self, table: &str, on: &str) -> Self {
+        self.joins.push(Join::Right(table.to_string(), on.to_string()));
+        self
+    }
+
+    // ── GROUP BY / HAVING ─────────────────────────────────────────────────
+
+    /// Add a `GROUP BY` clause.
+    ///
+    /// ```rust
+    /// use rok_orm_core::QueryBuilder;
+    ///
+    /// let (sql, _) = QueryBuilder::<()>::new("orders")
+    ///     .select(&["user_id", "COUNT(*) as total"])
+    ///     .group_by(&["user_id"])
+    ///     .having("COUNT(*) > 5")
+    ///     .to_sql();
+    ///
+    /// assert!(sql.contains("GROUP BY user_id"));
+    /// assert!(sql.contains("HAVING COUNT(*) > 5"));
+    /// ```
+    pub fn group_by(mut self, cols: &[&str]) -> Self {
+        self.group_by = cols.iter().map(|s| s.to_string()).collect();
+        self
+    }
+
+    /// Add a `HAVING` clause (requires [`group_by`]).
+    pub fn having(mut self, expr: &str) -> Self {
+        self.having = Some(expr.to_string());
         self
     }
 
@@ -247,7 +324,9 @@ impl<T> QueryBuilder<T> {
         let mut sql = format!("SELECT {distinct_kw}{cols} FROM {}", self.table);
         let mut params: Vec<SqlValue> = Vec::new();
 
+        sql.push_str(&self.build_joins());
         sql.push_str(&self.build_where(&mut params));
+        sql.push_str(&self.build_group_by());
         sql.push_str(&self.build_order());
 
         if let Some(n) = self.limit_val {
@@ -260,12 +339,13 @@ impl<T> QueryBuilder<T> {
         (sql, params)
     }
 
-    /// Build a `SELECT COUNT(*) FROM …` statement.
+    /// Build a `SELECT COUNT(*) FROM …` statement (includes JOINs and WHERE).
     pub fn to_count_sql(&self) -> (String, Vec<SqlValue>) {
         let mut params: Vec<SqlValue> = Vec::new();
+        let joins = self.build_joins();
         let where_clause = self.build_where(&mut params);
         (
-            format!("SELECT COUNT(*) FROM {}{}", self.table, where_clause),
+            format!("SELECT COUNT(*) FROM {}{}{}", self.table, joins, where_clause),
             params,
         )
     }
@@ -315,6 +395,49 @@ impl<T> QueryBuilder<T> {
         )
     }
 
+    /// Build an `INSERT INTO … VALUES …, …` statement for multiple rows.
+    ///
+    /// All rows must have the same columns in the same order as the first row.
+    ///
+    /// ```rust
+    /// use rok_orm_core::{QueryBuilder, SqlValue};
+    ///
+    /// let rows: Vec<Vec<(&str, SqlValue)>> = vec![
+    ///     vec![("name", "Alice".into()), ("email", "a@a.com".into())],
+    ///     vec![("name", "Bob".into()),   ("email", "b@b.com".into())],
+    /// ];
+    /// let (sql, params) = QueryBuilder::<()>::bulk_insert_sql("users", &rows);
+    /// assert!(sql.contains("($1, $2), ($3, $4)"));
+    /// assert_eq!(params.len(), 4);
+    /// ```
+    pub fn bulk_insert_sql(table: &str, rows: &[Vec<(&str, SqlValue)>]) -> (String, Vec<SqlValue>) {
+        assert!(!rows.is_empty(), "bulk_insert_sql requires at least one row");
+        let cols: Vec<&str> = rows[0].iter().map(|(c, _)| *c).collect();
+        let mut params: Vec<SqlValue> = Vec::new();
+        let mut value_groups: Vec<String> = Vec::new();
+        let mut offset = 1usize;
+
+        for row in rows {
+            let placeholders: Vec<String> = (offset..offset + row.len())
+                .map(|i| format!("${i}"))
+                .collect();
+            value_groups.push(format!("({})", placeholders.join(", ")));
+            for (_, v) in row.iter() {
+                params.push(v.clone());
+            }
+            offset += row.len();
+        }
+
+        (
+            format!(
+                "INSERT INTO {table} ({}) VALUES {}",
+                cols.join(", "),
+                value_groups.join(", ")
+            ),
+            params,
+        )
+    }
+
     /// Build an `UPDATE … SET … WHERE …` statement from explicit conditions.
     ///
     /// Prefer [`to_update_sql`] when you already have a `QueryBuilder`.
@@ -350,8 +473,31 @@ impl<T> QueryBuilder<T> {
         self
     }
 
+    fn build_joins(&self) -> String {
+        let mut out = String::new();
+        for join in &self.joins {
+            match join {
+                Join::Inner(t, on) => out.push_str(&format!(" INNER JOIN {t} ON {on}")),
+                Join::Left(t, on) => out.push_str(&format!(" LEFT JOIN {t} ON {on}")),
+                Join::Right(t, on) => out.push_str(&format!(" RIGHT JOIN {t} ON {on}")),
+            }
+        }
+        out
+    }
+
     fn build_where(&self, params: &mut Vec<SqlValue>) -> String {
         build_where_from(&self.conditions, params)
+    }
+
+    fn build_group_by(&self) -> String {
+        let mut out = String::new();
+        if !self.group_by.is_empty() {
+            out.push_str(&format!(" GROUP BY {}", self.group_by.join(", ")));
+        }
+        if let Some(ref h) = self.having {
+            out.push_str(&format!(" HAVING {h}"));
+        }
+        out
     }
 
     fn build_order(&self) -> String {
@@ -542,5 +688,77 @@ mod tests {
     fn option_value_some() {
         let val: SqlValue = Some(42i64).into();
         assert_eq!(val, SqlValue::Integer(42));
+    }
+
+    #[test]
+    fn inner_join() {
+        let (sql, _) = QueryBuilder::<()>::new("orders")
+            .inner_join("users", "users.id = orders.user_id")
+            .to_sql();
+        assert!(sql.contains("INNER JOIN users ON users.id = orders.user_id"));
+    }
+
+    #[test]
+    fn left_join_with_where() {
+        let (sql, params) = QueryBuilder::<()>::new("orders")
+            .left_join("users", "users.id = orders.user_id")
+            .where_eq("orders.status", "paid")
+            .to_sql();
+        assert!(sql.contains("LEFT JOIN users ON users.id = orders.user_id"));
+        assert!(sql.contains("WHERE orders.status = $1"));
+        assert_eq!(params.len(), 1);
+    }
+
+    #[test]
+    fn right_join() {
+        let (sql, _) = QueryBuilder::<()>::new("orders")
+            .right_join("products", "products.id = orders.product_id")
+            .to_sql();
+        assert!(sql.contains("RIGHT JOIN products ON products.id = orders.product_id"));
+    }
+
+    #[test]
+    fn group_by_and_having() {
+        let (sql, _) = QueryBuilder::<()>::new("orders")
+            .select(&["user_id", "COUNT(*) as total"])
+            .group_by(&["user_id"])
+            .having("COUNT(*) > 5")
+            .to_sql();
+        assert!(sql.contains("GROUP BY user_id"));
+        assert!(sql.contains("HAVING COUNT(*) > 5"));
+        // GROUP BY must come before ORDER BY
+        let gpos = sql.find("GROUP BY").unwrap();
+        let hpos = sql.find("HAVING").unwrap();
+        assert!(gpos < hpos);
+    }
+
+    #[test]
+    fn count_sql_with_join() {
+        let (sql, _) = QueryBuilder::<()>::new("orders")
+            .inner_join("users", "users.id = orders.user_id")
+            .where_eq("users.active", true)
+            .to_count_sql();
+        assert!(sql.contains("INNER JOIN users ON users.id = orders.user_id"));
+        assert!(sql.contains("SELECT COUNT(*) FROM orders"));
+    }
+
+    #[test]
+    fn bulk_insert_sql_two_rows() {
+        let rows: Vec<Vec<(&str, SqlValue)>> = vec![
+            vec![("name", "Alice".into()), ("email", "a@a.com".into())],
+            vec![("name", "Bob".into()), ("email", "b@b.com".into())],
+        ];
+        let (sql, params) = QueryBuilder::<()>::bulk_insert_sql("users", &rows);
+        assert!(sql.starts_with("INSERT INTO users (name, email) VALUES"));
+        assert!(sql.contains("($1, $2), ($3, $4)"));
+        assert_eq!(params.len(), 4);
+    }
+
+    #[test]
+    fn bulk_insert_sql_single_row() {
+        let rows = vec![vec![("x", SqlValue::Integer(1))]];
+        let (sql, params) = QueryBuilder::<()>::bulk_insert_sql("t", &rows);
+        assert!(sql.contains("($1)"));
+        assert_eq!(params.len(), 1);
     }
 }

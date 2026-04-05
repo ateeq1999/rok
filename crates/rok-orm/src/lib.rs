@@ -28,7 +28,7 @@
 //! ```
 
 // Re-export core types
-pub use rok_orm_core::{Condition, Model, OrderDir, QueryBuilder, SqlValue};
+pub use rok_orm_core::{Condition, Join, JoinOp, Model, OrderDir, QueryBuilder, SqlValue};
 
 // Re-export the derive macro
 pub use rok_orm_macros::Model as Model_derive;
@@ -45,5 +45,12 @@ pub mod executor;
 #[cfg(feature = "postgres")]
 pub mod pg_model;
 
+/// PostgreSQL transaction wrapper. Enable with `features = ["postgres"]`.
+#[cfg(feature = "postgres")]
+pub mod transaction;
+
 #[cfg(feature = "postgres")]
 pub use pg_model::PgModel;
+
+#[cfg(feature = "postgres")]
+pub use transaction::Tx;

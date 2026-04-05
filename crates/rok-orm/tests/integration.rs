@@ -220,3 +220,55 @@ fn update_sql_via_builder() {
     assert!(sql.contains("WHERE id = $3"));
     assert_eq!(params.len(), 3);
 }
+
+// ── join ──────────────────────────────────────────────────────────────────────
+
+#[test]
+fn inner_join_query() {
+    let (sql, params) = User::query()
+        .inner_join("posts", "posts.user_id = users.id")
+        .where_eq("users.active", true)
+        .to_sql();
+    assert!(sql.contains("INNER JOIN posts ON posts.user_id = users.id"));
+    assert!(sql.contains("WHERE users.active = $1"));
+    assert_eq!(params.len(), 1);
+}
+
+#[test]
+fn left_join_query() {
+    let (sql, _) = User::query()
+        .left_join("profiles", "profiles.user_id = users.id")
+        .to_sql();
+    assert!(sql.contains("LEFT JOIN profiles ON profiles.user_id = users.id"));
+}
+
+// ── group by / having ─────────────────────────────────────────────────────────
+
+#[test]
+fn group_by_having_query() {
+    use rok_orm::QueryBuilder;
+    let (sql, _) = QueryBuilder::<User>::new("users")
+        .select(&["role", "COUNT(*) as n"])
+        .group_by(&["role"])
+        .having("COUNT(*) > 1")
+        .to_sql();
+    assert!(sql.contains("GROUP BY role"));
+    assert!(sql.contains("HAVING COUNT(*) > 1"));
+}
+
+// ── bulk insert ───────────────────────────────────────────────────────────────
+
+#[test]
+fn bulk_insert_sql() {
+    use rok_orm::{QueryBuilder, SqlValue};
+
+    let rows: Vec<Vec<(&str, SqlValue)>> = vec![
+        vec![("name", "Alice".into()), ("email", "a@a.com".into())],
+        vec![("name", "Bob".into()), ("email", "b@b.com".into())],
+        vec![("name", "Carol".into()), ("email", "c@c.com".into())],
+    ];
+    let (sql, params) = QueryBuilder::<User>::bulk_insert_sql("users", &rows);
+    assert!(sql.starts_with("INSERT INTO users (name, email) VALUES"));
+    assert!(sql.contains("($1, $2), ($3, $4), ($5, $6)"));
+    assert_eq!(params.len(), 6);
+}

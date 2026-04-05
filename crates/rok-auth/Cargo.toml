@@ -22,6 +22,7 @@ argon2 = { workspace = true }
 rand = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
+tokio = { workspace = true }
 # Axum integration (optional)
 axum = { workspace = true, optional = true }
 tower = { workspace = true, optional = true }
