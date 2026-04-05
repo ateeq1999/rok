@@ -121,7 +121,230 @@ Stable public APIs across all crates.
 
 ---
 
-## Release Policy
+## Milestone 6 — rok-orm Macro DSL
+
+**Goal**: Collapse model definition, querying, and migration generation into a
+single, ergonomic macro surface. Users should need zero boilerplate structs and
+zero `impl` blocks for the common case.
+
+---
+
+### 6.1 — `model!` declarative schema macro
+
+Replace the two-step `#[derive(Model, sqlx::FromRow)] + attribute soup` with a
+single invocation that generates the struct, trait impls, and a `FromRow` derive
+in one shot.
+
+```rust
+// Before
+#[derive(Debug, Clone, Model, sqlx::FromRow)]
+#[rok_orm(table = "articles")]
+pub struct Article {
+    #[rok_orm(primary_key)]
+    pub id:         i64,
+    pub title:      String,
+    pub published:  bool,
+    #[rok_orm(skip)]
+    pub draft_notes: String,
+}
+
+// After
+rok_orm::model! {
+    Article {
+        table:   "articles",
+        pk:      id: i64,
+
+        title:      String,
+        published:  bool,
+
+        #[skip]
+        draft_notes: String,
+    }
+}
+```
+
+**What the macro generates:**
+- `pub struct Article { … }` with `#[derive(Debug, Clone)]`
+- `impl Model for Article { … }` (table, pk, columns)
+- `impl sqlx::FromRow for Article` (or `#[derive(sqlx::FromRow)]`)
+- Associated constant `Article::COLUMNS` (`&'static [&'static str]`)
+- `Article::query()` already works via blanket `Model` impl
+
+**Acceptance criteria:**
+- [ ] `model!` macro defined in `rok-orm-macros`
+- [ ] Generates identical output to equivalent `#[derive(Model)]` usage
+- [ ] Struct visibility (`pub`, `pub(crate)`, private) configurable
+- [ ] Optional `derives = [Serialize, Deserialize, PartialEq]` key for extra derives
+
+---
+
+### 6.2 — `query!` compile-time query builder
+
+A declarative macro for building queries without chaining methods — readable at
+a glance, validated at compile time where possible.
+
+```rust
+// Method-chain style (still supported)
+let q = User::query()
+    .where_eq("active", true)
+    .or_where_eq("role", "admin")
+    .order_by_desc("created_at")
+    .limit(10);
+
+// Macro style
+let q = rok_orm::query!(User {
+    where: active = true OR role = "admin",
+    order: created_at DESC,
+    limit: 10,
+});
+```
+
+**What the macro generates:** Equivalent `QueryBuilder` method calls. No runtime
+overhead — expands to exactly the same code as the chain.
+
+**Acceptance criteria:**
+- [ ] `query!` macro defined in `rok-orm-macros`
+- [ ] Supports: `where`, `or_where`, `select`, `distinct`, `order`, `limit`, `offset`
+- [ ] Column names checked against `Model::columns()` at compile time
+- [ ] Degrades gracefully — unknown operators fall back to `where_raw`
+
+---
+
+### 6.3 — `migrate!` inline migration DSL
+
+Define migrations directly in Rust source with the DDL embedded as string
+literals — no separate `.sql` files needed for simple cases.
+
+```rust
+rok_orm::migrate! {
+    version: 1,
+    name:    "create_users",
+
+    up: "
+        CREATE TABLE users (
+            id    BIGSERIAL PRIMARY KEY,
+            name  TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE
+        );
+    ",
+    down: "DROP TABLE users;",
+}
+```
+
+**What the macro generates:** A `static MIGRATION_0001: rok_migrate::Migration`
+constant that can be collected with `migrations![]` and applied via the executor.
+
+```rust
+// Collect and apply
+rok_orm::migrations![MIGRATION_0001, MIGRATION_0002, MIGRATION_0003];
+
+Migrator::run(&pool, &ALL_MIGRATIONS).await?;
+```
+
+**Acceptance criteria:**
+- [ ] `migrate!` macro emits a `Migration` static
+- [ ] `migrations![…]` macro collects them into `&'static [Migration]`
+- [ ] Version uniqueness validated at compile time (via const assertions)
+- [ ] Compatible with file-based migrations from `rok-migrate::load_from_dir`
+
+---
+
+### 6.4 — `scope!` named query scopes
+
+Attach reusable, named query filters to a model — eliminating repeated
+`.where_eq("deleted_at", SqlValue::Null)` chains everywhere.
+
+```rust
+rok_orm::scopes! {
+    User {
+        active:  |q| q.where_eq("active", true),
+        admins:  |q| q.where_eq("role", "admin"),
+        recent:  |q| q.order_by_desc("created_at").limit(20),
+    }
+}
+
+// Usage — scopes are free functions on the model
+let users = User::active().recent().all(&pool).await?;
+```
+
+**What the macro generates:** `impl User { fn active() -> QueryBuilder<User> { … } … }`
+
+**Acceptance criteria:**
+- [ ] `scopes!` macro generates inherent methods returning `QueryBuilder<Self>`
+- [ ] Scopes are composable (chainable)
+- [ ] Zero-cost: each scope is just a function call into the builder chain
+
+---
+
+### 6.5 — Soft deletes via attribute
+
+```rust
+rok_orm::model! {
+    Post {
+        table:      "posts",
+        soft_delete: deleted_at,   // enables soft-delete mode
+
+        pk:      id: i64,
+        title:   String,
+        deleted_at: Option<chrono::DateTime<chrono::Utc>>,
+    }
+}
+
+// delete_by_pk now sets deleted_at = NOW() instead of DELETE
+Post::delete_by_pk(&pool, 1i64).await?;
+
+// all() and find_where() automatically add WHERE deleted_at IS NULL
+Post::all(&pool).await?;             // only non-deleted rows
+
+// opt-in to include deleted rows
+Post::query().include_deleted().all(&pool).await?;
+```
+
+**Acceptance criteria:**
+- [ ] `soft_delete` key in `model!` enables the behaviour
+- [ ] `delete_by_pk` / `delete_where` issue `UPDATE … SET deleted_at = NOW()`
+- [ ] `all()` / `find_by_pk()` / `find_where()` filter `WHERE deleted_at IS NULL`
+- [ ] `QueryBuilder` gets `.include_deleted()` method to opt out of the filter
+
+---
+
+### 6.6 — Transactions
+
+```rust
+let mut tx = pool.begin().await?;
+
+User::create_in(&mut tx, &[("name", "Alice".into())]).await?;
+Post::create_in(&mut tx, &[("user_id", 1i64.into())]).await?;
+
+tx.commit().await?;
+```
+
+**Acceptance criteria:**
+- [ ] All `PgModel` CRUD methods have `_in(tx: &mut PgTransaction, …)` variants
+- [ ] `executor` module exposes matching `fetch_all_in`, `insert_in`, `update_in`, `delete_in`
+- [ ] Rollback on drop (standard sqlx behaviour preserved)
+
+---
+
+### 6.7 — Query logging
+
+```rust
+rok-orm = { version = "0.1", features = ["postgres", "tracing"] }
+```
+
+When the `tracing` feature is enabled every generated SQL statement is emitted
+at `DEBUG` level via the `tracing` crate:
+
+```
+DEBUG rok_orm: SELECT * FROM users WHERE active = $1 [true] (3.2ms)
+```
+
+**Acceptance criteria:**
+- [ ] `tracing` feature added to `rok-orm` and `rok-orm-core`
+- [ ] SQL + params + duration logged after each executor call
+- [ ] Zero overhead when feature is disabled (conditional compilation)
+
+---
 
 - **Patch** (`0.1.x`): bug fixes, doc improvements, no API change
 - **Minor** (`0.x.0`): additive API changes, new optional features
