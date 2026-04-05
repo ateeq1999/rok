@@ -17,11 +17,13 @@
 //!
 //! let all: Vec<User>    = User::all(&pool).await?;
 //! let one: Option<User> = User::find_by_pk(&pool, 1i64).await?;
+//! let n: i64            = User::count(&pool).await?;
 //! User::create(&pool, &[("name", "Alice".into())]).await?;
+//! User::update_by_pk(&pool, 1i64, &[("name", "Bob".into())]).await?;
 //! User::delete_by_pk(&pool, 1i64).await?;
 //! ```
 
-use rok_orm_core::{Model, SqlValue};
+use rok_orm_core::{Model, QueryBuilder, SqlValue};
 use sqlx::{postgres::PgRow, PgPool};
 
 use crate::executor;
@@ -41,6 +43,17 @@ pub trait PgModel: Model + for<'r> sqlx::FromRow<'r, PgRow> + Send + Unpin {
         executor::fetch_all(pool, Self::query())
     }
 
+    /// Fetch rows matching a custom query.
+    fn find_where(
+        pool: &PgPool,
+        builder: QueryBuilder<Self>,
+    ) -> impl std::future::Future<Output = Result<Vec<Self>, sqlx::Error>> + Send
+    where
+        Self: Sized,
+    {
+        executor::fetch_all(pool, builder)
+    }
+
     /// Fetch a single row by primary key.  Returns `None` if not found.
     fn find_by_pk(
         pool: &PgPool,
@@ -50,6 +63,27 @@ pub trait PgModel: Model + for<'r> sqlx::FromRow<'r, PgRow> + Send + Unpin {
         Self: Sized,
     {
         executor::fetch_optional(pool, Self::find(id))
+    }
+
+    /// Return the total number of rows in the model's table.
+    fn count(
+        pool: &PgPool,
+    ) -> impl std::future::Future<Output = Result<i64, sqlx::Error>> + Send
+    where
+        Self: Sized,
+    {
+        executor::count(pool, &Self::query())
+    }
+
+    /// Return the number of rows matching a custom query.
+    fn count_where(
+        pool: &PgPool,
+        builder: &QueryBuilder<Self>,
+    ) -> impl std::future::Future<Output = Result<i64, sqlx::Error>> + Send
+    where
+        Self: Sized,
+    {
+        executor::count(pool, builder)
     }
 
     /// Insert a row using the given column-value pairs and return rows affected.
@@ -63,6 +97,19 @@ pub trait PgModel: Model + for<'r> sqlx::FromRow<'r, PgRow> + Send + Unpin {
         executor::insert::<Self>(pool, Self::table_name(), data)
     }
 
+    /// Update the row with the given primary key and return rows affected.
+    fn update_by_pk(
+        pool: &PgPool,
+        id: impl Into<SqlValue> + Send,
+        data: &[(&str, SqlValue)],
+    ) -> impl std::future::Future<Output = Result<u64, sqlx::Error>> + Send
+    where
+        Self: Sized,
+    {
+        let builder = Self::find(id);
+        executor::update::<Self>(pool, builder, data)
+    }
+
     /// Delete the row with the given primary key and return rows affected.
     fn delete_by_pk(
         pool: &PgPool,
@@ -72,6 +119,17 @@ pub trait PgModel: Model + for<'r> sqlx::FromRow<'r, PgRow> + Send + Unpin {
         Self: Sized,
     {
         executor::delete(pool, Self::find(id))
+    }
+
+    /// Delete rows matching a custom query and return rows affected.
+    fn delete_where(
+        pool: &PgPool,
+        builder: QueryBuilder<Self>,
+    ) -> impl std::future::Future<Output = Result<u64, sqlx::Error>> + Send
+    where
+        Self: Sized,
+    {
+        executor::delete(pool, builder)
     }
 }
 

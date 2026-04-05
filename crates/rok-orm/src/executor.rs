@@ -18,10 +18,11 @@
 //!
 //! let users: Vec<User> = executor::fetch_all(&pool, User::query().where_eq("active", true)).await?;
 //! let count: i64       = executor::count(&pool, &User::query()).await?;
+//! executor::update(&pool, User::query().where_eq("id", 1i64), &[("name", "Bob".into())]).await?;
 //! executor::delete(&pool, User::find(42i64)).await?;
 //! ```
 
-use rok_orm_core::{sqlx_pg, Model, QueryBuilder};
+use rok_orm_core::{sqlx_pg, Model, QueryBuilder, SqlValue};
 use sqlx::postgres::PgRow;
 use sqlx::PgPool;
 
@@ -58,7 +59,7 @@ pub async fn count<T>(pool: &PgPool, builder: &QueryBuilder<T>) -> Result<i64, s
 pub async fn execute_raw(
     pool: &PgPool,
     sql: &str,
-    params: Vec<rok_orm_core::SqlValue>,
+    params: Vec<SqlValue>,
 ) -> Result<u64, sqlx::Error> {
     sqlx_pg::execute(pool, sql, params).await
 }
@@ -67,9 +68,19 @@ pub async fn execute_raw(
 pub async fn insert<T>(
     pool: &PgPool,
     table: &str,
-    data: &[(&str, rok_orm_core::SqlValue)],
+    data: &[(&str, SqlValue)],
 ) -> Result<u64, sqlx::Error> {
     let (sql, params) = QueryBuilder::<T>::insert_sql(table, data);
+    execute_raw(pool, &sql, params).await
+}
+
+/// Update rows matching the builder's conditions and return rows affected.
+pub async fn update<T>(
+    pool: &PgPool,
+    builder: QueryBuilder<T>,
+    data: &[(&str, SqlValue)],
+) -> Result<u64, sqlx::Error> {
+    let (sql, params) = builder.to_update_sql(data);
     execute_raw(pool, &sql, params).await
 }
 

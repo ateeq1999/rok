@@ -44,6 +44,16 @@ impl From<String> for SqlValue {
         Self::Text(s)
     }
 }
+impl From<i8> for SqlValue {
+    fn from(n: i8) -> Self {
+        Self::Integer(n as i64)
+    }
+}
+impl From<i16> for SqlValue {
+    fn from(n: i16) -> Self {
+        Self::Integer(n as i64)
+    }
+}
 impl From<i32> for SqlValue {
     fn from(n: i32) -> Self {
         Self::Integer(n as i64)
@@ -59,6 +69,16 @@ impl From<u32> for SqlValue {
         Self::Integer(n as i64)
     }
 }
+impl From<u64> for SqlValue {
+    fn from(n: u64) -> Self {
+        Self::Integer(n as i64)
+    }
+}
+impl From<f32> for SqlValue {
+    fn from(f: f32) -> Self {
+        Self::Float(f as f64)
+    }
+}
 impl From<f64> for SqlValue {
     fn from(f: f64) -> Self {
         Self::Float(f)
@@ -67,6 +87,32 @@ impl From<f64> for SqlValue {
 impl From<bool> for SqlValue {
     fn from(b: bool) -> Self {
         Self::Bool(b)
+    }
+}
+impl<T: Into<SqlValue>> From<Option<T>> for SqlValue {
+    fn from(opt: Option<T>) -> Self {
+        match opt {
+            Some(v) => v.into(),
+            None => Self::Null,
+        }
+    }
+}
+
+// ── JoinOp ───────────────────────────────────────────────────────────────────
+
+/// The logical operator used to join a condition to the preceding clause.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum JoinOp {
+    And,
+    Or,
+}
+
+impl fmt::Display for JoinOp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::And => write!(f, "AND"),
+            Self::Or => write!(f, "OR"),
+        }
     }
 }
 
@@ -88,6 +134,8 @@ pub enum Condition {
     IsNotNull(String),
     In(String, Vec<SqlValue>),
     NotIn(String, Vec<SqlValue>),
+    Between(String, SqlValue, SqlValue),
+    NotBetween(String, SqlValue, SqlValue),
     Raw(String),
 }
 
@@ -136,6 +184,14 @@ impl Condition {
                     vals.clone(),
                 )
             }
+            Self::Between(col, lo, hi) => (
+                format!("{col} BETWEEN ${offset} AND ${}", offset + 1),
+                vec![lo.clone(), hi.clone()],
+            ),
+            Self::NotBetween(col, lo, hi) => (
+                format!("{col} NOT BETWEEN ${offset} AND ${}", offset + 1),
+                vec![lo.clone(), hi.clone()],
+            ),
             Self::Raw(sql) => (sql.clone(), vec![]),
         }
     }
@@ -161,6 +217,8 @@ impl Condition {
                 let lits: Vec<String> = vals.iter().map(|v| v.to_sql_literal()).collect();
                 format!("{col} NOT IN ({})", lits.join(", "))
             }
+            Self::Between(col, lo, hi) => format!("{col} BETWEEN {lo} AND {hi}"),
+            Self::NotBetween(col, lo, hi) => format!("{col} NOT BETWEEN {lo} AND {hi}"),
             Self::Raw(sql) => sql.clone(),
         }
     }

@@ -24,6 +24,33 @@ pub struct OrderItem {
     pub quantity: i32,
 }
 
+// custom table name
+#[derive(Model)]
+#[rok_orm(table = "articles")]
+pub struct Article {
+    pub id: i64,
+    pub title: String,
+}
+
+// custom primary key via struct attribute
+#[derive(Model)]
+#[rok_orm(primary_key = "user_id")]
+pub struct Profile {
+    pub user_id: i64,
+    pub bio: String,
+}
+
+// field-level: skip + column rename + primary_key
+#[derive(Model)]
+pub struct Tag {
+    #[rok_orm(primary_key)]
+    pub tag_id: i64,
+    #[rok_orm(column = "tag_name")]
+    pub name: String,
+    #[rok_orm(skip)]
+    pub cached_count: i32,
+}
+
 // ── table names ───────────────────────────────────────────────────────────────
 
 #[test]
@@ -111,4 +138,85 @@ fn insert_sql() {
             SqlValue::Text("alice@example.com".into()),
         ]
     );
+}
+
+// ── attribute: custom table name ──────────────────────────────────────────────
+
+#[test]
+fn custom_table_name() {
+    assert_eq!(Article::table_name(), "articles");
+    assert_eq!(Article::columns(), &["id", "title"]);
+}
+
+// ── attribute: custom primary key ─────────────────────────────────────────────
+
+#[test]
+fn struct_level_primary_key() {
+    assert_eq!(Profile::primary_key(), "user_id");
+}
+
+#[test]
+fn field_level_primary_key() {
+    assert_eq!(Tag::primary_key(), "tag_id");
+}
+
+// ── attribute: skip and column rename ────────────────────────────────────────
+
+#[test]
+fn skip_excludes_field() {
+    // cached_count is skipped
+    assert_eq!(Tag::columns(), &["tag_id", "tag_name"]);
+}
+
+// ── OR conditions ─────────────────────────────────────────────────────────────
+
+#[test]
+fn or_where_conditions() {
+    let (sql, params) = User::query()
+        .where_eq("role", "admin")
+        .or_where_eq("role", "moderator")
+        .to_sql();
+    assert!(sql.contains("role = $1 OR role = $2"));
+    assert_eq!(params.len(), 2);
+}
+
+// ── between ───────────────────────────────────────────────────────────────────
+
+#[test]
+fn where_between_query() {
+    let (sql, params) = User::query()
+        .where_between("id", 1i64, 100i64)
+        .to_sql();
+    assert!(sql.contains("id BETWEEN $1 AND $2"));
+    assert_eq!(params.len(), 2);
+}
+
+// ── not_in ────────────────────────────────────────────────────────────────────
+
+#[test]
+fn where_not_in_query() {
+    let (sql, params) = User::query()
+        .where_not_in("id", vec![1i64, 2, 3])
+        .to_sql();
+    assert!(sql.contains("id NOT IN ($1, $2, $3)"));
+    assert_eq!(params.len(), 3);
+}
+
+// ── distinct ──────────────────────────────────────────────────────────────────
+
+#[test]
+fn distinct_query() {
+    let (sql, _) = User::query().distinct().select(&["email"]).to_sql();
+    assert!(sql.starts_with("SELECT DISTINCT email FROM users"));
+}
+
+// ── to_update_sql ─────────────────────────────────────────────────────────────
+
+#[test]
+fn update_sql_via_builder() {
+    let (sql, params) = User::find(1i64)
+        .to_update_sql(&[("name", "Bob".into()), ("email", "b@b.com".into())]);
+    assert!(sql.starts_with("UPDATE users SET name = $1, email = $2"));
+    assert!(sql.contains("WHERE id = $3"));
+    assert_eq!(params.len(), 3);
 }
