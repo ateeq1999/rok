@@ -123,32 +123,33 @@ Stable public APIs across all crates.
 
 ## Milestone 6 — rok-orm Macro DSL
 
-**Goal**: Collapse model definition, querying, and migration generation into a
-single, ergonomic macro surface. Users should need zero boilerplate structs and
-zero `impl` blocks for the common case.
+**Goal**: Add a declarative macro layer on top of the existing derive-attribute
+API. **Both styles are fully supported and permanent** — `#[derive(Model)]` +
+`#[rok_orm(…)]` attributes remain the primary API; the macros below are
+opt-in ergonomic shortcuts for users who prefer a more compact syntax.
 
 ---
 
 ### 6.1 — `model!` declarative schema macro
 
-Replace the two-step `#[derive(Model, sqlx::FromRow)] + attribute soup` with a
-single invocation that generates the struct, trait impls, and a `FromRow` derive
-in one shot.
+An opt-in alternative to `#[derive(Model, sqlx::FromRow)] + #[rok_orm(…)]`
+attributes.  Both styles produce identical output and can coexist in the same
+codebase — use whichever fits the situation.
 
 ```rust
-// Before
+// ── Style A: derive attributes (existing, always supported) ──────────────────
 #[derive(Debug, Clone, Model, sqlx::FromRow)]
 #[rok_orm(table = "articles")]
 pub struct Article {
     #[rok_orm(primary_key)]
-    pub id:         i64,
-    pub title:      String,
-    pub published:  bool,
+    pub id:          i64,
+    pub title:       String,
+    pub published:   bool,
     #[rok_orm(skip)]
     pub draft_notes: String,
 }
 
-// After
+// ── Style B: model! macro (new, opt-in) ──────────────────────────────────────
 rok_orm::model! {
     Article {
         table:   "articles",
@@ -163,35 +164,35 @@ rok_orm::model! {
 }
 ```
 
-**What the macro generates:**
+**What `model!` generates** (identical to Style A):
 - `pub struct Article { … }` with `#[derive(Debug, Clone)]`
 - `impl Model for Article { … }` (table, pk, columns)
-- `impl sqlx::FromRow for Article` (or `#[derive(sqlx::FromRow)]`)
-- Associated constant `Article::COLUMNS` (`&'static [&'static str]`)
-- `Article::query()` already works via blanket `Model` impl
+- `#[derive(sqlx::FromRow)]` on the struct
+- `Article::query()` already works via the blanket `Model` impl
 
 **Acceptance criteria:**
 - [ ] `model!` macro defined in `rok-orm-macros`
-- [ ] Generates identical output to equivalent `#[derive(Model)]` usage
+- [ ] Emits identical Rust as the equivalent `#[derive(Model)]` usage
 - [ ] Struct visibility (`pub`, `pub(crate)`, private) configurable
 - [ ] Optional `derives = [Serialize, Deserialize, PartialEq]` key for extra derives
+- [ ] `#[derive(Model)]` attribute style kept and unchanged — no deprecation
 
 ---
 
 ### 6.2 — `query!` compile-time query builder
 
-A declarative macro for building queries without chaining methods — readable at
-a glance, validated at compile time where possible.
+An opt-in alternative to the fluent method-chain API.  Both styles are always
+supported — the macro expands to exactly the same `QueryBuilder` method calls.
 
 ```rust
-// Method-chain style (still supported)
+// ── Style A: method chain (existing, always supported) ───────────────────────
 let q = User::query()
     .where_eq("active", true)
     .or_where_eq("role", "admin")
     .order_by_desc("created_at")
     .limit(10);
 
-// Macro style
+// ── Style B: query! macro (new, opt-in) ──────────────────────────────────────
 let q = rok_orm::query!(User {
     where: active = true OR role = "admin",
     order: created_at DESC,
