@@ -1,0 +1,30 @@
+import env from '#start/env'
+import { defineConfig, stores } from '@adonisjs/lock'
+import type { InferLockStores } from '@adonisjs/lock/types'
+
+const lockConfig = defineConfig({
+  default: env.get('LOCK_STORE'),
+  stores: {
+    
+    
+    /**
+     * Database store to manage locks
+     */
+    database: stores.database({
+      tableName: 'locks'
+    }),
+    
+    
+    /**
+     * Memory store could be used during
+     * testing
+     */
+    memory: stores.memory()
+  },
+})
+
+export default lockConfig
+
+declare module '@adonisjs/lock/types' {
+  export interface LockStoresList extends InferLockStores<typeof lockConfig> {}
+}
