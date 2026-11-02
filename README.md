@@ -1,3 +1,8 @@
+> **Archived.** The `rok` command now lives in [ateeq1999/rok-v2](https://github.com/ateeq1999/rok-v2)
+> (crate `rok-cli` from 0.7.0). This repository's task runner and crates
+> stop at their last release (`rok-cli` 0.6.1). Unfinished work is on the
+> `wip/pre-archive` branch.
+
 # rok - Run One, Know All
 
 > Execute multi-step tasks from JSON - the ultimate automation tool for developers and AI agents.
